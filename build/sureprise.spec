@@ -3,6 +3,8 @@
 import sys
 from pathlib import Path
 
+import certifi
+
 ROOT = Path(SPECPATH).resolve().parent
 SRC = ROOT / "src"
 _ICON = ROOT / "build" / "assets" / "app_icon.ico"
@@ -16,6 +18,7 @@ a = Analysis(
     datas=[
         (str(ROOT / "config.example.json"), "."),
         (str(ROOT / "LICENSE"), "."),
+        (certifi.where(), "certifi"),
     ],
     hiddenimports=[
         "PyQt6.sip",

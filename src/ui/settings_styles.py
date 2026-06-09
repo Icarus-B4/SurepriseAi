@@ -3,12 +3,12 @@ settings_styles.py
 QSS-Stile für das Einstellungsfenster (Glassmorphism, Toggles, Inputs).
 """
 
-from src.ui.design_tokens import Colors, Typography, FluentIcons
+from src.ui.design_tokens import Colors, Typography
 
-# Leicht transparenter Glas-Hintergrund
-GLASS_BG = "rgba(18, 18, 22, 0.78)"
-GLASS_BORDER = "rgba(255, 255, 255, 0.14)"
-GLASS_ELEVATED = "rgba(36, 36, 42, 0.65)"
+# Undurchsichtigerer Glas-Hintergrund – kein Durchscheinen der Island
+GLASS_BG = "rgba(22, 22, 28, 0.96)"
+GLASS_BORDER = "rgba(255, 255, 255, 0.12)"
+GLASS_ELEVATED = "rgba(36, 36, 44, 0.92)"
 
 
 def settings_stylesheet() -> str:
@@ -36,19 +36,27 @@ def settings_stylesheet() -> str:
             border: none;
         }}
 
+        QScrollArea {{
+            background: transparent;
+            border: none;
+        }}
+        QScrollArea > QWidget > QWidget {{
+            background: transparent;
+        }}
+
         QScrollBar:vertical {{
             border: none;
             background: transparent;
-            width: 6px;
-            margin: 4px 2px 4px 0;
+            width: 8px;
+            margin: 4px 0 4px 0;
         }}
         QScrollBar::handle:vertical {{
-            background: rgba(255, 255, 255, 0.14);
-            min-height: 24px;
-            border-radius: 3px;
+            background: rgba(255, 255, 255, 0.16);
+            min-height: 28px;
+            border-radius: 4px;
         }}
         QScrollBar::handle:vertical:hover {{
-            background: rgba(255, 255, 255, 0.24);
+            background: rgba(255, 255, 255, 0.28);
         }}
         QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical,
         QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {{
@@ -60,7 +68,7 @@ def settings_stylesheet() -> str:
             font-family: "{Typography.FONT_FAMILY}";
             font-size: 13px;
             spacing: 10px;
-            padding: 2px 0;
+            padding: 3px 0;
         }}
         QCheckBox::indicator {{
             width: 36px;
@@ -74,19 +82,29 @@ def settings_stylesheet() -> str:
             border: 1px solid {Colors.ACCENT_BRIGHT_HEX};
         }}
 
-        QComboBox, QLineEdit {{
+        QLineEdit {{
             background-color: {GLASS_ELEVATED};
             color: {Colors.TEXT_PRIMARY_HEX};
             border: 1px solid {Colors.BORDER_HEX};
             border-radius: 8px;
-            padding: 8px 32px 8px 12px;
+            padding: 9px 12px;
             font-family: "{Typography.FONT_FAMILY}";
             font-size: 13px;
-            min-height: 18px;
+            min-height: 20px;
+        }}
+        QComboBox {{
+            background-color: {GLASS_ELEVATED};
+            color: {Colors.TEXT_PRIMARY_HEX};
+            border: 1px solid {Colors.BORDER_HEX};
+            border-radius: 8px;
+            padding: 9px 32px 9px 12px;
+            font-family: "{Typography.FONT_FAMILY}";
+            font-size: 13px;
+            min-height: 20px;
         }}
         QComboBox:focus, QLineEdit:focus {{
             border: 1px solid {Colors.ACCENT_HEX};
-            background-color: rgba(36, 36, 42, 0.85);
+            background-color: rgba(40, 40, 48, 0.98);
         }}
         QComboBox::drop-down {{
             subcontrol-origin: padding;
@@ -106,7 +124,7 @@ def settings_stylesheet() -> str:
             margin-right: 8px;
         }}
         QComboBox QAbstractItemView {{
-            background-color: rgba(28, 28, 32, 0.96);
+            background-color: rgba(28, 28, 32, 0.98);
             color: {Colors.TEXT_PRIMARY_HEX};
             border: 1px solid {Colors.BORDER_HEX};
             border-radius: 8px;
@@ -119,7 +137,7 @@ def settings_stylesheet() -> str:
             color: {Colors.TEXT_PRIMARY_HEX};
             border: 1px solid {Colors.BORDER_HEX};
             border-radius: 8px;
-            padding: 8px;
+            padding: 10px 14px;
             font-family: "{Typography.FONT_FAMILY}";
             font-weight: 600;
         }}
@@ -132,9 +150,11 @@ def settings_stylesheet() -> str:
             border: none;
             color: {Colors.TEXT_SECONDARY_HEX};
             font-size: 14px;
+            padding: 4px;
         }}
         QPushButton#CloseButton:hover {{
             color: {Colors.RECORDING_RED_HEX};
             background-color: rgba(255, 69, 58, 0.12);
+            border-radius: 8px;
         }}
     """

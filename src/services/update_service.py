@@ -43,12 +43,12 @@ def is_newer(remote: str, local: str = __version__) -> bool:
 
 def _ssl_context() -> ssl.SSLContext:
     """SSL-Kontext inkl. certifi für PyInstaller-Bundles."""
-    try:
-        import certifi
+    from src.utils.ssl_bootstrap import certifi_bundle_path
 
-        return ssl.create_default_context(cafile=certifi.where())
-    except ImportError:
-        return ssl.create_default_context()
+    bundle = certifi_bundle_path()
+    if bundle:
+        return ssl.create_default_context(cafile=bundle)
+    return ssl.create_default_context()
 
 
 def _github_get(url: str, timeout: int = 12) -> dict:

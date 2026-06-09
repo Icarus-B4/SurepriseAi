@@ -562,3 +562,16 @@ Im Idle-Zustand fehlte ein sichtbarer Indikator, dass die Dynamic Island aktiv i
 - Hover oben mittig oder Klick auf Bar → volle Island-Pill.
 - Aufnahme/Verarbeitung/etc.: Shimmer aus, Pill wie bisher.
 
+## Eintrag 29: 2026-06-10 – Settings-Layout & Update v0.1.4
+
+### Aufgabe
+Settings-Menü Layout/Ecken kaputt; Update v0.1.2→v0.1.3 funktioniert nicht.
+
+### Ursachen
+1. **Settings:** DWM-Blur auf ganzem HWND, zu schmales Fenster, QLineEdit-Padding von ComboBox, Shimmer scheint durch.
+2. **Update v0.1.2:** Kein certifi im Bundle, `UpdateSignals` ohne `QueuedConnection`/Parent, API-Fehler ohne Fallback.
+
+### Implementiertes (v0.1.4)
+- **Settings:** 440×680, Mask-Radius 16px, undurchsichtiger Glas-Hintergrund, getrenntes QLineEdit-QSS, Shimmer bei Settings aus.
+- **Update:** `ssl_bootstrap.py`, certifi in PyInstaller-datas, Tray „Release manuell laden“, Browser-Fallback bei API-Fehler.
+

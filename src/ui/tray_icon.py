@@ -22,6 +22,7 @@ class SurepriseTrayIcon(QSystemTrayIcon):
     toggle_recording = pyqtSignal()
     open_history = pyqtSignal()
     check_updates = pyqtSignal()
+    open_releases = pyqtSignal()
     transcribe_url = pyqtSignal()
 
     def __init__(self, parent=None):
@@ -115,6 +116,8 @@ class SurepriseTrayIcon(QSystemTrayIcon):
         version_action.setEnabled(False)
         update_action = self.menu.addAction("↻ Nach Updates suchen…")
         update_action.triggered.connect(self.check_updates.emit)
+        releases_action = self.menu.addAction("⬇ Release manuell laden…")
+        releases_action.triggered.connect(self.open_releases.emit)
 
         self.menu.addSeparator()
         

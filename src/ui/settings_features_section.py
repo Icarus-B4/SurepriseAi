@@ -93,7 +93,9 @@ def add_features_section(
     layout.addWidget(modes_hint)
 
     modes_edit = QLineEdit()
+    modes_edit.setPlaceholderText("OUTLOOK=formal, slack=business, discord=casual")
     modes_edit.setText(_format_app_modes(config.get("app_modes", {})))
+    modes_edit.setCursorPosition(0)
     layout.addWidget(modes_edit)
 
     def _save_modes() -> None:

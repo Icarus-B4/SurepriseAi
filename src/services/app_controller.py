@@ -59,6 +59,7 @@ class AppController(QObject):
         self.app.tray.style_selected.connect(self._on_style_changed)
         self.app.tray.toggle_recording.connect(self.app.pipeline.toggle)
         self.app.tray.check_updates.connect(lambda: self.updates.check_now(silent=False))
+        self.app.tray.open_releases.connect(self.updates.open_releases_page)
         self.app.tray.transcribe_url.connect(self._open_url_dialog)
 
         expanded = self.app.window.pill.expanded_widget

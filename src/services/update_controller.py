@@ -13,7 +13,9 @@ from PyQt6.QtCore import QObject, Qt, QTimer, pyqtSignal
 from src.services.config_service import config
 from src.services.update_service import UpdateCheckResult, UpdateInfo, UpdateService
 from src.services.update_downloader import download_release_asset
-from src.version import __version__
+from src.version import GITHUB_REPO, __version__
+
+RELEASES_PAGE = f"https://github.com/{GITHUB_REPO}/releases/latest"
 
 
 class UpdateSignals(QObject):
@@ -73,10 +75,12 @@ class UpdateController:
         self._checking = False
 
         if result.error:
+            print(f"[Update] Fehler (v{__version__}): {result.error}")
             if not silent:
                 self.app.toast.show_error(
                     f"Update-Prüfung fehlgeschlagen: {result.error}"
                 )
+                QTimer.singleShot(400, self._open_releases_fallback)
             return
 
         if result.info is None:
@@ -127,3 +131,14 @@ class UpdateController:
         )
         QTimer.singleShot(800, self.app.controller.shutdown)
         QTimer.singleShot(1200, lambda: os.startfile(str(path)))
+
+    def open_releases_page(self) -> None:
+        """Öffnet die GitHub-Release-Seite (Fallback bei API-Fehlern)."""
+        self._open_releases_fallback()
+
+    def _open_releases_fallback(self) -> None:
+        webbrowser.open(RELEASES_PAGE)
+        self.app.toast.show_message(
+            "Release-Seite im Browser geöffnet – Setup manuell laden.",
+            duration_ms=3500,
+        )

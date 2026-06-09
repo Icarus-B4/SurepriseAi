@@ -33,6 +33,7 @@ class DynamicIslandWindow(QWidget):
         self.url_dropped_callback = None
         self._user_moved = False  # True sobald der Nutzer das Fenster per Drag verschoben hat
         self._idle_revealed = True  # Sentinel: erster Aufruf erzwingt kollabierte Shimmer-Bar
+        self._presence_hidden_for_settings = False
         
         self._init_ui()
         self._setup_position()

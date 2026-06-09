@@ -1,7 +1,7 @@
 """
 settings_panel.py
 Einstellungs-Panel für SurepriseAi in PyQt6.
-Glas-Optik mit leicht transparentem Hintergrund und DWM-Blur.
+Glas-Optik mit abgerundeten Ecken und sauberem Scroll-Layout.
 """
 
 from PyQt6.QtWidgets import (
@@ -9,13 +9,15 @@ from PyQt6.QtWidgets import (
     QComboBox, QLineEdit, QPushButton, QWidget, QScrollArea, QFrame,
     QGraphicsDropShadowEffect,
 )
-from PyQt6.QtCore import Qt, QPoint, pyqtSignal
-from PyQt6.QtGui import QColor
+from PyQt6.QtCore import Qt, QPoint, QRectF, pyqtSignal
+from PyQt6.QtGui import QColor, QPainterPath, QRegion
 
 from src.ui.design_tokens import Colors, Typography, FluentIcons
 from src.ui.settings_styles import settings_stylesheet
 from src.ui.settings_features_section import add_features_section
 from src.services.config_service import config
+
+_CORNER_RADIUS = 16
 
 
 class SettingsWindow(QDialog):
@@ -26,32 +28,35 @@ class SettingsWindow(QDialog):
     def __init__(self, parent=None, on_open_history=None):
         super().__init__(parent)
         self._on_open_history = on_open_history
+        self._container: QWidget | None = None
         self.setWindowFlags(
             Qt.WindowType.FramelessWindowHint |
             Qt.WindowType.WindowStaysOnTopHint |
-            Qt.WindowType.Tool
+            Qt.WindowType.Dialog
         )
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
-        self.resize(380, 580)
+        self.setMinimumSize(440, 640)
+        self.resize(440, 680)
         self.drag_position = QPoint()
         self._init_ui()
 
     def _init_ui(self):
         container = QWidget(self)
         container.setObjectName("SettingsContainer")
+        container.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
         container.setStyleSheet(settings_stylesheet())
+        self._container = container
 
         shadow = QGraphicsDropShadowEffect(container)
-        shadow.setBlurRadius(32)
-        shadow.setOffset(0, 8)
-        shadow.setColor(QColor(0, 0, 0, 120))
+        shadow.setBlurRadius(28)
+        shadow.setOffset(0, 6)
+        shadow.setColor(QColor(0, 0, 0, 100))
         container.setGraphicsEffect(shadow)
 
         layout = QVBoxLayout(container)
-        layout.setContentsMargins(20, 16, 20, 20)
+        layout.setContentsMargins(22, 18, 22, 22)
         layout.setSpacing(12)
 
-        # Header
         header = QHBoxLayout()
         title = QLabel("Einstellungen")
         title.setFont(Typography.get_font(Typography.MEDIUM, bold=True))
@@ -66,15 +71,16 @@ class SettingsWindow(QDialog):
         header.addWidget(close_btn)
         layout.addLayout(header)
 
-        # Scroll-Bereich
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
-        scroll.setStyleSheet("background: transparent; border: none;")
+        scroll.setFrameShape(QFrame.Shape.NoFrame)
+        scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        scroll.setStyleSheet("QScrollArea { background: transparent; border: none; }")
 
         content = QWidget()
         content.setStyleSheet("background: transparent;")
         scroll_layout = QVBoxLayout(content)
-        scroll_layout.setContentsMargins(0, 4, 4, 0)
+        scroll_layout.setContentsMargins(0, 2, 10, 8)
         scroll_layout.setSpacing(14)
 
         self._add_section(scroll_layout, "Aufnahme", FluentIcons.MICROPHONE)
@@ -105,15 +111,44 @@ class SettingsWindow(QDialog):
             on_open_history=self._on_open_history,
         )
 
+        scroll_layout.addStretch(1)
         scroll.setWidget(content)
-        layout.addWidget(scroll)
+        layout.addWidget(scroll, stretch=1)
 
         main_layout = QVBoxLayout(self)
+        main_layout.setContentsMargins(16, 16, 16, 16)
         main_layout.addWidget(container)
-        main_layout.setContentsMargins(12, 12, 12, 12)
+
+    def _apply_rounded_mask(self) -> None:
+        """Schneidet Container und Fenster auf abgerundetes Rechteck zu."""
+        if not self._container:
+            return
+        w = self._container.width()
+        h = self._container.height()
+        if w < 2 or h < 2:
+            return
+        path = QPainterPath()
+        path.addRoundedRect(QRectF(0, 0, w, h), _CORNER_RADIUS, _CORNER_RADIUS)
+        region = QRegion(path.toFillPolygon().toPolygon())
+        self._container.setMask(region)
+
+    def _hide_island_presence(self) -> None:
+        island = self.parent()
+        if island and hasattr(island, "presence_bar"):
+            island._presence_hidden_for_settings = True
+            island.presence_bar.stop()
+            island.presence_bar.hide()
+
+    def _restore_island_presence(self) -> None:
+        island = self.parent()
+        if not island or not getattr(island, "_presence_hidden_for_settings", False):
+            return
+        island._presence_hidden_for_settings = False
+        if (island.state_machine.is_idle or island.state_machine.is_basics) and not island._idle_revealed:
+            island._position_presence_bar()
+            island.presence_bar.start()
 
     def _add_section(self, layout: QVBoxLayout, title: str, icon: str) -> None:
-        """Fügt eine Sektionsüberschrift mit Trennlinie ein."""
         divider = QFrame()
         divider.setObjectName("SectionDivider")
         divider.setFrameShape(QFrame.Shape.HLine)
@@ -175,18 +210,23 @@ class SettingsWindow(QDialog):
             config.set(key, items)
 
         le.textChanged.connect(_on_change)
+        le.home(False)
         layout.addWidget(lbl)
         layout.addWidget(le)
         return le
 
     def showEvent(self, event):
-        """Aktiviert Windows DWM-Blur für Glas-Effekt."""
         super().showEvent(event)
-        try:
-            from src.utils.windows_overlay import enable_blur_behind
-            enable_blur_behind(int(self.winId()))
-        except Exception:
-            pass
+        self._hide_island_presence()
+        self._apply_rounded_mask()
+
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        self._apply_rounded_mask()
+
+    def closeEvent(self, event):
+        self._restore_island_presence()
+        super().closeEvent(event)
 
     def mousePressEvent(self, event):
         if event.button() == Qt.MouseButton.LeftButton:
