@@ -10,6 +10,17 @@
 
 ---
 
+## Installation (für Nutzer)
+
+1. **`SurepriseAi-Setup.exe`** von [GitHub Releases](https://github.com/Icarus-B4/SurepriseAi/releases/latest) herunterladen
+2. Doppelklick → Setup-Assistent (Deutsch) durchlaufen
+3. Optional: Desktop-Verknüpfung, Autostart mit Windows
+4. Nach der Installation: **Tray-Icon** unten rechts → **F8** zum Diktieren
+
+Kein Python nötig – der Installer enthält alles. Einstellungen liegen unter `%APPDATA%\SurepriseAi\`.
+
+---
+
 ## Features
 
 | Feature | Beschreibung |
@@ -156,25 +167,26 @@ Rechtsklick auf das Tray-Icon:
 
 ---
 
-## Windows-Installer (Build)
+### Installer lokal bauen (Entwickler)
 
-Für Entwickler – erstellt ein lauffähiges Bundle und optional einen Setup-Installer:
+**Engine:** [NSIS 3](https://nsis.sourceforge.io/) – dieselbe Technologie wie [Hermes Desktop](https://github.com/NousResearch/hermes-agent/tree/main/apps/desktop) (`electron-builder` → NSIS auf Windows).
 
 ```powershell
-# Nur PyInstaller-Bundle → dist\SurepriseAi\
-powershell -ExecutionPolicy Bypass -File .\build\build.ps1
+# Doppelklick oder:
+.\Erstelle-Installer.bat
 
-# Zusätzlich Inno-Setup-Installer (Inno Setup 6 erforderlich)
+# Oder manuell (lädt NSIS bei Bedarf nach .tools/):
 powershell -ExecutionPolicy Bypass -File .\build\build.ps1 -Installer
 ```
 
-Ergebnis:
-- **Portable:** `dist\SurepriseAi\SurepriseAi.exe`
-- **Installer:** `dist\SurepriseAi-Setup.exe`
+Ergebnis: **`dist\SurepriseAi-Setup.exe`** (~140 MB) – an Endnutzer weitergeben.
 
-Nach der Installation liegen Config und Historie unter `%APPDATA%\SurepriseAi\`. ML-Modelle gehören in den Ordner `models\` neben der EXE.
+Der Wizard entspricht Hermes (`oneClick: false`, Installationsordner wählbar, Benutzer-Installation):
+- Willkommen → Lizenz → Zielordner → Optionen → Installation → Fertig
+- Optional: Desktop-Verknüpfung, Autostart mit Windows
+- Deinstallation über „Apps & Features“
 
-### Auto-Update
+---
 
 - Beim Start wird optional nach GitHub-Releases gesucht (`check_updates_on_startup`)
 - Tray → **Nach Updates suchen…**

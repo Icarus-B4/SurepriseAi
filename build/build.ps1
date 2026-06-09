@@ -1,9 +1,8 @@
 #Requires -Version 5.1
 <#
 .SYNOPSIS
-    Erstellt das SurepriseAi PyInstaller-Bundle und optional den Inno-Setup-Installer.
+    Erstellt PyInstaller-Bundle und NSIS-Setup (wie Hermes Desktop / electron-builder).
 .EXAMPLE
-    .\build\build.ps1
     .\build\build.ps1 -Installer
 #>
 param(
@@ -36,6 +35,10 @@ if (-not $SkipPip) {
     & $pip install -r requirements.txt -q
 }
 
+Write-Host "==> Installer-Grafiken..." -ForegroundColor Yellow
+& $py build\generate_installer_assets.py
+if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
 Write-Host "==> PyInstaller..." -ForegroundColor Yellow
 & $py -m PyInstaller build\sureprise.spec --noconfirm --clean
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
@@ -43,23 +46,38 @@ if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 $dist = Join-Path $Root "dist\SurepriseAi"
 Copy-Item -Force "config.example.json" $dist
 New-Item -ItemType Directory -Force -Path (Join-Path $dist "models") | Out-Null
-
 Write-Host "==> Bundle fertig: $dist" -ForegroundColor Green
 
 if ($Installer) {
-    $iscc = @(
-        "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe",
-        "$env:ProgramFiles\Inno Setup 6\ISCC.exe"
+    $makensis = @(
+        (Join-Path $Root ".tools\NSIS\makensis.exe"),
+        (Join-Path $Root ".tools\NSIS\Bin\makensis.exe"),
+        "${env:ProgramFiles(x86)}\NSIS\makensis.exe",
+        "$env:ProgramFiles\NSIS\makensis.exe"
     ) | Where-Object { Test-Path $_ } | Select-Object -First 1
 
-    if (-not $iscc) {
-        Write-Warning "Inno Setup 6 nicht gefunden. Installer übersprungen."
-        Write-Host "Download: https://jrsoftware.org/isinfo.php"
-        exit 0
+    if (-not $makensis) {
+        Write-Host "==> NSIS wird installiert (Hermes-Installer-Engine)..." -ForegroundColor Yellow
+        $nsisSetup = Join-Path $Root ".tools\nsis-setup.exe"
+        $nsisDir = Join-Path $Root ".tools\NSIS"
+        if (-not (Test-Path $nsisSetup)) {
+            Invoke-WebRequest -Uri "https://sourceforge.net/projects/nsis/files/NSIS%203/3.11/nsis-3.11-setup.exe/download" `
+                -OutFile $nsisSetup -UseBasicParsing
+        }
+        New-Item -ItemType Directory -Force -Path $nsisDir | Out-Null
+        Start-Process -FilePath $nsisSetup -ArgumentList "/S", "/D=$nsisDir" -Wait
+        $makensis = @(
+            (Join-Path $nsisDir "makensis.exe"),
+            (Join-Path $nsisDir "Bin\makensis.exe")
+        ) | Where-Object { Test-Path $_ } | Select-Object -First 1
     }
 
-    Write-Host "==> Inno Setup Installer..." -ForegroundColor Yellow
-    & $iscc "/DMyAppVersion=$Version" "build\installer.iss"
+    if (-not $makensis) {
+        Write-Error "NSIS (makensis) nicht gefunden. NSIS 3.x erforderlich."
+    }
+
+    Write-Host "==> NSIS Setup.exe (Wizard, wie Hermes Desktop)..." -ForegroundColor Yellow
+    & $makensis @("/DAPP_VERSION=$Version", "build\installer.nsi")
     if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-    Write-Host "==> Installer: dist\SurepriseAi-Setup.exe" -ForegroundColor Green
+    Write-Host "==> Fertig: dist\SurepriseAi-Setup.exe" -ForegroundColor Green
 }

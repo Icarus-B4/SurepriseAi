@@ -95,8 +95,8 @@ SurepriseAi/
 - [x] Markierter Text als Kontext (SelectedTextKit)
 - [x] Historien-Export (TXT / MD / SRT)
 - [x] YouTube/URL-Transkription (yt-dlp)
-- [x] Installer (PyInstaller + Inno Setup) & Auto-Update (GitHub Releases)
 - [x] CI/CD (GitHub Actions: Smoke-Test + Release-Build)
+- [x] NSIS-Setup.exe (Hermes-Style) + Erststart-Dialog
 
 ---
 

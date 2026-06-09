@@ -33,10 +33,10 @@ jobs:
           .\venv\Scripts\pip install --upgrade pip
           .\venv\Scripts\pip install -r requirements.txt -r requirements-build.txt
 
-      - name: Inno Setup 6 installieren
-        run: choco install innosetup -y --no-progress
+      - name: NSIS 3 installieren
+        run: choco install nsis -y --no-progress
 
-      - name: Installer bauen
+      - name: Installer bauen (NSIS, wie Hermes Desktop)
         shell: pwsh
         env:
           RELEASE_VERSION: ${{ github.ref_name }}

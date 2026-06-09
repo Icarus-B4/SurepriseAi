@@ -10,6 +10,8 @@ from src.ui.island_states import IslandState
 from src.ui.polish_animator import PolishAnimator
 from src.ui.history_dialog import HistoryDialog
 from src.ui.url_transcribe_dialog import UrlTranscribeDialog
+from src.ui.welcome_dialog import WelcomeDialog
+from src.utils.app_paths import mark_onboarding_done, needs_onboarding
 from src.services.config_service import config
 from src.services.style_definitions import style_label
 from src.services.dictation_history import DictationHistoryService
@@ -138,9 +140,19 @@ class AppController(QObject):
         self._update_privacy_badge()
         self._refresh_tray_tooltip()
         if success:
-            self.app.toast.show_success("Bereit zum Diktieren")
+            if needs_onboarding():
+                QTimer.singleShot(400, self._show_welcome)
+            else:
+                self.app.toast.show_success("Bereit zum Diktieren")
         else:
             self.app.toast.show_error("Modell konnte nicht geladen werden")
+
+    def _show_welcome(self) -> None:
+        dlg = WelcomeDialog(self.app.window)
+        dlg.exec()
+        if dlg.skip_next_time():
+            mark_onboarding_done()
+        self.app.toast.show_success("Bereit zum Diktieren – drücke F8!")
 
     def _on_pipeline_state(self, state_name: str):
         self.app.state_machine.transition_by_name(state_name)

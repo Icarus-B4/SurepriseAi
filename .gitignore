@@ -9,6 +9,8 @@ __pycache__/
 .eggs/
 dist/
 build/sureprise/
+build/assets/*.bmp
+build/assets/*.ico
 *.egg
 
 # ── Virtuelle Umgebung ───────────────────────────────────────────────────────
@@ -49,6 +51,7 @@ models/
 .agent/skills/
 .agent/.agents/
 .agent/skills-lock.json
+.tools/
 .agent/dictation_history.json
 .agent/usage_stats.json
 

@@ -5,6 +5,7 @@ from pathlib import Path
 
 ROOT = Path(SPECPATH).resolve().parent
 SRC = ROOT / "src"
+_ICON = ROOT / "build" / "assets" / "app_icon.ico"
 
 block_cipher = None
 
@@ -62,7 +63,7 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    icon=None,
+    icon=str(_ICON) if _ICON.exists() else None,
 )
 
 coll = COLLECT(

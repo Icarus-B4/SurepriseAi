@@ -509,3 +509,20 @@ git push origin v0.1.0
 ### QS-Ergebnisse
 - Lokaler Smoke-Test: ✅ PASS
 
+## Eintrag 26: 2026-06-10 – NSIS-Installer & Erststart
+
+### Aufgabe
+Hermes-Style NSIS-Setup.exe für Endnutzer; Erststart-Onboarding nach Installation.
+
+### Implementiertes
+- **`build/installer.nsi`:** NSIS-Wizard (wie electron-builder/Hermes: Ordner wählen, Komponenten).
+- **`build/generate_installer_assets.py`:** Icon + Branding.
+- **`build/build.ps1`:** NSIS auto-install nach `.tools/`, PyInstaller + Setup.exe.
+- **`Erstelle-Installer.bat`:** Ein-Klick-Build.
+- **`welcome_dialog.py`:** Erststart-Hinweise (F8, Tray, Island).
+- Release-Workflow: NSIS statt Inno Setup.
+- Version **0.1.1**; Legacy `installer.iss` entfernt.
+
+### QS-Ergebnisse
+- NSIS-Build lokal: `dist/SurepriseAi-Setup.exe` (~139 MB) ✅
+

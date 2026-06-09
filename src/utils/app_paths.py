@@ -55,3 +55,16 @@ def ensure_first_run_config() -> None:
     if example.exists():
         shutil.copy(example, target)
         print(f"[Config] Erstkonfiguration angelegt: {target}")
+
+
+def onboarding_marker_path() -> Path:
+    return user_data_dir() / ".onboarding_done"
+
+
+def needs_onboarding() -> bool:
+    """True beim ersten Start nach Installation."""
+    return not onboarding_marker_path().exists()
+
+
+def mark_onboarding_done() -> None:
+    onboarding_marker_path().touch()
