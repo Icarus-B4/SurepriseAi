@@ -4,7 +4,6 @@ UI-Anbindung für Update-Prüfung und Installer-Download.
 """
 
 import os
-import subprocess
 import threading
 import webbrowser
 from typing import Optional
@@ -81,6 +80,9 @@ class UpdateController:
     def _on_download_done(self, path: Optional[object], info: UpdateInfo) -> None:
         """Download abgeschlossen – wieder im Hauptthread."""
         if path and hasattr(path, "suffix") and path.suffix.lower() == ".exe":
+            self.app.toast.show_success(
+                f"Update v{info.version} heruntergeladen – Setup startet…"
+            )
             self._launch_installer(path)
         elif path:
             os.startfile(path.parent)
@@ -97,4 +99,4 @@ class UpdateController:
             duration_ms=2500,
         )
         QTimer.singleShot(800, self.app.controller.shutdown)
-        QTimer.singleShot(1200, lambda: subprocess.Popen([str(path)], shell=True))
+        QTimer.singleShot(1200, lambda: os.startfile(str(path)))
