@@ -6,7 +6,7 @@ Verwaltet die Sub-Widgets für jeden Zustand (Idle, Rec, Proc, Success, Expanded
 
 from PyQt6.QtWidgets import QFrame, QWidget, QHBoxLayout, QVBoxLayout, QLabel, QStackedWidget, QPushButton, QScrollArea, QSizePolicy
 from PyQt6.QtCore import Qt, QTimer, QTime
-from src.ui.design_tokens import Colors, Typography, FluentIcons, IslandSize
+from src.ui.design_tokens import Colors, Typography, FluentIcons, IslandSize, AnimationTokens
 from src.ui.waveform_widget import WaveformWidget
 from src.ui.expanded_pill_widget import ExpandedPillWidget
 from src.ui.drag_handle import DragHandleButton
@@ -66,14 +66,26 @@ class IslandPill(QFrame):
         self.mic_icon.setObjectName("IconLabel")
         self.mic_icon.setFixedWidth(22)
         self.mic_icon.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.time_label = QLabel("SurepriseAi", self.idle_widget)
+
+        self.center_col = QWidget(self.idle_widget)
+        center_lay = QVBoxLayout(self.center_col)
+        center_lay.setContentsMargins(0, 0, 0, 0)
+        center_lay.setSpacing(0)
+        self.time_label = QLabel("SurepriseAi", self.center_col)
         self.time_label.setFont(Typography.get_font(Typography.SMALL, bold=True))
         self.time_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.privacy_label = QLabel("", self.center_col)
+        self.privacy_label.setFont(Typography.get_font(Typography.TINY))
+        self.privacy_label.setStyleSheet(f"color: {Colors.TEXT_TERTIARY_HEX};")
+        self.privacy_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.privacy_label.hide()
+        center_lay.addWidget(self.time_label)
+        center_lay.addWidget(self.privacy_label)
 
         # Symmetrie: Mic links + Griff rechts (je 22 px), Titel dazwischen zentriert
         idle_lay.addWidget(self.mic_icon)
         idle_lay.addStretch(1)
-        idle_lay.addWidget(self.time_label)
+        idle_lay.addWidget(self.center_col)
         idle_lay.addStretch(1)
 
         self.drag_handle = DragHandleButton(self.idle_widget)
@@ -229,6 +241,7 @@ class IslandPill(QFrame):
     def stop_processing(self):
         self.spinner_timer.stop()
         self.proc_icon.setText(FluentIcons.PROCESSING)
+        self.proc_label.setText("Bereinige...")
 
     def show_success(self, text: str):
         self.stacked_widget.setCurrentIndex(3)
@@ -245,6 +258,37 @@ class IslandPill(QFrame):
         self.stacked_widget.setCurrentIndex(0)
         self._update_time()
 
+    def set_privacy_badge(self, text: str | None) -> None:
+        """Zeigt oder verbirgt das Privacy-Badge unter der Uhrzeit."""
+        if text:
+            self.privacy_label.setText(text)
+            self.privacy_label.show()
+        else:
+            self.privacy_label.hide()
+
     def set_basics(self):
         self.stacked_widget.setCurrentIndex(5)
         self.basics_label.setText("Basics")
+
+    def play_settle_pulse(self) -> None:
+        """Kurzer Indigo-Glow beim Wechsel Aufnahme → Verarbeitung."""
+        r = self._corner_radius
+        self.setStyleSheet(f"""
+            QFrame#PillContainer {{
+                background-color: {Colors.ISLAND_BG_ALPHA};
+                border: 2px solid {Colors.ACCENT_BRIGHT_HEX};
+                border-radius: {r}px;
+            }}
+            QLabel {{
+                color: {Colors.TEXT_PRIMARY_HEX};
+                font-family: "{Typography.FONT_FAMILY}";
+                font-size: 13px;
+                background: transparent;
+            }}
+            QLabel#IconLabel {{
+                font-family: "{FluentIcons.FONT_FAMILY}";
+                font-size: 14px;
+                color: {Colors.TEXT_SECONDARY_HEX};
+            }}
+        """)
+        QTimer.singleShot(AnimationTokens.NORMAL, self._apply_pill_style)

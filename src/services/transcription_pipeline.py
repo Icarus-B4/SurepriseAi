@@ -22,6 +22,8 @@ from .clipboard_service import ClipboardService
 from .word_replacement_service import WordReplacementService
 from .pipeline_worker import PipelineWorker
 from .config_service import config
+from .app_mode_service import resolve_style_for_hwnd
+from .dictation_context_service import DictationContextService
 
 # Live-Transkription: niedrige Latenz durch kurzes Polling und kleines Audiopuffer
 LIVE_POLL_INTERVAL_S = 0.15
@@ -41,6 +43,7 @@ class TranscriptionPipeline:
         self.polisher    = PolishingService()
         self.clipboard   = ClipboardService()
         self.replacer    = WordReplacementService()
+        self.dictation_context = DictationContextService()
 
         # UI-Callbacks
         self._on_state_change: Optional[Callable[[str], None]] = None
@@ -51,6 +54,7 @@ class TranscriptionPipeline:
 
         self._initialized = False
         self._target_hwnd: Optional[int] = None
+        self._session_style: Optional[str] = None
         
         # Live-Transkription
         self._partial_thread: Optional[threading.Thread] = None
@@ -90,6 +94,9 @@ class TranscriptionPipeline:
 
     def start_recording(self) -> bool:
         """Startet die Aufnahme und den Live-Transkriptionstypist."""
+        if self.audio.is_recording:
+            return True
+
         self._capture_target_window()
         device = config.get_str("recording_device")
         success = self.audio.start_recording(device if device != "default" else None)
@@ -97,6 +104,9 @@ class TranscriptionPipeline:
         if success:
             self.recording_start_time = time.time()
             self.recording_duration = 0.0
+            resolved = resolve_style_for_hwnd(self._target_hwnd)
+            self._session_style = resolved or config.selected_style
+            self.dictation_context.capture_async(self._target_hwnd)
             self._emit_state("recording")
             
             # Live-Transkriptions-Thread starten
@@ -119,12 +129,20 @@ class TranscriptionPipeline:
         self.recording_duration = time.time() - self.recording_start_time
         self._emit_state("processing")
 
-        # Auslagerung an den PipelineWorker zur Einhaltung der Zeilenregeln
+        context = self.dictation_context.get_context(
+            timeout_s=config.get_int("screen_context_timeout_s", 3)
+        )
+
         worker = PipelineWorker(
             self.transcriber, self.replacer, self.polisher, self.clipboard,
             self._on_result, self._emit_state, self._emit_error
         )
-        worker.process_audio_async(audio_data, self._target_hwnd)
+        worker.process_audio_async(
+            audio_data,
+            self._target_hwnd,
+            style=self._session_style,
+            screen_context=context,
+        )
 
     def toggle(self) -> None:
         if self.audio.is_recording:
@@ -134,12 +152,37 @@ class TranscriptionPipeline:
 
     def transcribe_audio_file(self, file_path: str) -> None:
         """Datei-Transkription im Hintergrund starten."""
-        self._target_hwnd = None
+        self._start_file_worker(file_path)
+
+    def transcribe_media_url(self, url: str) -> None:
+        """Lädt Audio von einer URL (yt-dlp) und transkribiert es."""
+        threading.Thread(target=self._media_url_worker, args=(url,), daemon=True).start()
+
+    def _media_url_worker(self, url: str) -> None:
+        from .media_url_service import download_media_audio
+
+        self._emit_state("processing")
+        path, err = download_media_audio(url)
+        if err or not path:
+            self._emit_error(err or "Download fehlgeschlagen.")
+            self._emit_state("idle")
+            return
+        self._start_file_worker(str(path))
+
+    def _start_file_worker(self, file_path: str) -> None:
+        """Gemeinsamer Einstieg für Datei- und URL-Transkription."""
+        self._capture_target_window()
+        self.dictation_context.capture_async(self._target_hwnd)
         worker = PipelineWorker(
             self.transcriber, self.replacer, self.polisher, self.clipboard,
             self._on_result, self._emit_state, self._emit_error
         )
-        worker.process_file_async(file_path)
+        context = self.dictation_context.get_context(timeout_s=2.0)
+        worker.process_file_async(
+            file_path,
+            style=config.selected_style,
+            screen_context=context,
+        )
 
     def _live_transcription_worker(self) -> None:
         """Periodische Zwischen-Transkription im Hintergrund."""
@@ -190,6 +233,10 @@ class TranscriptionPipeline:
 
     def _emit_error(self, msg: str) -> None:
         if self._on_error: self._on_error(msg)
+
+    @property
+    def session_style(self) -> str:
+        return self._session_style or config.selected_style
 
     @property
     def is_recording(self) -> bool:

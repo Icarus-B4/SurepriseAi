@@ -4,19 +4,25 @@ Widget für die Großansicht (Expanded Mode) der Dynamic Island.
 Enthält Wort/WPM-Statistiken, eine Textbox mit Direktaktionen und Stil-Chips.
 """
 
+import re
+
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QTextEdit, QPushButton,
-    QLabel, QFrame, QScrollArea, QSizePolicy,
+    QLabel, QFrame, QSizePolicy,
 )
 from PyQt6.QtCore import pyqtSignal, Qt
 from src.ui.design_tokens import Colors, Typography, FluentIcons
 from src.ui.drag_handle import DragHandleButton
+from src.services.config_service import config
+from src.services.style_definitions import STYLE_DEFINITIONS
 
 
 class ExpandedPillWidget(QWidget):
     """Das Textbearbeitungs-, Statistik- und Stil-Auswahl-Widget im EXPANDED-State."""
     
     style_clicked = pyqtSignal(str)  # Emittiert den Stil-Key bei Klick
+    undo_clicked = pyqtSignal()
+    url_import_clicked = pyqtSignal()
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -122,12 +128,38 @@ class ExpandedPillWidget(QWidget):
             }}
             QPushButton:hover {{ color: {Colors.SUCCESS_GREEN_HEX}; }}
         """)
+
+        self.box_undo_btn = QPushButton(FluentIcons.RETRY, self)
+        self.box_undo_btn.setFixedSize(22, 22)
+        self.box_undo_btn.setToolTip("Letzten Satz entfernen")
+        self.box_undo_btn.setStyleSheet(f"""
+            QPushButton {{
+                background: transparent; border: none; color: {Colors.TEXT_SECONDARY_HEX};
+                font-family: "{FluentIcons.FONT_FAMILY}"; font-size: 11px;
+            }}
+            QPushButton:hover {{ color: {Colors.ACCENT_BRIGHT_HEX}; }}
+        """)
+        self.box_undo_btn.clicked.connect(self.undo_clicked.emit)
+
+        self.url_btn = QPushButton("🔗", self)
+        self.url_btn.setFixedSize(22, 22)
+        self.url_btn.setToolTip("YouTube/URL transkribieren")
+        self.url_btn.setStyleSheet(f"""
+            QPushButton {{
+                background: transparent; border: none; color: {Colors.TEXT_SECONDARY_HEX};
+                font-size: 11px;
+            }}
+            QPushButton:hover {{ color: {Colors.ACCENT_BRIGHT_HEX}; }}
+        """)
+        self.url_btn.clicked.connect(self.url_import_clicked.emit)
         
         # Wir belegen den Box Copy-Button direkt mit der Kopierfunktion
         self.exp_copy_btn = self.box_copy_btn  # Kompatibilität für AppController
         
         header_lay.addWidget(box_title)
         header_lay.addStretch()
+        header_lay.addWidget(self.url_btn)
+        header_lay.addWidget(self.box_undo_btn)
         header_lay.addWidget(self.box_copy_btn)
         frame_layout.addLayout(header_lay)
         
@@ -146,44 +178,37 @@ class ExpandedPillWidget(QWidget):
             QScrollBar::handle:vertical {{ background: {Colors.BORDER_HEX}; border-radius: 2px; }}
         """)
         frame_layout.addWidget(self.transcript_edit)
-        main_layout.addWidget(text_frame)
+        main_layout.addWidget(text_frame, stretch=1)
 
-        # ── 3. STIL-CHIPS (horizontal scrollbar bei Bedarf) ──
+        # ── 3. STIL-CHIPS (zwei Zeilen, ohne Scrollbar) ──
         chips_row = QHBoxLayout()
-        chips_row.setContentsMargins(0, 4, 0, 0)
-        chips_row.setSpacing(6)
+        chips_row.setContentsMargins(0, 2, 0, 0)
+        chips_row.setSpacing(8)
 
-        chips_scroll = QScrollArea(self)
-        chips_scroll.setFixedHeight(34)
-        chips_scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
-        chips_scroll.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
-        chips_scroll.setWidgetResizable(True)
-        chips_scroll.setStyleSheet("QScrollArea { background: transparent; border: none; }")
+        chips_col = QVBoxLayout()
+        chips_col.setSpacing(4)
+        row1 = QHBoxLayout()
+        row1.setSpacing(5)
+        row2 = QHBoxLayout()
+        row2.setSpacing(5)
 
-        chips_inner = QWidget()
-        chips_bar = QHBoxLayout(chips_inner)
-        chips_bar.setContentsMargins(0, 0, 0, 0)
-        chips_bar.setSpacing(5)
-
-        style_definitions = [
-            ("casual", "Bereinigen"),
-            ("business", "Business"),
-            ("bullet_points", "Stichpunkte"),
-            ("concise", "Kompakt"),
-            ("formal", "Formell"),
-        ]
-
-        for key, name in style_definitions:
-            btn = QPushButton(name, chips_inner)
+        for index, (key, name) in enumerate(STYLE_DEFINITIONS):
+            btn = QPushButton(name, self)
             btn.setFont(Typography.get_font(Typography.TINY, bold=True))
-            btn.setSizePolicy(QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Fixed)
+            btn.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
+            btn.setMinimumHeight(26)
             btn.clicked.connect(lambda _, k=key: self.style_clicked.emit(k))
-            chips_bar.addWidget(btn)
             self.chips[key] = btn
+            if index < 4:
+                row1.addWidget(btn)
+            else:
+                row2.addWidget(btn)
 
-        chips_bar.addStretch()
-        chips_scroll.setWidget(chips_inner)
-        chips_row.addWidget(chips_scroll, stretch=1)
+        row1.addStretch()
+        row2.addStretch()
+        chips_col.addLayout(row1)
+        chips_col.addLayout(row2)
+        chips_row.addLayout(chips_col, stretch=1)
 
         self.exp_close_btn = QPushButton("✕", self)
         self.exp_close_btn.setFixedSize(28, 28)
@@ -195,9 +220,8 @@ class ExpandedPillWidget(QWidget):
             }}
             QPushButton:hover {{ color: {Colors.RECORDING_RED_HEX}; border-color: {Colors.RECORDING_RED_HEX}; }}
         """)
-        chips_row.addWidget(self.exp_close_btn)
+        chips_row.addWidget(self.exp_close_btn, alignment=Qt.AlignmentFlag.AlignTop)
         main_layout.addLayout(chips_row)
-        from src.services.config_service import config
         self.set_active_style(config.selected_style)
 
     def set_stats(self, words: int, wpm: int):
@@ -216,7 +240,7 @@ class ExpandedPillWidget(QWidget):
                         color: white;
                         border: none;
                         border-radius: 10px;
-                        padding: 4px 8px;
+                        padding: 3px 7px;
                     }}
                     QPushButton:hover {{ background-color: {Colors.ACCENT_BRIGHT_HEX}; }}
                 """)
@@ -227,7 +251,7 @@ class ExpandedPillWidget(QWidget):
                         color: {Colors.TEXT_SECONDARY_HEX};
                         border: 1px solid {Colors.BORDER_HEX};
                         border-radius: 10px;
-                        padding: 4px 8px;
+                        padding: 3px 7px;
                     }}
                     QPushButton:hover {{ 
                         color: {Colors.TEXT_PRIMARY_HEX}; 
@@ -239,3 +263,15 @@ class ExpandedPillWidget(QWidget):
         """Deaktiviert Chips während Re-Polishing läuft."""
         for btn in self.chips.values():
             btn.setEnabled(not busy)
+
+    def undo_last_sentence(self) -> bool:
+        """Entfernt den letzten Satz aus dem Textfeld. Gibt True zurück wenn geändert."""
+        text = self.transcript_edit.toPlainText().strip()
+        if not text:
+            return False
+        parts = re.split(r"(?<=[.!?…])\s+", text)
+        if len(parts) <= 1:
+            self.transcript_edit.clear()
+            return True
+        self.transcript_edit.setPlainText(" ".join(parts[:-1]).strip())
+        return True

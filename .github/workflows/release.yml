@@ -1,0 +1,52 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  build-installer:
+    name: Windows-Installer bauen
+    runs-on: windows-latest
+    timeout-minutes: 90
+    steps:
+      - name: Repository auschecken
+        uses: actions/checkout@v4
+
+      - name: Python 3.11 einrichten
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: |
+            requirements.txt
+            requirements-build.txt
+
+      - name: Virtuelle Umgebung & Abhängigkeiten
+        shell: pwsh
+        run: |
+          python -m venv venv
+          .\venv\Scripts\pip install --upgrade pip
+          .\venv\Scripts\pip install -r requirements.txt -r requirements-build.txt
+
+      - name: Inno Setup 6 installieren
+        run: choco install innosetup -y --no-progress
+
+      - name: Installer bauen
+        shell: pwsh
+        env:
+          RELEASE_VERSION: ${{ github.ref_name }}
+        run: |
+          $ver = $env:RELEASE_VERSION -replace '^v',''
+          Write-Host "Baue Version $ver"
+          powershell -ExecutionPolicy Bypass -File .\build\build.ps1 -Installer -SkipPip -Version $ver
+
+      - name: GitHub Release erstellen
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/SurepriseAi-Setup.exe
+          generate_release_notes: true

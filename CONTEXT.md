@@ -82,17 +82,21 @@ SurepriseAi/
 - Nur **Windows** (Win32-Overlay, Auto-Typing)
 - Ollama-Polishing nach Diktat kann Sekunden dauern; Chips nutzen schnellen Offline-Pfad
 - Einige UI-Module > 200 Zeilen (Refactoring ausstehend)
-- Kein CI/CD, kein Installer
+- Kein paralleler CI-Lauf für macOS/Linux (Windows-only App)
 
 ---
 
 ## Nächste mögliche Ziele
 
-- [ ] Vollständige Fluent Dynamic-Color-Integration
-- [ ] Polish-Diff-Animation (Eloquent-Stil) in PyQt6
-- [ ] Installer / Auto-Update
-- [ ] Screen-Context / OCR (optional, VoiceInk-inspiriert)
-- [ ] App-spezifische Modi (Fenster-Titel statt macOS Bundle-ID)
+- [x] Eloquent Phase 1–3 (Diff-Animation, Chips, Historie, App-Modi, Mini-FAB, …)
+- [x] Settings-UI für Erscheinungsbild & App-Modi
+- [x] Windows-Akzent live (periodischer Refresh)
+- [x] Screen-Context / OCR (Windows-OCR, optional)
+- [x] Markierter Text als Kontext (SelectedTextKit)
+- [x] Historien-Export (TXT / MD / SRT)
+- [x] YouTube/URL-Transkription (yt-dlp)
+- [x] Installer (PyInstaller + Inno Setup) & Auto-Update (GitHub Releases)
+- [x] CI/CD (GitHub Actions: Smoke-Test + Release-Build)
 
 ---
 

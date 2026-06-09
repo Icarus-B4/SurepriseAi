@@ -36,25 +36,42 @@ class PipelineWorker:
         self.on_state_change = on_state_change
         self.on_error = on_error
 
-    def process_audio_async(self, audio_data: np.ndarray, target_hwnd: Optional[int]) -> None:
+    def process_audio_async(
+        self,
+        audio_data: np.ndarray,
+        target_hwnd: Optional[int],
+        style: Optional[str] = None,
+        screen_context: Optional[str] = None,
+    ) -> None:
         """Startet die Verarbeitung von Audiodaten in einem Daemon-Thread."""
         thread = threading.Thread(
             target=self._process_audio,
-            args=(audio_data, target_hwnd),
+            args=(audio_data, target_hwnd, style, screen_context),
             daemon=True
         )
         thread.start()
 
-    def process_file_async(self, file_path: str) -> None:
+    def process_file_async(
+        self,
+        file_path: str,
+        style: Optional[str] = None,
+        screen_context: Optional[str] = None,
+    ) -> None:
         """Startet die Datei-Transkription in einem Daemon-Thread."""
         thread = threading.Thread(
             target=self._process_file,
-            args=(file_path,),
+            args=(file_path, style, screen_context),
             daemon=True
         )
         thread.start()
 
-    def _process_audio(self, audio_data: np.ndarray, target_hwnd: Optional[int]) -> None:
+    def _process_audio(
+        self,
+        audio_data: np.ndarray,
+        target_hwnd: Optional[int],
+        style: Optional[str] = None,
+        screen_context: Optional[str] = None,
+    ) -> None:
         """Verarbeitet aufgezeichnete Audiodaten (Transkription, Korrektur, Polishing)."""
         try:
             # 1. Transkription
@@ -67,8 +84,13 @@ class PipelineWorker:
             # 2. Vokabular-Korrekturen
             corrected_text = self.replacer.apply(raw_text)
 
-            # 3. KI-Polishing mit dem aktuell gewählten Stil
-            polished_text = self.polisher.polish(corrected_text, style=config.selected_style)
+            # 3. KI-Polishing mit Session- oder Standard-Stil
+            active_style = style or config.selected_style
+            polished_text = self.polisher.polish(
+                corrected_text,
+                style=active_style,
+                screen_context=screen_context,
+            )
             final_text = polished_text or corrected_text
 
             # 4. Zwischenablage & optionales Einfügen
@@ -87,7 +109,12 @@ class PipelineWorker:
             self.on_error(f"Verarbeitungsfehler: {str(e)}")
             self.on_state_change("idle")
 
-    def _process_file(self, file_path: str) -> None:
+    def _process_file(
+        self,
+        file_path: str,
+        style: Optional[str] = None,
+        screen_context: Optional[str] = None,
+    ) -> None:
         """Transkribiert gezogene Audio- oder Videodateien."""
         try:
             self.on_state_change("processing")
@@ -99,7 +126,12 @@ class PipelineWorker:
                 return
 
             corrected_text = self.replacer.apply(raw_text)
-            polished_text = self.polisher.polish(corrected_text, style=config.selected_style)
+            active_style = style or config.selected_style
+            polished_text = self.polisher.polish(
+                corrected_text,
+                style=active_style,
+                screen_context=screen_context,
+            )
             final_text = polished_text or corrected_text
 
             if config.auto_copy:

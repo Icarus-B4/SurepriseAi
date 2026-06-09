@@ -29,6 +29,7 @@ class DynamicIslandWindow(QWidget):
         self.setFixedSize(IslandSize.WINDOW_WIDTH, IslandSize.WINDOW_HEIGHT)
         self.setAcceptDrops(True)
         self.file_dropped_callback = None
+        self.url_dropped_callback = None
         self._user_moved = False  # True sobald der Nutzer das Fenster per Drag verschoben hat
         
         self._init_ui()
@@ -191,6 +192,8 @@ class DynamicIslandWindow(QWidget):
             self._hide_basics_buttons()
             self._set_focus_accepting(False)
         elif new_state == IslandState.PROCESSING:
+            if prev_state == IslandState.RECORDING:
+                self.pill.play_settle_pulse()
             self.pill.start_processing()
             self.pill.set_corner_radius(IslandSize.PROCESSING_HEIGHT // 2)
             self.animate_to(IslandSize.PROCESSING_WIDTH, IslandSize.PROCESSING_HEIGHT)
@@ -301,7 +304,11 @@ class DynamicIslandWindow(QWidget):
         pass
 
     def _on_open_settings(self):
-        dialog = SettingsWindow(self)
+        on_history = getattr(self, "open_history_callback", None)
+        dialog = SettingsWindow(self, on_open_history=on_history)
+        cb = getattr(self, "settings_changed_callback", None)
+        if cb:
+            dialog.setting_changed.connect(cb)
         from PyQt6.QtWidgets import QApplication
         screen = QApplication.primaryScreen().geometry()
         x = int(screen.left() + (screen.width() - dialog.width()) / 2.0)
@@ -315,18 +322,30 @@ class DynamicIslandWindow(QWidget):
 
     def dragEnterEvent(self, event):
         if event.mimeData().hasUrls():
+            from src.services.media_url_service import is_media_url
             for url in event.mimeData().urls():
-                path = url.toLocalFile().lower()
-                if path.endswith(('.mp3', '.wav', '.m4a', '.mp4', '.avi', '.mov', '.ogg', '.flac')):
+                if url.isLocalFile():
+                    path = url.toLocalFile().lower()
+                    if path.endswith(('.mp3', '.wav', '.m4a', '.mp4', '.avi', '.mov', '.ogg', '.flac')):
+                        event.acceptProposedAction()
+                        return
+                elif is_media_url(url.toString()):
                     event.acceptProposedAction()
                     return
 
     def dropEvent(self, event):
+        from src.services.media_url_service import is_media_url
         for url in event.mimeData().urls():
-            file_path = url.toLocalFile()
-            path_lower = file_path.lower()
-            if path_lower.endswith(('.mp3', '.wav', '.m4a', '.mp4', '.avi', '.mov', '.ogg', '.flac')):
-                if self.file_dropped_callback:
-                    self.file_dropped_callback(file_path)
-                break
+            if url.isLocalFile():
+                file_path = url.toLocalFile()
+                path_lower = file_path.lower()
+                if path_lower.endswith(('.mp3', '.wav', '.m4a', '.mp4', '.avi', '.mov', '.ogg', '.flac')):
+                    if self.file_dropped_callback:
+                        self.file_dropped_callback(file_path)
+                    break
+            else:
+                remote = url.toString()
+                if is_media_url(remote) and self.url_dropped_callback:
+                    self.url_dropped_callback(remote)
+                    break
         event.acceptProposedAction()

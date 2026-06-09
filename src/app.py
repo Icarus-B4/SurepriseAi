@@ -6,7 +6,7 @@ Schlanke Hauptorchestrierung, delegiert Event-Handling an AppController.
 
 import sys
 from PyQt6.QtWidgets import QApplication
-from PyQt6.QtCore import QObject, pyqtSignal
+from PyQt6.QtCore import QObject, pyqtSignal, QTimer
 
 from src.ui.dynamic_island import DynamicIslandWindow
 from src.ui.toast_notification import ToastNotification
@@ -16,6 +16,7 @@ from src.services.hotkey_service import HotkeyService
 from src.services.config_service import config
 from src.services.app_controller import AppController
 from src.ui.tray_icon import SurepriseTrayIcon
+from src.ui.accent_theme import apply_accent_from_config
 
 
 class PipelineSignals(QObject):
@@ -51,16 +52,34 @@ class SurepriseApp:
         # Controller für die Event-Verarbeitung instanziieren
         self.controller = AppController(self)
         self.controller.connect_all()
+        self.mini_fab = None
 
     def start(self):
         """Startet Services und die Qt-Ereignisschleife."""
+        apply_accent_from_config()
+
         self.pipeline.initialize_async(on_ready=self.signals.ready.emit)
         if config.hotkey_enabled:
             self.hotkey.start()
 
+        self._sync_mini_fab_at_start()
+
+        self.accent_timer = QTimer()
+        self.accent_timer.timeout.connect(self.controller.check_accent_changed)
+        self.accent_timer.start(45_000)
+
         self.window.show()
         self.tray.show()
         sys.exit(self.app.exec())
+
+    def _sync_mini_fab_at_start(self):
+        if config.get_bool("enable_mini_fab", False):
+            from src.ui.mini_fab import MiniFab
+            self.mini_fab = MiniFab()
+            self.mini_fab.toggle_recording.connect(self.pipeline.toggle)
+            self.mini_fab.show_with_fade()
+        else:
+            self.mini_fab = None
 
     def shutdown(self):
         """Delegiert das saubere Beenden an den AppController."""

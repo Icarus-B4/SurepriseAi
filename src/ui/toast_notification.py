@@ -4,9 +4,15 @@ Status-Toast-Benachrichtigungen und Live-Transkriptions-Anzeige.
 Positioniert sich unterhalb der Dynamic Island und blendet sich sanft ein/aus.
 """
 
+import html
+import re
+
 from PyQt6.QtWidgets import QWidget, QLabel, QVBoxLayout
 from PyQt6.QtCore import Qt, QTimer, QPropertyAnimation
 from src.ui.design_tokens import Colors, Typography
+
+# Satzgrenzen für Live (final) vs. laufender Partial-Text
+_SENTENCE_SPLIT = re.compile(r"(?<=[.!?…])\s+")
 
 
 class ToastNotification(QWidget):
@@ -32,6 +38,7 @@ class ToastNotification(QWidget):
         self.hide_timer.timeout.connect(self.fade_out)
 
         self._is_live = False
+        self._live_plain = ""
         self._init_ui()
 
     def _init_ui(self):
@@ -54,6 +61,7 @@ class ToastNotification(QWidget):
         self.label.setFont(Typography.get_font(Typography.SMALL))
         self.label.setWordWrap(True)
         self.label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.label.setTextFormat(Qt.TextFormat.RichText)
         layout.addWidget(self.label)
 
         main_layout = QVBoxLayout(self)
@@ -89,8 +97,9 @@ class ToastNotification(QWidget):
         """Zeigt eine Standard-Benachrichtigung an (z. B. Kopiert, Fehler)."""
         self.hide_timer.stop()
         self._is_live = False
+        self._live_plain = ""
         self.title_label.hide()
-        self.label.setText(message)
+        self.label.setText(html.escape(message))
         self.label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self._apply_style(is_live=False, text_color=color_hex)
 
@@ -104,20 +113,74 @@ class ToastNotification(QWidget):
         self.hide_timer.start(duration_ms)
 
     def show_live_transcript(self, text: str):
-        """Zeigt den transkribierten Text live an, ohne auszublenden."""
+        """Zeigt Live-Text: abgeschlossene Sätze normal, Rest grau/kursiv."""
         self.hide_timer.stop()
         self.fade_animation.stop()
         self._is_live = True
+        self._live_plain = text.strip()
 
         self.title_label.setText("LIVE-TRANSKRIPTION")
         self.title_label.show()
-        self.label.setText(text)
         self.label.setAlignment(Qt.AlignmentFlag.AlignLeft)
-        self._apply_style(is_live=True, text_color=Colors.TEXT_PRIMARY_HEX)
+        self._render_live_html(self._live_plain, settled=False)
+        self._apply_style(is_live=True)
 
         self._position_and_show()
         self.setWindowOpacity(1.0)
         self.raise_()
+
+    def settle_live_transcript(self, text: str | None = None) -> None:
+        """Markiert den Live-Text als „eingefroren“ vor dem Ausblenden."""
+        if not self._is_live:
+            return
+        final = (text or self._live_plain).strip()
+        self._live_plain = final
+        self.title_label.setText("TRANSKRIPT")
+        self._render_live_html(final, settled=True)
+        self._position_and_show()
+
+    def _render_live_html(self, text: str, settled: bool) -> None:
+        """Baut Rich-Text: final = weiß normal, partial = grau kursiv."""
+        if not text or text == "Höre zu…":
+            self.label.setText(
+                f'<span style="color:{Colors.TEXT_SECONDARY_HEX};'
+                f'font-style:italic;">{html.escape(text or "Höre zu…")}</span>'
+            )
+            return
+
+        if settled:
+            self.label.setText(
+                f'<span style="color:{Colors.TEXT_PRIMARY_HEX};">'
+                f"{html.escape(text)}</span>"
+            )
+            return
+
+        parts = _SENTENCE_SPLIT.split(text.strip())
+        if len(parts) == 1 and not re.search(r"[.!?…]$", text.strip()):
+            self.label.setText(
+                f'<span style="color:{Colors.TEXT_SECONDARY_HEX};'
+                f'font-style:italic;">{html.escape(text.strip())}</span>'
+            )
+            return
+
+        if re.search(r"[.!?…]$", text.strip()):
+            final_part, partial_part = text.strip(), ""
+        else:
+            final_part = " ".join(parts[:-1]).strip()
+            partial_part = parts[-1].strip()
+
+        chunks: list[str] = []
+        if final_part:
+            chunks.append(
+                f'<span style="color:{Colors.TEXT_PRIMARY_HEX};">'
+                f"{html.escape(final_part)}</span>"
+            )
+        if partial_part:
+            chunks.append(
+                f'<span style="color:{Colors.TEXT_SECONDARY_HEX};'
+                f'font-style:italic;">{html.escape(partial_part)}</span>'
+            )
+        self.label.setText(" ".join(chunks) if chunks else html.escape(text))
 
     def end_live_mode(self):
         """Beendet den Live-Modus und blendet das Fenster aus."""

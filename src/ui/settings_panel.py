@@ -9,26 +9,30 @@ from PyQt6.QtWidgets import (
     QComboBox, QLineEdit, QPushButton, QWidget, QScrollArea, QFrame,
     QGraphicsDropShadowEffect,
 )
-from PyQt6.QtCore import Qt, QPoint
+from PyQt6.QtCore import Qt, QPoint, pyqtSignal
 from PyQt6.QtGui import QColor
 
 from src.ui.design_tokens import Colors, Typography, FluentIcons
 from src.ui.settings_styles import settings_stylesheet
+from src.ui.settings_features_section import add_features_section
 from src.services.config_service import config
 
 
 class SettingsWindow(QDialog):
     """Rahmenloses Einstellungsfenster mit Glassmorphism-Design."""
 
-    def __init__(self, parent=None):
+    setting_changed = pyqtSignal(str)
+
+    def __init__(self, parent=None, on_open_history=None):
         super().__init__(parent)
+        self._on_open_history = on_open_history
         self.setWindowFlags(
             Qt.WindowType.FramelessWindowHint |
             Qt.WindowType.WindowStaysOnTopHint |
             Qt.WindowType.Tool
         )
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
-        self.resize(380, 520)
+        self.resize(380, 580)
         self.drag_position = QPoint()
         self._init_ui()
 
@@ -93,6 +97,13 @@ class SettingsWindow(QDialog):
 
         self._add_section(scroll_layout, "Personal Vocabulary", "📖")
         self.vocab_edit = self._add_list_field(scroll_layout, "Eigennamen (Komma-getrennt)", "personal_vocabulary")
+
+        add_features_section(
+            scroll_layout,
+            self._add_section,
+            lambda key: self.setting_changed.emit(key),
+            on_open_history=self._on_open_history,
+        )
 
         scroll.setWidget(content)
         layout.addWidget(scroll)

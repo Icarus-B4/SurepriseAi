@@ -39,6 +39,21 @@ _WHITESPACE_PATTERN = re.compile(r" {2,}")
 # Satzanfang nach Punkt/Ausrufe/Fragezeichen
 _SATZ_ANFANG = re.compile(r"([.!?])\s+([a-z])")
 
+# Gesprochene Selbstkorrekturen: „… nein, ich meine …“
+_SELBSTKORREKTUR_MARKER = re.compile(
+    r"\b(?:"
+    r"nein(?:,\s*)?(?:ich meine|meine ich)?|"
+    r"nee(?:,\s*)?(?:ich meine|meine ich)?|"
+    r"stop|warte|moment|"
+    r"ich meine(?:,\s*)?|eigentlich meine ich|"
+    r"or rather|i mean|"
+    r"sorry(?:,\s*)?(?:i mean|ich meine)?|"
+    r"oder besser(?: gesagt)?|"
+    r"korrigiert|lass mich das nochmal sagen"
+    r")\b",
+    flags=re.IGNORECASE,
+)
+
 
 def entferne_fuellwoerter(text: str) -> str:
     """Entfernt Füllwörter aus dem Text."""
@@ -53,6 +68,35 @@ def entferne_abbrueche(text: str) -> str:
 def entferne_doppelungen(text: str) -> str:
     """Entfernt direkte Wortwiederholungen wie 'das das'."""
     return _DOPPELUNG_PATTERN.sub(r"\1", text)
+
+
+def entferne_selbstkorrekturen(text: str) -> str:
+    """
+    Filtert gesprochene Korrekturen wie „Sende an John nein ich meine James“.
+    Entfernt das falsch gesprochene Wort vor dem Marker und behält den Rest.
+    """
+    if not text or not text.strip():
+        return text
+
+    def _fix_segment(segment: str) -> str:
+        parts = _SELBSTKORREKTUR_MARKER.split(segment)
+        if len(parts) <= 1:
+            return segment.strip()
+
+        prefix = parts[0]
+        for tail in parts[1:]:
+            corrected = tail.strip().strip(",").strip()
+            if not corrected:
+                continue
+            words = prefix.strip().split()
+            if words:
+                words = words[:-1]
+            prefix = " ".join(words + [corrected])
+        return prefix.strip()
+
+    segments = re.split(r"(?<=[.!?])\s+", text.strip())
+    cleaned = [_fix_segment(seg) for seg in segments if seg.strip()]
+    return " ".join(cleaned)
 
 
 def entferne_satz_wiederholungen(text: str) -> str:
@@ -103,6 +147,7 @@ def bereinige_text(
     if entferne_fuell:
         text = entferne_fuellwoerter(text)
 
+    text = entferne_selbstkorrekturen(text)
     text = entferne_abbrueche(text)
 
     if entferne_doppel:

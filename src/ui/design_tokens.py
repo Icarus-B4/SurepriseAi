@@ -123,9 +123,9 @@ class Typography:
 # ── Dynamic Island Dimensionen ────────────────────────────────────────────────
 
 class IslandSize:
-    # IDLE: Kleine Pill
+    # IDLE: Kleine Pill (mit optionalem Privacy-Badge)
     IDLE_WIDTH  = 290
-    IDLE_HEIGHT = 38
+    IDLE_HEIGHT = 44
 
     # RECORDING: Expandierte Pill mit Waveform
     RECORDING_WIDTH  = 360
@@ -140,8 +140,8 @@ class IslandSize:
     SUCCESS_HEIGHT = 50
 
     # EXPANDED: Große Kapsel für volles Transkript
-    EXPANDED_WIDTH  = 580
-    EXPANDED_HEIGHT = 320
+    EXPANDED_WIDTH  = 620
+    EXPANDED_HEIGHT = 348
     EXPANDED_RADIUS = 16
 
     # Trägerfenster – muss größer als EXPANDED sein, sonst werden Ecken abgeschnitten

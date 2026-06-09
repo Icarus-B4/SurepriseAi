@@ -8,7 +8,9 @@ from PyQt6.QtWidgets import QSystemTrayIcon, QMenu
 from PyQt6.QtGui import QIcon, QPixmap, QPainter, QColor
 from PyQt6.QtCore import Qt, pyqtSignal
 from src.services.config_service import config
+from src.services.style_definitions import STYLE_DEFINITIONS
 from src.ui.design_tokens import Colors
+from src.version import __version__
 
 
 class SurepriseTrayIcon(QSystemTrayIcon):
@@ -18,6 +20,9 @@ class SurepriseTrayIcon(QSystemTrayIcon):
     quit_app = pyqtSignal()
     style_selected = pyqtSignal(str)
     toggle_recording = pyqtSignal()
+    open_history = pyqtSignal()
+    check_updates = pyqtSignal()
+    transcribe_url = pyqtSignal()
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -44,7 +49,7 @@ class SurepriseTrayIcon(QSystemTrayIcon):
         painter.drawEllipse(0, 0, 16, 16)
         
         # Kleine Kapsel in der Mitte (Indigo Akzentfarbe)
-        painter.setBrush(QColor("#6366F1"))
+        painter.setBrush(QColor(Colors.ACCENT_HEX))
         painter.drawRoundedRect(3, 6, 10, 4, 2, 2)
         
         painter.end()
@@ -83,15 +88,7 @@ class SurepriseTrayIcon(QSystemTrayIcon):
         self.style_menu.setStyleSheet(self.menu.styleSheet())
         
         self.style_actions = {}
-        styles = [
-            ("casual", "Bereinigen"),
-            ("business", "Business"),
-            ("bullet_points", "Stichpunkte"),
-            ("concise", "Kompakt"),
-            ("formal", "Formell"),
-        ]
-        
-        for key, label in styles:
+        for key, label in STYLE_DEFINITIONS:
             action = self.style_menu.addAction(label)
             action.setCheckable(True)
             action.triggered.connect(lambda checked, k=key: self.style_selected.emit(k))
@@ -100,10 +97,26 @@ class SurepriseTrayIcon(QSystemTrayIcon):
         self.update_menu_states()
         
         self.menu.addSeparator()
+
+        history_action = self.menu.addAction("📜 Diktat-Verlauf")
+        history_action.triggered.connect(self.open_history.emit)
+
+        url_action = self.menu.addAction("🔗 URL transkribieren…")
+        url_action.triggered.connect(self.transcribe_url.emit)
+        
+        self.menu.addSeparator()
         
         # Einstellungen
         settings_action = self.menu.addAction("⚙ Einstellungen")
         settings_action.triggered.connect(self.open_settings.emit)
+
+        self.menu.addSeparator()
+        version_action = self.menu.addAction(f"Version {__version__}")
+        version_action.setEnabled(False)
+        update_action = self.menu.addAction("↻ Nach Updates suchen…")
+        update_action.triggered.connect(self.check_updates.emit)
+
+        self.menu.addSeparator()
         
         # Beenden
         quit_action = self.menu.addAction("❌ Beenden")
@@ -123,6 +136,14 @@ class SurepriseTrayIcon(QSystemTrayIcon):
             self.record_action.setText("⏹ Aufnahme stoppen")
         else:
             self.record_action.setText("🎙 Diktat starten")
+
+    def refresh_tooltip(self, stats_line: str = "") -> None:
+        """Setzt Tooltip inkl. Version und optionaler Tagesstatistik."""
+        header = f"SurepriseAi v{__version__}"
+        if stats_line:
+            self.setToolTip(f"{header}\n{stats_line}")
+        else:
+            self.setToolTip(header)
 
     def _on_activated(self, reason):
         """Ein- und Ausblenden der Dynamic Island bei Doppelklick."""

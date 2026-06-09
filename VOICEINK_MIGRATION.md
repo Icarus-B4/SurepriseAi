@@ -18,9 +18,9 @@ Eine direkte Portierung nach Windows ist technisch unmöglich — der gesamte UI
 | whisper.cpp | faster-whisper + sherpa fallback | ✅ |
 | AIEnhancement (Ollama optional) | `polishing_service.py` + lokaler Fallback | ✅ |
 | Global Shortcuts (CGEvent) | — | 🔲 geplant |
-| SelectedTextKit / Paste | pyperclip (Clipboard) | 🔲 erweitern |
-| Screen Context / OCR | — | 🔲 optional |
-| Modes pro App | — | 🔲 optional |
+| SelectedTextKit / Paste | Markierter Text via Ctrl+C + Export TXT/MD/SRT | ✅ |
+| Screen Context / OCR | `screen_context_service.py` + Windows OCR | ✅ |
+| Modes pro App | `app_mode_service.py` | ✅ |
 
 ## Pipeline (wie VoiceInk)
 

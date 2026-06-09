@@ -346,4 +346,166 @@ Gelöschte Dokumente `CONTEXT.md`, `GEMINI.md`, `prd.md`, `VOICEINK_MIGRATION.md
 - **`prd.md`, `CONTEXT.md`, `GEMINI.md`:** Aus `.agent/CONVERSATION_MEMORY.md`, Transcript-Referenzen und aktuellem Code rekonstruiert (kein Git-Commit / keine Cursor-Local-History verfügbar).
 - Rekonstruierte Dateien enthalten Hinweis im Kopfbereich.
 
+## Eintrag 16: 2026-06-09 – Polish-Diff-Animation (Eloquent-Phase 1)
+
+### Aufgabe
+Erste Todo-Phase: Rohtext → polierter Text visuell animieren (Durchstreichen/Einblenden).
+
+### Implementiertes
+- **`src/utils/diff_helper.py`:** Wort-Diff via `difflib`, HTML-Frames mit rotem Durchstreichen und Indigo-Highlight.
+- **`src/ui/polish_animator.py`:** Gestaffelte Animation (280 ms Rohtext → Diff-Frames → finales Plain-Polish).
+- **`app_controller.py`:** Animation nach Pipeline-Ergebnis; Clipboard-Toast erst nach Abschluss; Abbruch bei Stil-Chip-Klick.
+
+### QS-Ergebnisse
+- Syntax-Check + Diff-Test (4 Frames für Füllwort-Beispiel): ✅ PASS
+
+## Eintrag 17: 2026-06-09 – Live-Typografie & Settle-Pulse (Eloquent Phase 1b)
+
+### Aufgabe
+Todo Phase 1: Live vs. Final Typografie im Toast; Settle-Pulse Recording → Processing.
+
+### Implementiertes
+- **`toast_notification.py`:** Rich-Text – abgeschlossene Sätze weiß/normal, laufender Rest grau/kursiv; `settle_live_transcript()` vor Ausblenden.
+- **`app_controller.py`:** `_last_live_text`; bei Processing 320 ms Settle, dann Fade-out.
+- **`island_pill.py`:** `play_settle_pulse()` – Indigo-Border-Glow 200 ms.
+- **`dynamic_island.py`:** Pulse bei RECORDING → PROCESSING.
+
+### QS-Ergebnisse
+- Syntax-Check: ✅ PASS
+
+## Eintrag 18: 2026-06-09 – Stil-Chips Kernpunkte/Lang & Undo
+
+### Aufgabe
+Phase 2: Eloquent-Stil-Chips „Kernpunkte“ + „Lang“; Undo letzter Satz in Expanded.
+
+### Implementiertes
+- **`style_definitions.py`:** Zentrale Liste aller 7 Stil-Chips (Single Source of Truth).
+- **`polishing_service.py`:** Ollama-Prompts + Offline-Fallback für `key_points` und `long`.
+- **UI:** Chips in Expanded + Tray; `EXPANDED_WIDTH` 620 px.
+- **Undo:** ↺-Button entfernt letzten Satz, aktualisiert Stats/Clipboard.
+
+### QS-Ergebnisse
+- Syntax-Check + Fallback-Test key_points/long: ✅ PASS
+
+## Eintrag 19: 2026-06-09 – Phase 3: Eloquent-Features (7 Punkte)
+
+### Aufgabe
+Restliche Todo-Liste bis zum letzten Schritt: Selbstkorrektur, Historie, App-Modi, Privacy-Badge, Windows-Akzent, Mini-FAB, Tray-Statistik.
+
+### Implementiertes
+- **`text_cleaner.py`:** `entferne_selbstkorrekturen()` für „nein, ich meine…“-Muster.
+- **`dictation_history.py` + `history_dialog.py`:** Verlauf mit Suche/Kopieren; Tray-Menü „Diktat-Verlauf“.
+- **`app_mode_service.py`:** Stil pro Fenster/Prozess (`config.app_modes`).
+- **`island_pill.py`:** Privacy-Badge „Offline · lokal“ / „Lokal · Ollama“.
+- **`windows_accent.py` + `accent_theme.py`:** Live Windows-Akzentfarbe in Design-Tokens.
+- **`mini_fab.py`:** Optionaler schwebender Mic-Button (`enable_mini_fab`).
+- **`usage_stats.py`:** Tagesstatistik im Tray-Tooltip (Wörter, Ø WPM).
+- **Config:** Neue Keys in `config_service.py` und `config.example.json`.
+
+### QS-Ergebnisse
+- Import-Check + Selbstkorrektur-Unit-Test: ✅ PASS
+
+## Eintrag 20: 2026-06-09 – Phase 4: Settings & Laufzeit-Integration
+
+### Aufgabe
+Fortführung nach Eloquent-Phasen 1–3: neue Features in Settings bedienbar, ohne Neustart anwendbar.
+
+### Implementiertes
+- **`settings_features_section.py`:** Mini-FAB, Privacy-Badge, Windows-Akzent, App-Modi-Editor, Historie-Button.
+- **`runtime_settings_handler.py`:** FAB ein/aus, Akzent-Refresh, Privacy-Badge live.
+- **`accent_theme.py`:** `apply_accent_from_config()`, Cache für periodischen Refresh (45 s).
+- **Mini-FAB/Layout-Fixes:** FAB sichtbar wenn aktiviert; Chips zweizeilig ohne Scrollbar.
+
+### QS-Ergebnisse
+- Import-Check + App-Modi-Parser: ✅ PASS
+
+## Eintrag 21: 2026-06-09 – Screen-OCR / Bildschirmkontext
+
+### Aufgabe
+VoiceInk-inspiriertes Screen-Context/OCR für Windows – lokale OCR beim Diktatstart, Kontext an Ollama-Polishing.
+
+### Implementiertes
+- **`window_capture.py`:** Fenster-Region screenshot (Pillow ImageGrab).
+- **`screen_ocr_service.py`:** Windows-OCR via `winocr` (WinRT, lokal).
+- **`screen_context_service.py`:** Async-OCR beim Aufnahmestart, Timeout vor Polishing.
+- **`polish_prompts.py`:** Ollama-Prompt mit optionalem Bildschirmkontext.
+- Pipeline + Settings: `enable_screen_context`, Privacy-Badge „OCR · lokal“.
+- Abhängigkeiten: `Pillow`, `winocr`.
+
+### QS-Ergebnisse
+- winocr-Test + Modul-Import: ✅ PASS
+
+## Eintrag 22: 2026-06-09 – Installer & Auto-Update
+
+### Aufgabe
+Windows-Installer (PyInstaller + Inno Setup) und automatische Update-Prüfung via GitHub Releases.
+
+### Implementiertes
+- **`src/version.py`:** Zentrale Version `0.1.0`, GitHub-Repo.
+- **`app_paths.py`:** Pfade für EXE-Bundle (%APPDATA% Config/Historie).
+- **`update_service.py` + `update_controller.py`:** GitHub-Release-Check, Installer-Download.
+- **Tray:** „Nach Updates suchen…“, Version im Tooltip.
+- **`build/sureprise.spec`, `build.ps1`, `installer.iss`:** Build-Pipeline.
+- **`requirements-build.txt`:** PyInstaller.
+
+### QS-Ergebnisse
+- Import-Check Update-Module: ✅ PASS
+
+## Eintrag 23: 2026-06-09 – Phase 5b: URL-Transkription (YouTube & Co.)
+
+### Aufgabe
+Nutzer bestätigte Phase 5b: Medien-URLs (YouTube, Vimeo, …) herunterladen und über die bestehende Datei-Pipeline transkribieren.
+
+### Implementiertes
+- **`media_url_service.py`:** yt-dlp Download nach Temp, `is_media_url()` für unterstützte Hosts.
+- **`url_transcribe_dialog.py`:** Dialog mit Clipboard-Vorausfüllung.
+- **`transcription_pipeline.py`:** `transcribe_media_url()` + gemeinsamer `_start_file_worker()`.
+- **`app_controller.py`:** Dialog, Toast, Drag & Drop für URLs.
+- **`tray_icon.py`:** Menüpunkt „URL transkribieren…“.
+- **`expanded_pill_widget.py`:** 🔗-Button im Text-Header.
+- **`dynamic_island.py`:** Remote-URLs per Drag & Drop akzeptieren.
+- **`requirements.txt`:** `yt-dlp>=2024.1.0`.
+
+### QS-Ergebnisse
+- pip install yt-dlp + Import-Check: ✅ PASS
+
+## Eintrag 24: 2026-06-09 – Phase 5c: Markierter Text + Historien-Export
+
+### Aufgabe
+Fortsetzung nach Phase 5b: VoiceInk SelectedTextKit (markierter Text als Kontext) und Export aus dem Diktat-Verlauf.
+
+### Implementiertes
+- **`selected_text_service.py`:** Ctrl+C-Erfassung markierten Textes beim Diktatstart.
+- **`dictation_context_service.py`:** Kombiniert OCR + Markierung für Ollama.
+- **`clipboard_service.py`:** `capture_selection()`, `read_clipboard()`.
+- **`history_export.py` + `history_export_dialog.py`:** Export TXT/MD/SRT aus Historie.
+- Pipeline nutzt `DictationContextService` statt nur Screen-OCR.
+- Settings: Checkbox „Markierten Text als Kontext“.
+- Config: `enable_selected_text_context`, `selected_text_max_chars`.
+- Fix: Unicode-Checkmarks in Transcription-Logs (Windows cp1252).
+
+### QS-Ergebnisse
+- Import-Check + SRT-Export-Unit-Test: ✅ PASS
+
+## Eintrag 25: 2026-06-09 – Phase 5d: CI/CD & GitHub Release
+
+### Aufgabe
+Automatisierter Smoke-Test bei Push/PR und Release-Build bei Git-Tag (v0.1.0).
+
+### Implementiertes
+- **`.github/workflows/ci.yml`:** Windows Smoke-Test (`build/ci_smoke_test.py`) bei Push/PR.
+- **`.github/workflows/release.yml`:** Tag `v*` → PyInstaller + Inno Setup → GitHub Release.
+- **`build/ci_smoke_test.py`:** py_compile + Import-Checks ohne GUI/Modelle.
+- **`build/build.ps1`:** Parameter `-Version` für Inno Setup (`/DMyAppVersion=`).
+- **`build/installer.iss`:** Version per Build-Override.
+- **`sureprise.spec`:** `yt_dlp` als hiddenimport.
+
+### Release-Anleitung
+```bash
+git tag v0.1.0
+git push origin v0.1.0
+```
+
+### QS-Ergebnisse
+- Lokaler Smoke-Test: ✅ PASS
 

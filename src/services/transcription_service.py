@@ -108,7 +108,7 @@ class TranscriptionService:
                 recognizer_config
             )
             self._initialized = True
-            print("[Transcription] Parakeet TDT geladen ✓")
+            print("[Transcription] Parakeet TDT geladen OK")
             return True
 
         except Exception as e:
@@ -128,7 +128,7 @@ class TranscriptionService:
                 compute_type="int8",
             )
             self._initialized = True
-            print(f"[Transcription] Whisper '{model_size}' geladen ✓")
+            print(f"[Transcription] Whisper '{model_size}' geladen OK")
             return True
         except Exception as e:
             print(f"[Transcription] Whisper-Fehler: {e}")
@@ -150,7 +150,7 @@ class TranscriptionService:
                 device="cpu",
                 compute_type="int8",
             )
-            print("[Transcription] Whisper 'tiny' für Live-Partials geladen ✓")
+            print("[Transcription] Whisper 'tiny' für Live-Partials geladen OK")
         except Exception as e:
             print(f"[Transcription] Partial-Modell-Fehler: {e} – nutze Hauptmodell")
             self._partial_whisper_model = self._whisper_model

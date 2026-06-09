@@ -8,7 +8,7 @@ __pycache__/
 *.egg-info/
 .eggs/
 dist/
-build/
+build/sureprise/
 *.egg
 
 # ── Virtuelle Umgebung ───────────────────────────────────────────────────────
@@ -49,6 +49,8 @@ models/
 .agent/skills/
 .agent/.agents/
 .agent/skills-lock.json
+.agent/dictation_history.json
+.agent/usage_stats.json
 
 # ── Test-/Scratch-Dateien ────────────────────────────────────────────────────
 scratch_*.py

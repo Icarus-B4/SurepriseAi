@@ -23,5 +23,24 @@
     "polishing_timeout_s": 30,
     "push_to_talk": true,
     "transcription_language": "auto",
-    "translate_to_english": false
+    "translate_to_english": false,
+    "enable_app_modes": true,
+    "app_modes": {
+        "OUTLOOK": "formal",
+        "slack": "business",
+        "teams": "business",
+        "discord": "casual",
+        "notepad": "concise"
+    },
+    "enable_mini_fab": false,
+    "use_windows_accent": true,
+    "show_privacy_badge": true,
+    "dictation_history_max": 50,
+    "enable_screen_context": false,
+    "enable_selected_text_context": true,
+    "selected_text_max_chars": 800,
+    "screen_context_mode": "active_window",
+    "screen_context_max_chars": 1200,
+    "screen_context_timeout_s": 3,
+    "check_updates_on_startup": true
 }

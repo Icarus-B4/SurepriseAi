@@ -254,3 +254,115 @@ class ClipboardService:
     def last_text(self) -> str:
         """Zuletzt kopierter Text."""
         return self._last_text
+
+    def read_clipboard(self) -> str:
+        """Liest den aktuellen Zwischenablage-Inhalt."""
+        if PYPERCLIP_AVAILABLE:
+            try:
+                return pyperclip.paste() or ""
+            except Exception as e:
+                print(f"[Clipboard] Lesen fehlgeschlagen: {e}")
+        return ""
+
+    def capture_selection(self, target_hwnd: int, delay_ms: int = 80) -> Optional[str]:
+        """
+        Kopiert markierten Text aus der Ziel-App via Ctrl+C.
+        Stellt die ursprüngliche Zwischenablage danach wieder her.
+        """
+        if not WIN32_AVAILABLE or not target_hwnd:
+            return None
+
+        original = self.read_clipboard()
+        self._force_foreground(target_hwnd)
+        time.sleep(0.04)
+
+        if not self._send_ctrl_c():
+            return None
+
+        time.sleep(delay_ms / 1000.0)
+        captured = self.read_clipboard().strip()
+
+        if original:
+            self._copy_win32(original) if not PYPERCLIP_AVAILABLE else self._restore_clipboard(original)
+        elif captured:
+            # Leere Zwischenablage wiederherstellen
+            self._clear_clipboard()
+
+        if not captured or len(captured) < 2:
+            return None
+        if captured == original.strip():
+            return None
+        return captured
+
+    def _restore_clipboard(self, text: str) -> None:
+        try:
+            pyperclip.copy(text)
+        except Exception as e:
+            print(f"[Clipboard] Wiederherstellung fehlgeschlagen: {e}")
+
+    def _clear_clipboard(self) -> None:
+        if not WIN32_AVAILABLE:
+            return
+        try:
+            ctypes.windll.user32.OpenClipboard(0)
+            ctypes.windll.user32.EmptyClipboard()
+            ctypes.windll.user32.CloseClipboard()
+        except Exception:
+            pass
+
+    def _send_ctrl_c(self) -> bool:
+        """Sendet Ctrl+C an das fokussierte Fenster."""
+        if not WIN32_AVAILABLE:
+            return False
+        try:
+            import ctypes
+            import ctypes.wintypes as wintypes
+
+            class MOUSEINPUT(ctypes.Structure):
+                _fields_ = [
+                    ("dx", wintypes.LONG), ("dy", wintypes.LONG),
+                    ("mouseData", wintypes.DWORD), ("dwFlags", wintypes.DWORD),
+                    ("time", wintypes.DWORD), ("dwExtraInfo", ctypes.c_size_t),
+                ]
+
+            class HARDWAREINPUT(ctypes.Structure):
+                _fields_ = [
+                    ("uMsg", wintypes.DWORD), ("wParamL", wintypes.WORD), ("wParamH", wintypes.WORD),
+                ]
+
+            class KEYBDINPUT(ctypes.Structure):
+                _fields_ = [
+                    ("wVk", wintypes.WORD), ("wScan", wintypes.WORD),
+                    ("dwFlags", wintypes.DWORD), ("time", wintypes.DWORD),
+                    ("dwExtraInfo", ctypes.c_size_t),
+                ]
+
+            class INPUT(ctypes.Structure):
+                class _INPUT(ctypes.Union):
+                    _fields_ = [("mi", MOUSEINPUT), ("ki", KEYBDINPUT), ("hi", HARDWAREINPUT)]
+                _anonymous_ = ("_input",)
+                _fields_ = [("type", wintypes.DWORD), ("_input", _INPUT)]
+
+            INPUT_KEYBOARD = 1
+            KEYEVENTF_KEYUP = 0x0002
+            VK_CONTROL, VK_C = 0x11, 0x43
+            scan_ctrl = ctypes.windll.user32.MapVirtualKeyW(VK_CONTROL, 0)
+            scan_c = ctypes.windll.user32.MapVirtualKeyW(VK_C, 0)
+
+            inputs = (INPUT * 4)()
+            for i, (vk, scan, flags) in enumerate([
+                (VK_CONTROL, scan_ctrl, 0),
+                (VK_C, scan_c, 0),
+                (VK_C, scan_c, KEYEVENTF_KEYUP),
+                (VK_CONTROL, scan_ctrl, KEYEVENTF_KEYUP),
+            ]):
+                inputs[i].type = INPUT_KEYBOARD
+                inputs[i].ki.wVk = vk
+                inputs[i].ki.wScan = scan
+                inputs[i].ki.dwFlags = flags
+
+            res = ctypes.windll.user32.SendInput(4, inputs, ctypes.sizeof(INPUT))
+            return res == 4
+        except Exception as e:
+            print(f"[Clipboard] Ctrl+C fehlgeschlagen: {e}")
+            return False

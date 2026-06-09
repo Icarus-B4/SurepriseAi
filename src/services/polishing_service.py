@@ -1,25 +1,16 @@
 """
 polishing_service.py
 Text-Polishing via Ollama oder regelbasierten Fallback bei Offline-Status.
-Garantiert unter 200 Zeilen für Clean Code.
 """
 
 import json
 import threading
 from typing import Callable, Optional
 import urllib.request
-import urllib.error
 
 from .config_service import config
+from .polish_prompts import build_ollama_prompt
 from ..utils.text_cleaner import bereinige_text
-
-STYLE_PROMPTS = {
-    "business": "Schreibe den Text in einem klaren, sachlichen Business-Stil um. Antworte NUR mit dem Text.",
-    "casual": "Bereinige den Text, behalte den lockeren Ton bei. Antworte NUR mit dem Text.",
-    "bullet_points": "Wandle den Text in prägnante Stichpunkte um (mit '•'). Antworte NUR mit dem Text.",
-    "concise": "Fasse den Text auf das Wesentliche zusammen. Antworte NUR mit dem Text.",
-    "formal": "Formuliere den Text in einem formellen, höflichen Stil um. Antworte NUR mit dem Text."
-}
 
 
 class PolishingService:
@@ -33,10 +24,15 @@ class PolishingService:
         self._on_result = cb
 
     def polish_async(self, text: str, style: Optional[str] = None) -> None:
-        threading.Thread(target=self._polish_worker, args=(text, style), daemon=True).start()
+        threading.Thread(target=self._polish_worker, args=(text, style, None), daemon=True).start()
 
-    def polish(self, text: str, style: Optional[str] = None) -> str:
-        """Volles Polishing nach Diktat (optional mit Ollama, kann dauern)."""
+    def polish(
+        self,
+        text: str,
+        style: Optional[str] = None,
+        screen_context: Optional[str] = None,
+    ) -> str:
+        """Volles Polishing nach Diktat (optional mit Ollama und Bildschirmkontext)."""
         if not text or not text.strip():
             return text
         active_style = style or config.selected_style
@@ -44,7 +40,7 @@ class PolishingService:
         ollama_result: Optional[str] = None
 
         if config.ollama_polishing:
-            ollama_result = self._call_ollama(cleaned, active_style)
+            ollama_result = self._call_ollama(cleaned, active_style, screen_context)
 
         if ollama_result and ollama_result.strip() != cleaned.strip():
             return ollama_result
@@ -68,6 +64,15 @@ class PolishingService:
                 return f"• {t[0].upper() + t[1:]}" if t else text
             return "\n".join(f"• {s[0].upper() + s[1:]}" for s in parts)
 
+        if style == "key_points":
+            sentences = [s.strip() for s in re.split(r'(?<=[.!?])\s+', text) if s.strip()]
+            if not sentences:
+                return text
+            ranked = sorted(sentences, key=lambda s: len(s.split()), reverse=True)
+            top = ranked[: min(5, max(3, len(ranked)))]
+            top.sort(key=lambda s: sentences.index(s))
+            return "\n".join(f"• {s[0].upper() + s[1:]}" for s in top)
+
         if style == "concise":
             sentences = [s.strip() for s in re.split(r'(?<=[.!?])\s+', text) if s.strip()]
             if len(sentences) > 1:
@@ -76,6 +81,26 @@ class PolishingService:
             if len(words) > 8:
                 return " ".join(words[: max(6, len(words) // 2)]) + " …"
             return text
+
+        if style == "long":
+            sentences = [s.strip() for s in re.split(r'(?<=[.!?])\s+', text) if s.strip()]
+            if not sentences:
+                return text
+            if len(sentences) == 1 and len(text.split()) < 18:
+                base = sentences[0].rstrip(".")
+                return (
+                    f"{base}. Dies lässt sich im weiteren Kontext noch genauer "
+                    f"ausführen und vertiefen."
+                )
+            expanded: list[str] = []
+            bridges = ("Darüber hinaus", "Des Weiteren", "Zudem", "Außerdem")
+            for i, s in enumerate(sentences):
+                if len(s.split()) < 10:
+                    s = f"Im Einzelnen: {s[0].lower() + s[1:]}" if s and s[0].isupper() else s
+                expanded.append(s)
+                if i < len(sentences) - 1 and len(sentences[i + 1].split()) < 8:
+                    expanded.append(f"{bridges[i % len(bridges)]} gilt Folgendes.")
+            return " ".join(expanded)
 
         if style == "business":
             repl = {
@@ -108,13 +133,19 @@ class PolishingService:
 
         return text
 
-    def _call_ollama(self, text: str, style: str) -> Optional[str]:
+    def _call_ollama(
+        self,
+        text: str,
+        style: str,
+        screen_context: Optional[str] = None,
+    ) -> Optional[str]:
         url = f"{config.ollama_url}/api/generate"
+        prompt = build_ollama_prompt(text, style, screen_context)
         payload = json.dumps({
             "model": config.ollama_model,
-            "prompt": f"{STYLE_PROMPTS.get(style, '')}\n\nText:\n{text}",
+            "prompt": prompt,
             "stream": False,
-            "options": {"temperature": 0.3, "num_predict": 500}
+            "options": {"temperature": 0.3, "num_predict": 500},
         }).encode("utf-8")
 
         try:
@@ -129,9 +160,15 @@ class PolishingService:
             self._ollama_available = False
         return None
 
-    def _polish_worker(self, text: str, style: Optional[str]) -> None:
-        res = self.polish(text, style)
-        if self._on_result and res: self._on_result(res)
+    def _polish_worker(
+        self,
+        text: str,
+        style: Optional[str],
+        screen_context: Optional[str],
+    ) -> None:
+        res = self.polish(text, style, screen_context)
+        if self._on_result and res:
+            self._on_result(res)
 
     def check_ollama_status(self) -> bool:
         try:

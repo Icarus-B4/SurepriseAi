@@ -9,8 +9,7 @@ import os
 from pathlib import Path
 from typing import Any, Optional
 
-# Pfad zur Konfigurationsdatei (relativ zum Projektstamm)
-_CONFIG_PATH = Path(__file__).parent.parent.parent / "config.json"
+from src.utils.app_paths import config_path as _config_file, ensure_first_run_config, models_dir
 
 # Standardwerte – werden verwendet, wenn config.json fehlt
 _DEFAULTS: dict[str, Any] = {
@@ -39,6 +38,25 @@ _DEFAULTS: dict[str, Any] = {
     "push_to_talk":            False,
     "transcription_language":  "auto",
     "translate_to_english":    False,
+    "enable_app_modes":        True,
+    "app_modes": {
+        "OUTLOOK": "formal",
+        "slack":   "business",
+        "teams":   "business",
+        "discord": "casual",
+        "notepad": "concise",
+    },
+    "enable_mini_fab":         True,
+    "use_windows_accent":      True,
+    "show_privacy_badge":      True,
+    "dictation_history_max":   50,
+    "enable_screen_context":   False,
+    "enable_selected_text_context": True,
+    "selected_text_max_chars": 800,
+    "screen_context_mode":     "active_window",
+    "screen_context_max_chars": 1200,
+    "screen_context_timeout_s": 3,
+    "check_updates_on_startup":  True,
 }
 
 
@@ -53,9 +71,11 @@ class ConfigService:
 
     def load(self) -> None:
         """Liest config.json und merged mit Standardwerten."""
-        if _CONFIG_PATH.exists():
+        ensure_first_run_config()
+        path = _config_file()
+        if path.exists():
             try:
-                with open(_CONFIG_PATH, "r", encoding="utf-8") as f:
+                with open(path, "r", encoding="utf-8") as f:
                     data = json.load(f)
                 # Defaults als Basis, dann überschreiben
                 self._config = {**_DEFAULTS, **data}
@@ -68,8 +88,10 @@ class ConfigService:
 
     def save(self) -> None:
         """Schreibt die aktuelle Konfiguration in config.json."""
+        path = _config_file()
+        path.parent.mkdir(parents=True, exist_ok=True)
         try:
-            with open(_CONFIG_PATH, "w", encoding="utf-8") as f:
+            with open(path, "w", encoding="utf-8") as f:
                 json.dump(self._config, f, indent=4, ensure_ascii=False)
         except OSError as e:
             print(f"[Config] Fehler beim Speichern: {e}")
@@ -159,7 +181,7 @@ class ConfigService:
 
     @property
     def models_dir(self) -> Path:
-        return Path(__file__).parent.parent.parent / "models"
+        return models_dir()
 
     @property
     def parakeet_model_dir(self) -> Path:

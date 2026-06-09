@@ -22,6 +22,9 @@
 | **Auto-Typing** | Fertiger Text wird optional direkt in die aktive Anwendung eingefügt |
 | **System-Tray** | Steuerung im Hintergrund: Diktat, Stil, Einstellungen |
 | **Datei-Import** | Audio/Video per Drag & Drop auf die Island transkribieren |
+| **URL-Import** | YouTube, Vimeo, SoundCloud & Co. per Tray, Dialog oder Drag & Drop (yt-dlp) |
+| **Kontext-Polishing** | Markierter Text + optional OCR für bessere Ollama-Korrektur |
+| **Historien-Export** | Diktate als TXT, Markdown oder SRT exportieren |
 
 ---
 
@@ -134,6 +137,9 @@ Der aktive Stil wird **indigo** hervorgehoben. Die Änderung erfolgt **sofort** 
 | Diktat starten/stoppen | **F8** oder Tray → Diktat |
 | Text kopieren | Kopieren-Icon im Textfeld |
 | Audio-Datei transkribieren | MP3/WAV/MP4 per Drag & Drop auf die Island |
+| Video-/Audio-URL transkribieren | Tray → **URL transkribieren…**, 🔗 in Expanded oder URL per Drag & Drop |
+| Diktat exportieren | Tray → Diktat-Verlauf → Eintrag wählen → **Exportieren…** (TXT/MD/SRT) |
+| Kontext für Polishing | Text in Ziel-App markieren, dann F8 – Ollama nutzt Markierung automatisch |
 | Island ein-/ausblenden | Doppelklick auf Tray-Icon |
 | Basics-Modus (Power/Restart/Sleep) | Mausrad auf der Idle-Pill |
 
@@ -143,8 +149,64 @@ Rechtsklick auf das Tray-Icon:
 
 - Diktat starten / stoppen
 - Polishing-Stil wählen
+- **URL transkribieren…** (YouTube, Vimeo, …)
 - Einstellungen
+- **Nach Updates suchen…** (GitHub Releases)
 - Beenden
+
+---
+
+## Windows-Installer (Build)
+
+Für Entwickler – erstellt ein lauffähiges Bundle und optional einen Setup-Installer:
+
+```powershell
+# Nur PyInstaller-Bundle → dist\SurepriseAi\
+powershell -ExecutionPolicy Bypass -File .\build\build.ps1
+
+# Zusätzlich Inno-Setup-Installer (Inno Setup 6 erforderlich)
+powershell -ExecutionPolicy Bypass -File .\build\build.ps1 -Installer
+```
+
+Ergebnis:
+- **Portable:** `dist\SurepriseAi\SurepriseAi.exe`
+- **Installer:** `dist\SurepriseAi-Setup.exe`
+
+Nach der Installation liegen Config und Historie unter `%APPDATA%\SurepriseAi\`. ML-Modelle gehören in den Ordner `models\` neben der EXE.
+
+### Auto-Update
+
+- Beim Start wird optional nach GitHub-Releases gesucht (`check_updates_on_startup`)
+- Tray → **Nach Updates suchen…**
+- Bei neuem Release wird der Installer nach `Downloads\` geladen
+
+Release auf GitHub anlegen mit Tag `v0.1.1` und Asset `SurepriseAi-Setup.exe`.
+
+---
+
+## CI/CD (GitHub Actions)
+
+| Workflow | Trigger | Aufgabe |
+|----------|---------|---------|
+| **CI** | Push/PR auf `main` | Smoke-Test + `py_compile` aller Module |
+| **Release** | Git-Tag `v*` (z. B. `v0.1.0`) | PyInstaller + Inno Setup → `SurepriseAi-Setup.exe` als Release-Asset |
+
+### Ersten Release veröffentlichen
+
+```bash
+# Version in src/version.py prüfen (z. B. 0.1.0)
+git tag v0.1.0
+git push origin v0.1.0
+```
+
+GitHub Actions baut automatisch den Installer und lädt `dist/SurepriseAi-Setup.exe` als Release-Asset hoch. Die Auto-Update-Funktion in der App erkennt neuere Tags über die GitHub-API.
+
+Lokal testen:
+
+```powershell
+python build/ci_smoke_test.py
+powershell -ExecutionPolicy Bypass -File .\build\build.ps1 -Installer
+```
 
 ---
 
@@ -189,6 +251,9 @@ SurepriseAi/
 ## Entwicklung
 
 ```powershell
+# CI-Smoke-Test (wie GitHub Actions)
+python build/ci_smoke_test.py
+
 # Syntax prüfen
 .\venv\Scripts\python.exe -m py_compile src/app.py
 
