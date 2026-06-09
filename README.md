@@ -46,7 +46,7 @@
 ### 1. Repository klonen
 
 ```bash
-git clone https://github.com/DEIN-USER/SurepriseAi.git
+git clone https://github.com/Icarus-B4/SurepriseAi.git
 cd SurepriseAi
 ```
 
