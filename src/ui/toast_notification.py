@@ -11,15 +11,11 @@ from PyQt6.QtWidgets import QWidget, QLabel, QVBoxLayout
 from PyQt6.QtCore import Qt, QTimer, QPropertyAnimation
 from src.ui.design_tokens import Colors, Typography
 
-# Satzgrenzen für Live (final) vs. laufender Partial-Text
 _SENTENCE_SPLIT = re.compile(r"(?<=[.!?…])\s+")
 
 
 class ToastNotification(QWidget):
-    """
-    Schwebendes, rahmenloses Toast-Fenster.
-    Unterstützt Standard-Pills (Erfolg, Fehler) und wachsende Live-Transkripte.
-    """
+    """Schwebendes Toast-Fenster für Status, Fehler und Live-Transkripte."""
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -30,7 +26,7 @@ class ToastNotification(QWidget):
             Qt.WindowType.WindowDoesNotAcceptFocus
         )
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
-        self.setFixedWidth(400)
+        self.setFixedWidth(420)
 
         self.fade_animation = QPropertyAnimation(self, b"windowOpacity")
         self.hide_timer = QTimer(self)
@@ -49,14 +45,12 @@ class ToastNotification(QWidget):
         layout.setContentsMargins(16, 10, 16, 10)
         layout.setSpacing(4)
 
-        # Titel für Live-Modus
         self.title_label = QLabel("", self)
         self.title_label.setFont(Typography.get_font(Typography.TINY, bold=True))
         self.title_label.setStyleSheet(f"color: {Colors.TEXT_SECONDARY_HEX};")
         self.title_label.hide()
         layout.addWidget(self.title_label)
 
-        # Haupttext
         self.label = QLabel("", self)
         self.label.setFont(Typography.get_font(Typography.SMALL))
         self.label.setWordWrap(True)
@@ -71,13 +65,10 @@ class ToastNotification(QWidget):
         self._apply_style(is_live=False)
 
     def _apply_style(self, is_live: bool, text_color: str = Colors.TEXT_PRIMARY_HEX):
-        """Wendet QSS-Styling an. Live-Transkripte erhalten ein anderes Layout."""
         self._is_live = is_live
-        
-        # Kreisrunde Pille für kurze Toasts, abgerundeter Kasten für Live-Transkript
         radius = 12 if is_live else 20
         padding_v = 12 if is_live else 8
-        bg_color = "rgba(13, 13, 15, 0.95)" # Edles, dunkles Schwarz
+        bg_color = "rgba(13, 13, 15, 0.95)"
 
         self.container.setStyleSheet(f"""
             QWidget#ToastContainer {{
@@ -93,8 +84,15 @@ class ToastNotification(QWidget):
             }}
         """)
 
-    def show_message(self, message: str, color_hex: str = Colors.TEXT_PRIMARY_HEX, duration_ms: int = 2000):
-        """Zeigt eine Standard-Benachrichtigung an (z. B. Kopiert, Fehler)."""
+    def show_message(
+        self,
+        message: str,
+        color_hex: str = Colors.TEXT_PRIMARY_HEX,
+        duration_ms: int = 2000,
+        *,
+        sticky: bool = False,
+    ):
+        """Zeigt eine Benachrichtigung. sticky=True hält den Toast bis zum nächsten Aufruf."""
         self.hide_timer.stop()
         self._is_live = False
         self._live_plain = ""
@@ -110,10 +108,10 @@ class ToastNotification(QWidget):
         self.fade_animation.setEndValue(1.0)
         self.fade_animation.start()
 
-        self.hide_timer.start(duration_ms)
+        if not sticky:
+            self.hide_timer.start(duration_ms)
 
     def show_live_transcript(self, text: str):
-        """Zeigt Live-Text: abgeschlossene Sätze normal, Rest grau/kursiv."""
         self.hide_timer.stop()
         self.fade_animation.stop()
         self._is_live = True
@@ -130,7 +128,6 @@ class ToastNotification(QWidget):
         self.raise_()
 
     def settle_live_transcript(self, text: str | None = None) -> None:
-        """Markiert den Live-Text als „eingefroren“ vor dem Ausblenden."""
         if not self._is_live:
             return
         final = (text or self._live_plain).strip()
@@ -140,7 +137,6 @@ class ToastNotification(QWidget):
         self._position_and_show()
 
     def _render_live_html(self, text: str, settled: bool) -> None:
-        """Baut Rich-Text: final = weiß normal, partial = grau kursiv."""
         if not text or text == "Höre zu…":
             self.label.setText(
                 f'<span style="color:{Colors.TEXT_SECONDARY_HEX};'
@@ -183,25 +179,34 @@ class ToastNotification(QWidget):
         self.label.setText(" ".join(chunks) if chunks else html.escape(text))
 
     def end_live_mode(self):
-        """Beendet den Live-Modus und blendet das Fenster aus."""
         self._is_live = False
         self.fade_out()
 
-    def show_success(self, message: str):
-        self.show_message(message, Colors.SUCCESS_GREEN_HEX, 2000)
+    def show_success(self, message: str, duration_ms: int = 3500):
+        self.show_message(message, Colors.SUCCESS_GREEN_HEX, duration_ms)
 
-    def show_error(self, message: str):
-        self.show_message(message, Colors.RECORDING_RED_HEX, 3000)
+    def show_error(self, message: str, duration_ms: int = 6000):
+        self.show_message(message, Colors.RECORDING_RED_HEX, duration_ms)
+
+    def show_update(self, message: str):
+        """Länger sichtbarer Toast für Update-Hinweise."""
+        self.show_message(message, Colors.SUCCESS_GREEN_HEX, duration_ms=10_000, sticky=True)
 
     def fade_out(self):
-        """Blendet das Toast-Fenster sanft aus."""
         if self._is_live:
-            return  # Während Live-Transkription nicht ausblenden
+            return
         self.fade_animation.stop()
         self.fade_animation.setDuration(200)
         self.fade_animation.setStartValue(self.windowOpacity())
         self.fade_animation.setEndValue(0.0)
-        self.fade_animation.finished.connect(self.hide)
+        try:
+            self.fade_animation.finished.disconnect(self.hide)
+        except TypeError:
+            pass
+        self.fade_animation.finished.connect(
+            self.hide,
+            Qt.ConnectionType.SingleShotConnection,
+        )
         self.fade_animation.start()
 
     def _position_and_show(self):
@@ -210,6 +215,7 @@ class ToastNotification(QWidget):
         if screen:
             screen_geom = screen.geometry()
             x = int(screen_geom.left() + (screen_geom.width() - self.width()) / 2.0)
-            y = int(screen_geom.top() + 75)  # Direkt unter der Dynamic Island
+            y = int(screen_geom.top() + 75)
             self.move(x, y)
         self.show()
+        self.raise_()

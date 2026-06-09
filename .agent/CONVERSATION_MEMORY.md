@@ -575,3 +575,17 @@ Settings-Menü Layout/Ecken kaputt; Update v0.1.2→v0.1.3 funktioniert nicht.
 - **Settings:** 440×680, Mask-Radius 16px, undurchsichtiger Glas-Hintergrund, getrenntes QLineEdit-QSS, Shimmer bei Settings aus.
 - **Update:** `ssl_bootstrap.py`, certifi in PyInstaller-datas, Tray „Release manuell laden“, Browser-Fallback bei API-Fehler.
 
+## Eintrag 30: 2026-06-10 – Update-Toast & Absturz v0.1.5
+
+### Problem
+v0.1.3: Update-Check zeigt nichts / Toast zu kurz / App stürzt ab.
+
+### Ursachen
+1. Toasts überschrieben sich sofort („verfügbar“ → „Lade…“ in <1s).
+2. `fade_animation.finished.connect(hide)` ohne SingleShot → Qt-Crash.
+3. Kein Windows-Tray-Ballon als Fallback.
+
+### Fix (v0.1.5)
+- Toast: `show_update()` sticky 10s, `SingleShotConnection` für fade_out.
+- Update: Tray `showMessage` + verzögerter Download (2,5s), try/except, `update.log`.
+

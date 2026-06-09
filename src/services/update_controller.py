@@ -5,17 +5,21 @@ UI-Anbindung für Update-Prüfung und Installer-Download.
 
 import os
 import threading
+import traceback
 import webbrowser
 from typing import Optional
 
 from PyQt6.QtCore import QObject, Qt, QTimer, pyqtSignal
+from PyQt6.QtWidgets import QSystemTrayIcon
 
 from src.services.config_service import config
 from src.services.update_service import UpdateCheckResult, UpdateInfo, UpdateService
 from src.services.update_downloader import download_release_asset
+from src.utils.app_paths import user_data_dir
 from src.version import GITHUB_REPO, __version__
 
 RELEASES_PAGE = f"https://github.com/{GITHUB_REPO}/releases/latest"
+_TRAY_MS = 12_000
 
 
 class UpdateSignals(QObject):
@@ -37,11 +41,17 @@ class UpdateSignals(QObject):
         )
 
     def _deliver_result(self, result: UpdateCheckResult, silent: bool) -> None:
-        """Slot auf QObject – garantiert im Qt-Hauptthread."""
-        self._controller._on_result(result, silent)
+        try:
+            self._controller._on_result(result, silent)
+        except Exception:
+            self._controller._log(f"UI-Fehler bei Update-Ergebnis:\n{traceback.format_exc()}")
+            self._controller._checking = False
 
     def _deliver_download(self, path: object, info: UpdateInfo) -> None:
-        self._controller._on_download_done(path, info)
+        try:
+            self._controller._on_download_done(path, info)
+        except Exception:
+            self._controller._log(f"UI-Fehler nach Download:\n{traceback.format_exc()}")
 
 
 class UpdateController:
@@ -51,11 +61,11 @@ class UpdateController:
         self.app = app
         self.service = UpdateService()
         self._checking = False
+        self._pending_info: Optional[UpdateInfo] = None
         qt_app = app.app if hasattr(app, "app") else None
         self._signals = UpdateSignals(self, parent=qt_app)
 
     def schedule_startup_check(self) -> None:
-        """Prüft nach Start im Hintergrund auf Updates."""
         if not config.get_bool("check_updates_on_startup", True):
             return
         QTimer.singleShot(12_000, lambda: self.check_now(silent=True))
@@ -65,80 +75,161 @@ class UpdateController:
             return
         self._checking = True
         if not silent:
-            self.app.toast.show_message("Suche nach Updates…", duration_ms=1500)
+            self._notify(
+                "Update-Prüfung",
+                "Suche nach Updates…",
+                toast_ms=4000,
+                icon=QSystemTrayIcon.MessageIcon.Information,
+            )
         self.service.check_async(
             lambda result, is_silent=silent: self._signals.result_ready.emit(result, is_silent)
         )
 
     def _on_result(self, result: UpdateCheckResult, silent: bool) -> None:
-        """Wird über UpdateSignals im Hauptthread aufgerufen."""
         self._checking = False
 
         if result.error:
-            print(f"[Update] Fehler (v{__version__}): {result.error}")
+            self._log(f"Fehler (v{__version__}): {result.error}")
             if not silent:
-                self.app.toast.show_error(
-                    f"Update-Prüfung fehlgeschlagen: {result.error}"
+                self._notify(
+                    "Update fehlgeschlagen",
+                    f"{result.error}\nRelease-Seite wird geöffnet…",
+                    toast_ms=8000,
+                    icon=QSystemTrayIcon.MessageIcon.Warning,
+                    error=True,
                 )
-                QTimer.singleShot(400, self._open_releases_fallback)
+                QTimer.singleShot(600, self._open_releases_fallback)
             return
 
         if result.info is None:
             if not silent:
-                self.app.toast.show_message(
+                self._notify(
+                    "SurepriseAi",
                     f"Bereits aktuell (v{__version__})",
-                    duration_ms=2200,
+                    toast_ms=5000,
+                    icon=QSystemTrayIcon.MessageIcon.Information,
                 )
             return
 
         info = result.info
-        self.app.toast.show_success(f"Update v{info.version} verfügbar!")
+        self._log(f"Update gefunden: v{info.version}")
+        self._pending_info = info
+        self._notify(
+            "SurepriseAi Update",
+            f"Version {info.version} verfügbar!\nDownload startet gleich…",
+            toast_ms=10_000,
+            icon=QSystemTrayIcon.MessageIcon.Information,
+            update=True,
+        )
+
         if info.download_url:
-            self.app.toast.show_message("Lade Installer…", duration_ms=3000)
-            threading.Thread(
-                target=self._download_worker,
-                args=(info,),
-                daemon=True,
-            ).start()
+            QTimer.singleShot(2500, self._start_pending_download)
         elif info.page_url:
             webbrowser.open(info.page_url)
 
+    def _start_pending_download(self) -> None:
+        info = self._pending_info
+        if not info or not info.download_url:
+            return
+        self._notify(
+            "SurepriseAi Update",
+            f"Lade v{info.version} herunter (~140 MB)…",
+            toast_ms=10_000,
+            icon=QSystemTrayIcon.MessageIcon.Information,
+            update=True,
+        )
+        threading.Thread(
+            target=self._download_worker,
+            args=(info,),
+            daemon=True,
+        ).start()
+
     def _download_worker(self, info: UpdateInfo) -> None:
-        name = info.download_url.rsplit("/", 1)[-1] if info.download_url else ""
-        path = download_release_asset(info.download_url or "", name)
-        self._signals.download_ready.emit(path, info)
+        try:
+            name = info.download_url.rsplit("/", 1)[-1] if info.download_url else ""
+            path = download_release_asset(info.download_url or "", name)
+            self._log(f"Download: {path}")
+            self._signals.download_ready.emit(path, info)
+        except Exception:
+            self._log(f"Download-Fehler:\n{traceback.format_exc()}")
+            self._signals.download_ready.emit(None, info)
 
     def _on_download_done(self, path: Optional[object], info: UpdateInfo) -> None:
-        """Download abgeschlossen – im Hauptthread via UpdateSignals."""
+        self._pending_info = None
         if path and hasattr(path, "suffix") and path.suffix.lower() == ".exe":
-            self.app.toast.show_success(
-                f"Update v{info.version} heruntergeladen – Setup startet…"
+            self._notify(
+                "SurepriseAi Update",
+                f"v{info.version} heruntergeladen.\nSetup startet – App beendet sich…",
+                toast_ms=10_000,
+                icon=QSystemTrayIcon.MessageIcon.Information,
+                update=True,
             )
             self._launch_installer(path)
         elif path:
             os.startfile(path.parent)
         elif info.page_url:
             webbrowser.open(info.page_url)
-            self.app.toast.show_error("Download fehlgeschlagen – Release-Seite geöffnet.")
+            self._notify(
+                "Update",
+                "Download fehlgeschlagen – Release-Seite geöffnet.",
+                toast_ms=8000,
+                icon=QSystemTrayIcon.MessageIcon.Warning,
+                error=True,
+            )
         else:
-            self.app.toast.show_error("Update-Download fehlgeschlagen.")
+            self._notify(
+                "Update",
+                "Download fehlgeschlagen.",
+                toast_ms=8000,
+                icon=QSystemTrayIcon.MessageIcon.Critical,
+                error=True,
+            )
+            QTimer.singleShot(600, self._open_releases_fallback)
 
     def _launch_installer(self, path) -> None:
-        """Startet Setup-EXE nach Download (App beenden)."""
-        self.app.toast.show_message(
-            "Installer wird gestartet – SurepriseAi beendet sich…",
-            duration_ms=2500,
-        )
-        QTimer.singleShot(800, self.app.controller.shutdown)
-        QTimer.singleShot(1200, lambda: os.startfile(str(path)))
+        QTimer.singleShot(1000, self.app.controller.shutdown)
+        QTimer.singleShot(1600, lambda: os.startfile(str(path)))
 
     def open_releases_page(self) -> None:
-        """Öffnet die GitHub-Release-Seite (Fallback bei API-Fehlern)."""
         self._open_releases_fallback()
 
     def _open_releases_fallback(self) -> None:
         webbrowser.open(RELEASES_PAGE)
-        self.app.toast.show_message(
-            "Release-Seite im Browser geöffnet – Setup manuell laden.",
-            duration_ms=3500,
+        self._notify(
+            "SurepriseAi",
+            "Release-Seite im Browser geöffnet.",
+            toast_ms=6000,
+            icon=QSystemTrayIcon.MessageIcon.Information,
         )
+
+    def _notify(
+        self,
+        title: str,
+        body: str,
+        toast_ms: int = 5000,
+        icon: QSystemTrayIcon.MessageIcon = QSystemTrayIcon.MessageIcon.Information,
+        *,
+        error: bool = False,
+        update: bool = False,
+    ) -> None:
+        """Tray-Ballon (Windows) + Toast – doppelte Absicherung."""
+        try:
+            self.app.tray.showMessage(title, body, icon, _TRAY_MS)
+        except Exception:
+            pass
+        if update:
+            self.app.toast.show_update(body)
+        elif error:
+            self.app.toast.show_error(body, duration_ms=toast_ms)
+        else:
+            self.app.toast.show_message(body, duration_ms=toast_ms)
+
+    def _log(self, message: str) -> None:
+        print(f"[Update] {message}")
+        try:
+            log_dir = user_data_dir()
+            log_dir.mkdir(parents=True, exist_ok=True)
+            with open(log_dir / "update.log", "a", encoding="utf-8") as fh:
+                fh.write(f"{message}\n")
+        except OSError:
+            pass
