@@ -8,6 +8,7 @@ from PyQt6.QtWidgets import QWidget, QVBoxLayout
 from PyQt6.QtCore import Qt, QPropertyAnimation, QEasingCurve, pyqtProperty, QPoint, QTimer
 from src.ui.design_tokens import IslandSize, Colors, AnimationTokens
 from src.ui.island_pill import IslandPill
+from src.ui.island_shimmer_indicator import IslandShimmerIndicator
 from src.ui.island_states import IslandState
 from src.ui.settings_panel import SettingsWindow
 from src.ui.quick_control_button import QuickControlButton
@@ -31,6 +32,7 @@ class DynamicIslandWindow(QWidget):
         self.file_dropped_callback = None
         self.url_dropped_callback = None
         self._user_moved = False  # True sobald der Nutzer das Fenster per Drag verschoben hat
+        self._idle_revealed = True  # Sentinel: erster Aufruf erzwingt kollabierte Shimmer-Bar
         
         self._init_ui()
         self._setup_position()
@@ -44,11 +46,12 @@ class DynamicIslandWindow(QWidget):
         
         self.opacity_anim = QPropertyAnimation(self, b"windowOpacity")
         self.opacity_anim.setDuration(AnimationTokens.FAST)
-        self.setWindowOpacity(0.0) # Start unsichtbar im Idle
-        self.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents, True)
+        self.setWindowOpacity(1.0)
         
         # State-Machine Listener registrieren
         self.state_machine.add_listener(self._on_state_changed)
+        if self.state_machine.is_idle or self.state_machine.is_basics:
+            self._set_idle_revealed(False)
 
     def _init_quick_controls(self):
         self.btn_power = QuickControlButton("⏻", Colors.RECORDING_RED_HEX, self)
@@ -71,6 +74,7 @@ class DynamicIslandWindow(QWidget):
     def _check_hover(self):
         # Nur relevant im IDLE- und BASICS-Zustand (ansonsten immer sichtbar)
         if not (self.state_machine.is_idle or self.state_machine.is_basics):
+            self._exit_presence_mode()
             if self.windowOpacity() < 1.0:
                 self._fade_to(1.0)
             return
@@ -81,29 +85,52 @@ class DynamicIslandWindow(QWidget):
         screen_rect = QApplication.primaryScreen().geometry()
         center_x = screen_rect.width() / 2
         
-        # Hover-Zone: 250px links/rechts von der Mitte (etwas breiter wegen Quick Controls), obere 120px
+        # Hover-Zone: 250px links/rechts von der Mitte, obere 120px
         is_in_zone = (center_x - 250 <= pos.x() <= center_x + 250) and (pos.y() <= 120)
         
-        if self.windowOpacity() > 0:
-            if self.geometry().contains(pos):
-                is_in_zone = True
+        if self.geometry().contains(pos):
+            is_in_zone = True
 
-        if is_in_zone:
-            self.is_hovered = True
-            self._fade_to(1.0)
-        else:
-            self.is_hovered = False
-            self._fade_to(0.0)
+        self.is_hovered = is_in_zone
+        self._set_idle_revealed(is_in_zone)
 
     def _fade_to(self, target_opacity: float):
-        if self.windowOpacity() == target_opacity: return
+        if self.windowOpacity() == target_opacity:
+            return
         self.opacity_anim.stop()
         self.opacity_anim.setStartValue(self.windowOpacity())
         self.opacity_anim.setEndValue(target_opacity)
         self.opacity_anim.start()
-        
-        # Klick-Durchlässigkeit anpassen
-        self.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents, target_opacity == 0.0)
+
+    def _position_presence_bar(self) -> None:
+        x = (self.width() - self.presence_bar.width()) // 2
+        self.presence_bar.move(x, IslandSize.PRESENCE_TOP_Y)
+
+    def _set_idle_revealed(self, revealed: bool) -> None:
+        """Wechselt zwischen Shimmer-Bar (kollabiert) und voller Idle-Pill."""
+        if revealed == self._idle_revealed:
+            return
+        self._idle_revealed = revealed
+        if revealed:
+            self.presence_bar.stop()
+            self.presence_bar.hide()
+            self.pill.show()
+            self._fade_to(1.0)
+            self.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents, False)
+        else:
+            self.pill.hide()
+            self._position_presence_bar()
+            self.presence_bar.start()
+            self.setWindowOpacity(1.0)
+            self.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents, False)
+
+    def _exit_presence_mode(self) -> None:
+        """Blendet Shimmer-Bar aus, zeigt die Pill (aktive Zustände)."""
+        self.presence_bar.stop()
+        self.presence_bar.hide()
+        self.pill.show()
+        self._idle_revealed = True
+        self.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents, False)
 
     def _init_ui(self):
         self.layout = QVBoxLayout(self)
@@ -113,6 +140,10 @@ class DynamicIslandWindow(QWidget):
         self.pill = IslandPill(self)
         self.pill.setFixedSize(IslandSize.IDLE_WIDTH, IslandSize.IDLE_HEIGHT)
         self.layout.addWidget(self.pill)
+
+        self.presence_bar = IslandShimmerIndicator(self)
+        self.presence_bar.hide()
+        self._position_presence_bar()
 
     def mark_user_positioned(self) -> None:
         """Merkt sich, dass der Nutzer die Position manuell gesetzt hat."""
@@ -137,7 +168,12 @@ class DynamicIslandWindow(QWidget):
 
     def showEvent(self, event):
         super().showEvent(event)
+        self._position_presence_bar()
         # Kein _setup_position() hier – show() würde sonst nach jedem Klick zurückspringen
+
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        self._position_presence_bar()
 
     # ── Animierbare Properties ──
 
@@ -185,13 +221,16 @@ class DynamicIslandWindow(QWidget):
             self.animate_to(IslandSize.IDLE_WIDTH, IslandSize.IDLE_HEIGHT)
             self._hide_basics_buttons()
             self._set_focus_accepting(False)
+            self._set_idle_revealed(self.is_hovered)
         elif new_state == IslandState.RECORDING:
+            self._exit_presence_mode()
             self.pill.start_recording()
             self.pill.set_corner_radius(IslandSize.RECORDING_HEIGHT // 2)
             self.animate_to(IslandSize.RECORDING_WIDTH, IslandSize.RECORDING_HEIGHT)
             self._hide_basics_buttons()
             self._set_focus_accepting(False)
         elif new_state == IslandState.PROCESSING:
+            self._exit_presence_mode()
             if prev_state == IslandState.RECORDING:
                 self.pill.play_settle_pulse()
             self.pill.start_processing()
@@ -200,12 +239,14 @@ class DynamicIslandWindow(QWidget):
             self._hide_basics_buttons()
             self._set_focus_accepting(False)
         elif new_state == IslandState.SUCCESS:
+            self._exit_presence_mode()
             self.pill.stop_processing()
             self.pill.set_corner_radius(IslandSize.SUCCESS_HEIGHT // 2)
             self.animate_to(IslandSize.SUCCESS_WIDTH, IslandSize.SUCCESS_HEIGHT)
             self._hide_basics_buttons()
             self._set_focus_accepting(False)
         elif new_state == IslandState.EXPANDED:
+            self._exit_presence_mode()
             self.pill.set_corner_radius(IslandSize.EXPANDED_RADIUS)
             self._set_focus_accepting(True)
             self.animate_to(IslandSize.EXPANDED_WIDTH, IslandSize.EXPANDED_HEIGHT)
@@ -216,6 +257,7 @@ class DynamicIslandWindow(QWidget):
             self.animate_to(IslandSize.IDLE_WIDTH, IslandSize.IDLE_HEIGHT)
             self._show_basics_buttons()
             self._set_focus_accepting(False)
+            self._set_idle_revealed(self.is_hovered)
 
     def _set_focus_accepting(self, accept: bool):
         flags = self.windowFlags()
@@ -280,8 +322,17 @@ class DynamicIslandWindow(QWidget):
     # ── Mouse Events ──
 
     def mousePressEvent(self, event):
+        point = event.position().toPoint()
+        if self.presence_bar.isVisible() and self.presence_bar.geometry().contains(point):
+            if event.button() == Qt.MouseButton.LeftButton:
+                self._set_idle_revealed(True)
+                if self.state_machine.is_idle or self.state_machine.is_success:
+                    self.state_machine.transition_by_name("expanded")
+            event.accept()
+            return
+
         pill_rect = self.pill.geometry()
-        if pill_rect.contains(event.position().toPoint()):
+        if pill_rect.contains(point):
             if event.button() == Qt.MouseButton.RightButton:
                 # Stilwahl nur über Direkt-Chips im EXPANDED-Modus
                 if self.state_machine.is_idle or self.state_machine.is_success:

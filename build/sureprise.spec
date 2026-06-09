@@ -34,6 +34,7 @@ a = Analysis(
         "PIL",
         "PIL.ImageGrab",
         "yt_dlp",
+        "certifi",
     ],
     hookspath=[],
     hooksconfig={},

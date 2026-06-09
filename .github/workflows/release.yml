@@ -56,13 +56,13 @@ jobs:
             **Windows-Installer** – Doppelklick auf `SurepriseAi-Setup.exe`.
 
             ### Neu
-            - Auto-Update: Download-Feedback und zuverlässiger Setup-Start
-            - NSIS-Installer mit Erststart-Dialog
+            - Auto-Update: Thread-sicherer Tray-Check, API-Fallback, SSL/certifi
+            - Fehlermeldung statt stiller „Bereits aktuell“-Meldung bei API-Problemen
 
-            ### Update testen (von v0.1.1)
-            1. v0.1.1 installiert lassen (oder ältere Version)
+            ### Update testen
+            1. Ältere Version installiert lassen (z. B. v0.1.1)
             2. Tray → **Nach Updates suchen…**
-            3. Toast „Update v0.1.2 verfügbar!“ → Download nach `%USERPROFILE%\Downloads`
+            3. Toast „Update verfügbar!“ → Download nach `%USERPROFILE%\Downloads`
             4. Setup startet automatisch
 
             Vollständiges Changelog: https://github.com/Icarus-B4/SurepriseAi/compare/v0.1.1...${{ github.ref_name }}

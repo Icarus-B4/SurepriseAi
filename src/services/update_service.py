@@ -5,6 +5,7 @@ Prüft GitHub-Releases auf neuere SurepriseAi-Versionen.
 
 import json
 import re
+import ssl
 import threading
 import urllib.error
 import urllib.request
@@ -22,6 +23,14 @@ class UpdateInfo:
     notes: str
 
 
+@dataclass
+class UpdateCheckResult:
+    """Ergebnis einer Update-Prüfung (Update, aktuell oder Fehler)."""
+
+    info: Optional[UpdateInfo] = None
+    error: Optional[str] = None
+
+
 def parse_version(version: str) -> tuple[int, ...]:
     """Wandelt 'v0.1.0' in (0, 1, 0) um."""
     nums = re.findall(r"\d+", version.lstrip("vV"))
@@ -30,6 +39,41 @@ def parse_version(version: str) -> tuple[int, ...]:
 
 def is_newer(remote: str, local: str = __version__) -> bool:
     return parse_version(remote) > parse_version(local)
+
+
+def _ssl_context() -> ssl.SSLContext:
+    """SSL-Kontext inkl. certifi für PyInstaller-Bundles."""
+    try:
+        import certifi
+
+        return ssl.create_default_context(cafile=certifi.where())
+    except ImportError:
+        return ssl.create_default_context()
+
+
+def _github_get(url: str, timeout: int = 12) -> dict:
+    req = urllib.request.Request(
+        url,
+        headers={
+            "Accept": "application/vnd.github+json",
+            "User-Agent": APP_UA(),
+        },
+    )
+    with urllib.request.urlopen(req, timeout=timeout, context=_ssl_context()) as resp:
+        return json.loads(resp.read().decode("utf-8"))
+
+
+def _release_from_payload(data: dict) -> Optional[UpdateInfo]:
+    tag = str(data.get("tag_name", "")).strip()
+    if not tag or not is_newer(tag):
+        return None
+    download = _pick_installer_asset(data.get("assets", []))
+    return UpdateInfo(
+        version=tag.lstrip("vV"),
+        page_url=str(data.get("html_url", "")),
+        download_url=download,
+        notes=str(data.get("body", "")).strip()[:500],
+    )
 
 
 class UpdateService:
@@ -42,38 +86,48 @@ class UpdateService:
     def latest(self) -> Optional[UpdateInfo]:
         return self._latest
 
-    def check_async(self, on_done: Callable[[Optional[UpdateInfo]], None]) -> None:
+    def check_async(self, on_done: Callable[[UpdateCheckResult], None]) -> None:
         threading.Thread(target=self._worker, args=(on_done,), daemon=True).start()
 
-    def _worker(self, on_done: Callable[[Optional[UpdateInfo]], None]) -> None:
-        info = self._fetch_latest()
-        self._latest = info
-        on_done(info)
+    def _worker(self, on_done: Callable[[UpdateCheckResult], None]) -> None:
+        result = self._fetch_latest()
+        if result.info:
+            self._latest = result.info
+        on_done(result)
 
-    def _fetch_latest(self) -> Optional[UpdateInfo]:
-        url = f"https://api.github.com/repos/{GITHUB_REPO}/releases/latest"
+    def _fetch_latest(self) -> UpdateCheckResult:
+        base = f"https://api.github.com/repos/{GITHUB_REPO}/releases"
         try:
-            req = urllib.request.Request(
-                url,
-                headers={"Accept": "application/vnd.github+json", "User-Agent": APP_UA()},
-            )
-            with urllib.request.urlopen(req, timeout=8) as resp:
-                data = json.loads(resp.read().decode("utf-8"))
-        except (urllib.error.URLError, TimeoutError, json.JSONDecodeError) as exc:
-            print(f"[Update] Prüfung fehlgeschlagen: {exc}")
-            return None
+            data = _github_get(f"{base}/latest")
+            info = _release_from_payload(data)
+            return UpdateCheckResult(info=info)
+        except urllib.error.HTTPError as exc:
+            if exc.code != 404:
+                msg = f"GitHub API HTTP {exc.code}"
+                print(f"[Update] Prüfung fehlgeschlagen: {msg}")
+                return UpdateCheckResult(error=msg)
+            print("[Update] /releases/latest → 404, Fallback auf Release-Liste")
+        except (urllib.error.URLError, TimeoutError, json.JSONDecodeError, ssl.SSLError) as exc:
+            msg = str(exc)
+            print(f"[Update] Prüfung fehlgeschlagen: {msg}")
+            return UpdateCheckResult(error=msg)
 
-        tag = str(data.get("tag_name", "")).strip()
-        if not tag or not is_newer(tag):
-            return None
-
-        download = _pick_installer_asset(data.get("assets", []))
-        return UpdateInfo(
-            version=tag.lstrip("vV"),
-            page_url=str(data.get("html_url", "")),
-            download_url=download,
-            notes=str(data.get("body", "")).strip()[:500],
-        )
+        try:
+            releases = _github_get(f"{base}?per_page=8")
+            if not isinstance(releases, list):
+                return UpdateCheckResult(error="Ungültige GitHub-Antwort")
+            for entry in releases:
+                if entry.get("draft") or entry.get("prerelease"):
+                    continue
+                info = _release_from_payload(entry)
+                if info:
+                    return UpdateCheckResult(info=info)
+            return UpdateCheckResult()
+        except (urllib.error.URLError, urllib.error.HTTPError, TimeoutError,
+                json.JSONDecodeError, ssl.SSLError) as exc:
+            msg = str(exc)
+            print(f"[Update] Fallback fehlgeschlagen: {msg}")
+            return UpdateCheckResult(error=msg)
 
 
 def APP_UA() -> str:

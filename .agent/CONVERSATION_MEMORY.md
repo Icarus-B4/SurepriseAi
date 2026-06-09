@@ -526,3 +526,39 @@ Hermes-Style NSIS-Setup.exe für Endnutzer; Erststart-Onboarding nach Installati
 ### QS-Ergebnisse
 - NSIS-Build lokal: `dist/SurepriseAi-Setup.exe` (~139 MB) ✅
 
+## Eintrag 27: 2026-06-10 – Auto-Update Crash & stille Fehler behoben
+
+### Aufgabe
+Auto-Update von v0.1.1 → v0.1.2: kein Toast, App-Absturz beim Tray-Check.
+
+### Ursachen
+1. **Threading:** UI-Callbacks (`toast`) liefen teils außerhalb des Qt-Hauptthreads → `QObject::killTimer`-Crash.
+2. **API-Fehler = „aktuell“:** HTTP 404/SSL-Fehler lieferten `None` → irreführende Meldung oder Stille.
+3. **PyInstaller-SSL:** Kein `certifi` im Bundle.
+
+### Implementiertes
+- **`update_service.py`:** `UpdateCheckResult` (info/error), GitHub-API-Fallback bei 404, `certifi`-SSL.
+- **`update_controller.py`:** `UpdateSignals` mit `QueuedConnection`-Slots auf QObject, Fehler-Toast bei manuellem Check.
+- **`update_downloader.py`:** SSL-Kontext + User-Agent.
+- **`requirements.txt` / `sureprise.spec`:** `certifi` ergänzt.
+- Version **0.1.3**.
+
+### QS-Ergebnisse
+- Smoke-Test inkl. Live-GitHub-Check: ✅ PASS
+- Simulierter Check als v0.1.1 findet v0.1.2: ✅
+
+## Eintrag 28: 2026-06-10 – Dynamic Island Presence-Shimmer
+
+### Aufgabe
+Im Idle-Zustand fehlte ein sichtbarer Indikator, dass die Dynamic Island aktiv ist.
+
+### Implementiertes
+- **`island_shimmer_indicator.py`:** Schmale Kapsel (156×7 px) mit wanderndem Indigo-Shimmer.
+- **`dynamic_island.py`:** Idle/Basics zeigen immer Shimmer-Bar; Hover/Klick blendet volle Pill ein.
+- **`design_tokens.py`:** `PRESENCE_WIDTH/HEIGHT/TOP_Y`.
+
+### Verhalten
+- Kollabiert: animierte Bar oben mittig (immer sichtbar).
+- Hover oben mittig oder Klick auf Bar → volle Island-Pill.
+- Aufnahme/Verarbeitung/etc.: Shimmer aus, Pill wie bisher.
+

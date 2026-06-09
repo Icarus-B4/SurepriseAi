@@ -127,6 +127,11 @@ class IslandSize:
     IDLE_WIDTH  = 290
     IDLE_HEIGHT = 44
 
+    # Presence-Bar (kollabierte Dynamic Island, immer sichtbar im Idle)
+    PRESENCE_WIDTH  = 118
+    PRESENCE_HEIGHT = 11
+    PRESENCE_TOP_Y  = 8
+
     # RECORDING: Expandierte Pill mit Waveform
     RECORDING_WIDTH  = 360
     RECORDING_HEIGHT = 56

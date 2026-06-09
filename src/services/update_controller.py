@@ -8,10 +8,10 @@ import threading
 import webbrowser
 from typing import Optional
 
-from PyQt6.QtCore import QObject, QTimer, pyqtSignal
+from PyQt6.QtCore import QObject, Qt, QTimer, pyqtSignal
 
 from src.services.config_service import config
-from src.services.update_service import UpdateInfo, UpdateService
+from src.services.update_service import UpdateCheckResult, UpdateInfo, UpdateService
 from src.services.update_downloader import download_release_asset
 from src.version import __version__
 
@@ -20,7 +20,26 @@ class UpdateSignals(QObject):
     """Thread-sichere Signale für Update-Ergebnisse (Worker → UI-Thread)."""
 
     result_ready = pyqtSignal(object, bool)
-    download_ready = pyqtSignal(object, object)  # Pfad | None, UpdateInfo
+    download_ready = pyqtSignal(object, object)
+
+    def __init__(self, controller: "UpdateController", parent: Optional[QObject] = None) -> None:
+        super().__init__(parent)
+        self._controller = controller
+        self.result_ready.connect(
+            self._deliver_result,
+            Qt.ConnectionType.QueuedConnection,
+        )
+        self.download_ready.connect(
+            self._deliver_download,
+            Qt.ConnectionType.QueuedConnection,
+        )
+
+    def _deliver_result(self, result: UpdateCheckResult, silent: bool) -> None:
+        """Slot auf QObject – garantiert im Qt-Hauptthread."""
+        self._controller._on_result(result, silent)
+
+    def _deliver_download(self, path: object, info: UpdateInfo) -> None:
+        self._controller._on_download_done(path, info)
 
 
 class UpdateController:
@@ -30,9 +49,8 @@ class UpdateController:
         self.app = app
         self.service = UpdateService()
         self._checking = False
-        self._signals = UpdateSignals()
-        self._signals.result_ready.connect(self._on_result)
-        self._signals.download_ready.connect(self._on_download_done)
+        qt_app = app.app if hasattr(app, "app") else None
+        self._signals = UpdateSignals(self, parent=qt_app)
 
     def schedule_startup_check(self) -> None:
         """Prüft nach Start im Hintergrund auf Updates."""
@@ -47,13 +65,21 @@ class UpdateController:
         if not silent:
             self.app.toast.show_message("Suche nach Updates…", duration_ms=1500)
         self.service.check_async(
-            lambda info, is_silent=silent: self._signals.result_ready.emit(info, is_silent)
+            lambda result, is_silent=silent: self._signals.result_ready.emit(result, is_silent)
         )
 
-    def _on_result(self, info: Optional[UpdateInfo], silent: bool) -> None:
-        """Läuft garantiert im Qt-Hauptthread."""
+    def _on_result(self, result: UpdateCheckResult, silent: bool) -> None:
+        """Wird über UpdateSignals im Hauptthread aufgerufen."""
         self._checking = False
-        if info is None:
+
+        if result.error:
+            if not silent:
+                self.app.toast.show_error(
+                    f"Update-Prüfung fehlgeschlagen: {result.error}"
+                )
+            return
+
+        if result.info is None:
             if not silent:
                 self.app.toast.show_message(
                     f"Bereits aktuell (v{__version__})",
@@ -61,6 +87,7 @@ class UpdateController:
                 )
             return
 
+        info = result.info
         self.app.toast.show_success(f"Update v{info.version} verfügbar!")
         if info.download_url:
             self.app.toast.show_message("Lade Installer…", duration_ms=3000)
@@ -78,7 +105,7 @@ class UpdateController:
         self._signals.download_ready.emit(path, info)
 
     def _on_download_done(self, path: Optional[object], info: UpdateInfo) -> None:
-        """Download abgeschlossen – wieder im Hauptthread."""
+        """Download abgeschlossen – im Hauptthread via UpdateSignals."""
         if path and hasattr(path, "suffix") and path.suffix.lower() == ".exe":
             self.app.toast.show_success(
                 f"Update v{info.version} heruntergeladen – Setup startet…"

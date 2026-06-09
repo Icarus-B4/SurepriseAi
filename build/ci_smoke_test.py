@@ -22,7 +22,7 @@ def main() -> None:
     from src.services.media_url_service import is_media_url
     from src.services.dictation_context_service import merge_polish_context
     from src.services.history_export import _as_srt
-    from src.services.update_service import parse_version, is_newer
+    from src.services.update_service import parse_version, is_newer, UpdateService
 
     assert is_media_url("https://www.youtube.com/watch?v=abc")
     assert merge_polish_context("OCR", "Markierung")
@@ -30,6 +30,11 @@ def main() -> None:
     assert parse_version("v0.1.1") > parse_version("0.1.0")
     assert is_newer("v0.2.0", "0.1.0")
     assert config.get_str("global_hotkey")
+
+    result = UpdateService()._fetch_latest()
+    assert result.error is None, f"GitHub-Update-Check: {result.error}"
+    if result.info:
+        assert is_newer(f"v{result.info.version}", "0.0.0")
 
     print(f"Smoke OK v{__version__}")
 
