@@ -1,0 +1,67 @@
+"""
+app.py
+Haupt-App-Controller für SurepriseAi (PyQt6 Version).
+Schlanke Hauptorchestrierung, delegiert Event-Handling an AppController.
+"""
+
+import sys
+from PyQt6.QtWidgets import QApplication
+from PyQt6.QtCore import QObject, pyqtSignal
+
+from src.ui.dynamic_island import DynamicIslandWindow
+from src.ui.toast_notification import ToastNotification
+from src.ui.island_states import IslandState, IslandStateMachine
+from src.services.transcription_pipeline import TranscriptionPipeline
+from src.services.hotkey_service import HotkeyService
+from src.services.config_service import config
+from src.services.app_controller import AppController
+from src.ui.tray_icon import SurepriseTrayIcon
+
+
+class PipelineSignals(QObject):
+    """Thread-sichere Signalschnittstelle für Qt-UI."""
+    ready = pyqtSignal(bool)
+    state_changed = pyqtSignal(str)
+    result_ready = pyqtSignal(str, str)
+    error_occurred = pyqtSignal(str)
+    audio_level = pyqtSignal(float)
+    partial_ready = pyqtSignal(str)  # Für Live-Transkription
+
+
+class SurepriseApp:
+    """
+    Hauptanwendungsklasse für SurepriseAi.
+    Orchestriert Initialisierung von UI, Hotkeys und Pipeline.
+    """
+
+    def __init__(self):
+        self.app = QApplication(sys.argv)
+        self.app.setQuitOnLastWindowClosed(False)
+
+        self.signals = PipelineSignals()
+        self.pipeline = TranscriptionPipeline()
+        self.hotkey = HotkeyService()
+        self.state_machine = IslandStateMachine()
+
+        # UI & Tray
+        self.window = DynamicIslandWindow(self.state_machine)
+        self.toast = ToastNotification()
+        self.tray = SurepriseTrayIcon()
+
+        # Controller für die Event-Verarbeitung instanziieren
+        self.controller = AppController(self)
+        self.controller.connect_all()
+
+    def start(self):
+        """Startet Services und die Qt-Ereignisschleife."""
+        self.pipeline.initialize_async(on_ready=self.signals.ready.emit)
+        if config.hotkey_enabled:
+            self.hotkey.start()
+
+        self.window.show()
+        self.tray.show()
+        sys.exit(self.app.exec())
+
+    def shutdown(self):
+        """Delegiert das saubere Beenden an den AppController."""
+        self.controller.shutdown()
