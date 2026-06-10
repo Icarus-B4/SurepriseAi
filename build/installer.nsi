@@ -2,6 +2,7 @@
 ; oneClick: false, allowToChangeInstallationDirectory: true, perMachine: false
 
 !include "MUI2.nsh"
+!include "Sections.nsh"
 
 !ifndef APP_VERSION
   !define APP_VERSION "0.1.1"
@@ -53,15 +54,7 @@ Function .onInit
   ReadRegStr $0 HKCU "Software\${APP_PUBLISHER}\${APP_NAME}" "InstallPath"
   StrCmp $0 "" +2 0
     StrCpy $INSTDIR $0
-
-  ; Stilles Update: optionale Komponenten wie zuvor beibehalten
-  IfSilent 0 silent_done
-    IfFileExists "$DESKTOP\${APP_NAME}.lnk" 0 +2
-      SectionSetFlags ${SecDesktop} ${SF_SELECTED}
-    ReadRegStr $1 HKCU "Software\Microsoft\Windows\CurrentVersion\Run" "${APP_NAME}"
-    StrCmp $1 "" silent_done 0
-      SectionSetFlags ${SecAutostart} ${SF_SELECTED}
-  silent_done:
+  Call ConfigureSilentSections
 FunctionEnd
 
 Function .onInstSuccess
@@ -120,6 +113,17 @@ SectionEnd
   !insertmacro MUI_DESCRIPTION_TEXT ${SecDesktop} $(DESC_SecDesktop)
   !insertmacro MUI_DESCRIPTION_TEXT ${SecAutostart} $(DESC_SecAutostart)
 !insertmacro MUI_FUNCTION_DESCRIPTION_END
+
+; Nach Section-Definitionen – SecDesktop/SecAutostart sind hier bekannt
+Function ConfigureSilentSections
+  IfSilent 0 silent_done
+    IfFileExists "$DESKTOP\${APP_NAME}.lnk" 0 +2
+      SectionSetFlags ${SecDesktop} ${SF_SELECTED}
+    ReadRegStr $1 HKCU "Software\Microsoft\Windows\CurrentVersion\Run" "${APP_NAME}"
+    StrCmp $1 "" silent_done 0
+      SectionSetFlags ${SecAutostart} ${SF_SELECTED}
+  silent_done:
+FunctionEnd
 
 Section "Uninstall"
   DeleteRegKey HKCU "Software\Microsoft\Windows\CurrentVersion\Run\${APP_NAME}"
