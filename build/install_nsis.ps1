@@ -30,7 +30,7 @@ function Test-ZipFile([string]$Path) {
     if (-not (Test-Path $Path)) { return $false }
     $len = (Get-Item $Path).Length
     if ($len -lt 500000) {
-        Write-Host "Datei zu klein ($len Bytes) – vermutlich HTML-Fehlerseite"
+        Write-Host "Datei zu klein ($len Bytes), vermutlich HTML-Fehlerseite"
         return $false
     }
     $b = Get-Content $Path -AsByteStream -TotalCount 2
@@ -48,7 +48,7 @@ $downloaded = $false
         if (Test-ZipFile $zipPath) {
             $downloaded = $true
         } else {
-            Write-Host "Ungültige ZIP-Datei, erneuter Versuch..."
+            Write-Host "Ungueltige ZIP-Datei, erneuter Versuch..."
         }
     } catch {
         Write-Host "Fehler: $_"
