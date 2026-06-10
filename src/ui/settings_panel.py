@@ -5,7 +5,7 @@ Glas-Optik mit abgerundeten Ecken und sauberem Scroll-Layout.
 """
 
 from PyQt6.QtWidgets import (
-    QDialog, QVBoxLayout, QHBoxLayout, QLabel, QCheckBox,
+    QDialog, QVBoxLayout, QHBoxLayout, QLabel,
     QComboBox, QLineEdit, QPushButton, QWidget, QScrollArea, QFrame,
     QGraphicsDropShadowEffect,
 )
@@ -15,6 +15,7 @@ from PyQt6.QtGui import QColor, QPainterPath, QRegion
 from src.ui.design_tokens import Colors, Typography, FluentIcons
 from src.ui.settings_styles import settings_stylesheet
 from src.ui.settings_features_section import add_features_section
+from src.ui.toggle_switch import ToggleRow
 from src.services.config_service import config
 
 _CORNER_RADIUS = 16
@@ -168,12 +169,11 @@ class SettingsWindow(QDialog):
         row.addStretch()
         layout.addLayout(row)
 
-    def _add_checkbox(self, layout: QVBoxLayout, label: str, key: str) -> QCheckBox:
-        cb = QCheckBox(label)
-        cb.setChecked(config.get_bool(key))
-        cb.stateChanged.connect(lambda state: config.set(key, state == 2))
-        layout.addWidget(cb)
-        return cb
+    def _add_checkbox(self, layout: QVBoxLayout, label: str, key: str) -> ToggleRow:
+        row = ToggleRow(label, checked=config.get_bool(key))
+        row.toggled.connect(lambda checked: config.set(key, checked))
+        layout.addWidget(row)
+        return row
 
     def _add_dropdown(self, layout: QVBoxLayout, label: str, key: str, options: list) -> QComboBox:
         lbl = QLabel(label)

@@ -5,9 +5,10 @@ Einstellungs-Sektion für Erscheinungsbild, Mini-FAB, App-Modi und Historie.
 
 from typing import Callable
 
-from PyQt6.QtWidgets import QVBoxLayout, QLabel, QCheckBox, QLineEdit, QPushButton
+from PyQt6.QtWidgets import QVBoxLayout, QLabel, QLineEdit, QPushButton
 
 from src.ui.design_tokens import Colors, Typography
+from src.ui.toggle_switch import ToggleRow
 from src.services.config_service import config
 
 
@@ -40,37 +41,35 @@ def add_features_section(
     """Baut die Sektion Erscheinungsbild & Integration."""
     add_section(layout, "Erscheinungsbild", "🎨")
 
-    def _checkbox(label: str, key: str) -> QCheckBox:
-        cb = QCheckBox(label)
-        cb.setChecked(config.get_bool(key))
-        cb.stateChanged.connect(
-            lambda state, k=key: (_save_bool(k, state == 2), on_change(k))
-        )
-        layout.addWidget(cb)
-        return cb
+    def _toggle(label: str, key: str) -> ToggleRow:
+        row = ToggleRow(label, checked=config.get_bool(key))
+        row.toggled.connect(lambda checked, k=key: (_save_bool(k, checked), on_change(k)))
+        layout.addWidget(row)
+        return row
 
-    _checkbox("Windows-Akzentfarbe verwenden", "use_windows_accent")
-    _checkbox("Privacy-Badge in Idle-Pill", "show_privacy_badge")
-    _checkbox("Mini-FAB (schwebender Mic-Button)", "enable_mini_fab")
-    _checkbox("Updates beim Start prüfen", "check_updates_on_startup")
+    _toggle("Windows-Akzentfarbe verwenden", "use_windows_accent")
+    _toggle("Privacy-Badge in Idle-Pill", "show_privacy_badge")
+    _toggle("Mini-FAB (schwebender Mic-Button)", "enable_mini_fab")
+    _toggle("Updates beim Start prüfen", "check_updates_on_startup")
 
     add_section(layout, "Bildschirmkontext (OCR)", "👁")
-    ctx_cb = QCheckBox("Bildschirmkontext für Polishing (lokal, Windows-OCR)")
-    ctx_cb.setChecked(config.get_bool("enable_screen_context"))
-    ctx_cb.stateChanged.connect(
-        lambda state: (_save_bool("enable_screen_context", state == 2), on_change("enable_screen_context"))
+    ctx_row = ToggleRow("Bildschirmkontext für Polishing (lokal, Windows-OCR)", checked=config.get_bool("enable_screen_context"))
+    ctx_row.toggled.connect(
+        lambda checked: (_save_bool("enable_screen_context", checked), on_change("enable_screen_context"))
     )
-    layout.addWidget(ctx_cb)
+    layout.addWidget(ctx_row)
 
-    sel_cb = QCheckBox("Markierten Text als Kontext (Ctrl+C beim Diktatstart)")
-    sel_cb.setChecked(config.get_bool("enable_selected_text_context", True))
-    sel_cb.stateChanged.connect(
-        lambda state: (
-            _save_bool("enable_selected_text_context", state == 2),
+    sel_row = ToggleRow(
+        "Markierten Text als Kontext (Ctrl+C beim Diktatstart)",
+        checked=config.get_bool("enable_selected_text_context", True),
+    )
+    sel_row.toggled.connect(
+        lambda checked: (
+            _save_bool("enable_selected_text_context", checked),
             on_change("enable_selected_text_context"),
         )
     )
-    layout.addWidget(sel_cb)
+    layout.addWidget(sel_row)
 
     ctx_hint = QLabel(
         "Liest beim Diktatstart markierten Text und/oder OCR aus dem aktiven Fenster – "
@@ -82,9 +81,8 @@ def add_features_section(
     layout.addWidget(ctx_hint)
 
     add_section(layout, "App-Modi", "🪟")
-    modes_cb = QCheckBox("Stil automatisch je nach aktivem Fenster")
-    modes_cb.setChecked(config.get_bool("enable_app_modes"))
-    layout.addWidget(modes_cb)
+    modes_row = ToggleRow("Stil automatisch je nach aktivem Fenster", checked=config.get_bool("enable_app_modes"))
+    layout.addWidget(modes_row)
 
     modes_hint = QLabel("Fenster/Prozess = Stil, z. B. OUTLOOK=formal, slack=business")
     modes_hint.setWordWrap(True)
@@ -104,8 +102,8 @@ def add_features_section(
         on_change("app_modes")
 
     modes_edit.editingFinished.connect(_save_modes)
-    modes_cb.stateChanged.connect(
-        lambda state: (_save_bool("enable_app_modes", state == 2), on_change("enable_app_modes"))
+    modes_row.toggled.connect(
+        lambda checked: (_save_bool("enable_app_modes", checked), on_change("enable_app_modes"))
     )
 
     if on_open_history:

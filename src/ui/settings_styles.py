@@ -63,25 +63,6 @@ def settings_stylesheet() -> str:
             background: none; border: none;
         }}
 
-        QCheckBox {{
-            color: {Colors.TEXT_SECONDARY_HEX};
-            font-family: "{Typography.FONT_FAMILY}";
-            font-size: 13px;
-            spacing: 10px;
-            padding: 3px 0;
-        }}
-        QCheckBox::indicator {{
-            width: 36px;
-            height: 20px;
-            border-radius: 10px;
-            border: 1px solid {Colors.BORDER_HEX};
-            background-color: {GLASS_ELEVATED};
-        }}
-        QCheckBox::indicator:checked {{
-            background-color: {Colors.ACCENT_HEX};
-            border: 1px solid {Colors.ACCENT_BRIGHT_HEX};
-        }}
-
         QLineEdit {{
             background-color: {GLASS_ELEVATED};
             color: {Colors.TEXT_PRIMARY_HEX};

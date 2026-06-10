@@ -37,6 +37,13 @@ class ToastNotification(QWidget):
         self._live_plain = ""
         self._init_ui()
 
+    def _disconnect_fade_finished(self) -> None:
+        """Trennt hide-Handler – verhindert Kollisionen bei schnellen Toast-Wechseln."""
+        try:
+            self.fade_animation.finished.disconnect(self.hide)
+        except TypeError:
+            pass
+
     def _init_ui(self):
         self.container = QWidget(self)
         self.container.setObjectName("ToastContainer")
@@ -103,6 +110,7 @@ class ToastNotification(QWidget):
 
         self._position_and_show()
         self.fade_animation.stop()
+        self._disconnect_fade_finished()
         self.fade_animation.setDuration(150)
         self.fade_animation.setStartValue(self.windowOpacity())
         self.fade_animation.setEndValue(1.0)
@@ -199,10 +207,7 @@ class ToastNotification(QWidget):
         self.fade_animation.setDuration(200)
         self.fade_animation.setStartValue(self.windowOpacity())
         self.fade_animation.setEndValue(0.0)
-        try:
-            self.fade_animation.finished.disconnect(self.hide)
-        except TypeError:
-            pass
+        self._disconnect_fade_finished()
         self.fade_animation.finished.connect(
             self.hide,
             Qt.ConnectionType.SingleShotConnection,

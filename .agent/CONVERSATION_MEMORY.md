@@ -602,3 +602,37 @@ Nach Update-Download soll Installation vollautomatisch laufen (ohne Setup-Wizard
 ### Ablauf
 Download → App beendet sich → Setup silent → SurepriseAi startet neu.
 
+## Eintrag 32: 2026-06-10 – DESIGN.md für SurepriseAi
+
+### Aufgabe
+Design-Guideline von Hermes/Electron auf SurepriseAi (PyQt6) umschreiben.
+
+### Ergebnis
+- **`DESIGN.md`** komplett neu: Tokens (`design_tokens.py`), Island-Zustände, QSS-Muster, Animation, Windows-Integration, Komponenten-Karte, Checkliste.
+- Single Source of Truth: `design_tokens.py`, `settings_styles.py`, `accent_theme.py`.
+
+## Eintrag 33: 2026-06-10 – Update-Absturz & Debug-Cleanup
+
+### Problem
+App stürzte kurz nach Update-Toast „Lade v0.1.6 herunter…“ ab.
+
+### Ursache
+Toast-`fade_out` kollidierte mit schnellen Update-Toast-Wechseln (`QPropertyAnimation.finished`-Handler). Debug-Instrumentation verschärfte das (Qt-`State`-Enum in `json.dumps`).
+
+### Fix (behalten)
+- `toast_notification.py`: `_disconnect_fade_finished()` vor Fade-in und Fade-out.
+
+### Cleanup
+- `debug_log.py` und alle NDJSON-Instrumentierung entfernt.
+- Produktions-`update.log` unter `%APPDATA%\SurepriseAi\` bleibt.
+
+## Eintrag 34: 2026-06-10 – Release-Vorbereitung v0.1.7
+
+### Enthält (uncommitted)
+- Toast-Fix (`_disconnect_fade_finished`) – Update-Absturz
+- Fluent-Toggle (`toggle_switch.py`) – Einstellungen
+- `DESIGN.md` – PyQt6 Design-Guide
+
+### Version
+`0.1.7` – Smoke-Test OK.
+
