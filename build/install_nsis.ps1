@@ -8,6 +8,8 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
+[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+
 $nsisDir = Join-Path $Root ".tools\NSIS"
 $candidates = @(
     (Join-Path $nsisDir "makensis.exe"),
@@ -33,8 +35,15 @@ function Test-ZipFile([string]$Path) {
         Write-Host "Datei zu klein ($len Bytes), vermutlich HTML-Fehlerseite"
         return $false
     }
-    $b = Get-Content $Path -AsByteStream -TotalCount 2
-    return ($b[0] -eq 0x50 -and $b[1] -eq 0x4B)
+    $bytes = [System.IO.File]::ReadAllBytes($Path)
+    if ($bytes.Length -lt 2) { return $false }
+    return ($bytes[0] -eq 0x50 -and $bytes[1] -eq 0x4B)
+}
+
+function Download-NsisZip([string]$Url, [string]$OutPath) {
+    $client = New-Object System.Net.WebClient
+    $client.Headers.Add("User-Agent", "SurepriseAi-CI/1.0")
+    $client.DownloadFile($Url, $OutPath)
 }
 
 $downloaded = $false
@@ -43,8 +52,7 @@ $downloaded = $false
     Write-Host "NSIS-ZIP Download Versuch $_/3..."
     try {
         if (Test-Path $zipPath) { Remove-Item $zipPath -Force }
-        Invoke-WebRequest -Uri $zipUrl -OutFile $zipPath -UseBasicParsing `
-            -UserAgent "SurepriseAi-CI/1.0" -MaximumRedirection 10
+        Download-NsisZip -Url $zipUrl -OutPath $zipPath
         if (Test-ZipFile $zipPath) {
             $downloaded = $true
         } else {

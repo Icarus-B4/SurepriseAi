@@ -30,12 +30,12 @@ jobs:
         shell: pwsh
         run: |
           python -m venv venv
-          .\venv\Scripts\pip install --upgrade pip
+          .\venv\Scripts\python.exe -m pip install --upgrade pip
           .\venv\Scripts\pip install -r requirements.txt -r requirements-build.txt
 
       - name: NSIS 3 installieren (ZIP portable)
         shell: pwsh
-        run: powershell -ExecutionPolicy Bypass -File .\build\install_nsis.ps1
+        run: ./build/install_nsis.ps1
 
       - name: Installer bauen (NSIS, wie Hermes Desktop)
         shell: pwsh
@@ -44,7 +44,7 @@ jobs:
         run: |
           $ver = $env:RELEASE_VERSION -replace '^v',''
           Write-Host "Baue Version $ver"
-          powershell -ExecutionPolicy Bypass -File .\build\build.ps1 -Installer -SkipPip -Version $ver
+          ./build/build.ps1 -Installer -SkipPip -Version $ver
 
       - name: GitHub Release erstellen
         uses: softprops/action-gh-release@v2

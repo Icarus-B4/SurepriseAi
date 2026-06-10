@@ -58,7 +58,7 @@ if ($Installer) {
 
     if (-not $makensis) {
         Write-Host "==> NSIS wird installiert (ZIP portable)..." -ForegroundColor Yellow
-        & powershell -ExecutionPolicy Bypass -File (Join-Path $Root "build\install_nsis.ps1") -Root $Root
+        & (Join-Path $Root "build\install_nsis.ps1") -Root $Root
         if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
         $makensis = @(
             (Join-Path $Root ".tools\NSIS\makensis.exe"),
