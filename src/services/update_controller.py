@@ -15,6 +15,7 @@ from PyQt6.QtWidgets import QSystemTrayIcon
 from src.services.config_service import config
 from src.services.update_service import UpdateCheckResult, UpdateInfo, UpdateService
 from src.services.update_downloader import download_release_asset
+from src.services.update_installer import launch_update_installer
 from src.utils.app_paths import user_data_dir
 from src.version import GITHUB_REPO, __version__
 
@@ -159,7 +160,7 @@ class UpdateController:
         if path and hasattr(path, "suffix") and path.suffix.lower() == ".exe":
             self._notify(
                 "SurepriseAi Update",
-                f"v{info.version} heruntergeladen.\nSetup startet – App beendet sich…",
+                f"v{info.version} heruntergeladen.\nInstallation läuft automatisch…",
                 toast_ms=10_000,
                 icon=QSystemTrayIcon.MessageIcon.Information,
                 update=True,
@@ -187,8 +188,10 @@ class UpdateController:
             QTimer.singleShot(600, self._open_releases_fallback)
 
     def _launch_installer(self, path) -> None:
+        """Beendet die App und startet NSIS-Setup im Silent-Modus (/S)."""
+        self._log(f"Starte Silent-Installer: {path}")
         QTimer.singleShot(1000, self.app.controller.shutdown)
-        QTimer.singleShot(1600, lambda: os.startfile(str(path)))
+        QTimer.singleShot(1600, lambda: launch_update_installer(path))
 
     def open_releases_page(self) -> None:
         self._open_releases_fallback()

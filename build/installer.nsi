@@ -53,6 +53,21 @@ Function .onInit
   ReadRegStr $0 HKCU "Software\${APP_PUBLISHER}\${APP_NAME}" "InstallPath"
   StrCmp $0 "" +2 0
     StrCpy $INSTDIR $0
+
+  ; Stilles Update: optionale Komponenten wie zuvor beibehalten
+  IfSilent 0 silent_done
+    IfFileExists "$DESKTOP\${APP_NAME}.lnk" 0 +2
+      SectionSetFlags ${SecDesktop} ${SF_SELECTED}
+    ReadRegStr $1 HKCU "Software\Microsoft\Windows\CurrentVersion\Run" "${APP_NAME}"
+    StrCmp $1 "" silent_done 0
+      SectionSetFlags ${SecAutostart} ${SF_SELECTED}
+  silent_done:
+FunctionEnd
+
+Function .onInstSuccess
+  ; Nach stillem Auto-Update die neue Version starten
+  IfSilent 0 +2
+    Exec '"$INSTDIR\${APP_EXE}"'
 FunctionEnd
 
 Function un.onInit

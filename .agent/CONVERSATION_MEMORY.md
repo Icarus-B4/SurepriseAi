@@ -589,3 +589,16 @@ v0.1.3: Update-Check zeigt nichts / Toast zu kurz / App stürzt ab.
 - Toast: `show_update()` sticky 10s, `SingleShotConnection` für fade_out.
 - Update: Tray `showMessage` + verzögerter Download (2,5s), try/except, `update.log`.
 
+## Eintrag 31: 2026-06-10 – Stille Auto-Installation (v0.1.6)
+
+### Aufgabe
+Nach Update-Download soll Installation vollautomatisch laufen (ohne Setup-Wizard).
+
+### Implementiertes
+- **`update_installer.py`:** NSIS `/S` + `/D=<InstallDir>` für installierte App.
+- **`installer.nsi`:** Silent behält Desktop/Autostart; `.onInstSuccess` startet neue EXE.
+- Version **0.1.6**.
+
+### Ablauf
+Download → App beendet sich → Setup silent → SurepriseAi startet neu.
+
