@@ -1,5 +1,8 @@
 # SurepriseAi
 
+[![CI](https://github.com/Icarus-B4/SurepriseAi/actions/workflows/ci.yml/badge.svg)](https://github.com/Icarus-B4/SurepriseAi/actions/workflows/ci.yml)
+[![Release](https://github.com/Icarus-B4/SurepriseAi/actions/workflows/release.yml/badge.svg)](https://github.com/Icarus-B4/SurepriseAi/actions/workflows/release.yml)
+
 ![Python](https://img.shields.io/badge/Python-3.11+-3776AB?style=flat-square&logo=python&logoColor=white)
 ![PyQt6](https://img.shields.io/badge/GUI-PyQt6-41CD52?style=flat-square&logo=qt&logoColor=white)
 ![Platform](https://img.shields.io/badge/Plattform-Windows-0078D6?style=flat-square&logo=windows&logoColor=white)
@@ -201,7 +204,7 @@ Release auf GitHub anlegen mit Tag `v0.1.1` und Asset `SurepriseAi-Setup.exe`.
 | Workflow | Trigger | Aufgabe |
 |----------|---------|---------|
 | **CI** | Push/PR auf `main` | Smoke-Test + `py_compile` aller Module |
-| **Release** | Git-Tag `v*` (z. B. `v0.1.0`) | PyInstaller + Inno Setup → `SurepriseAi-Setup.exe` als Release-Asset |
+| **Release** | Git-Tag `v*` (z. B. `v0.1.7`) | PyInstaller + NSIS → `SurepriseAi-Setup.exe` als Release-Asset |
 
 ### Ersten Release veröffentlichen
 
