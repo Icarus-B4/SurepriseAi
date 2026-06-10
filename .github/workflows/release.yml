@@ -33,8 +33,43 @@ jobs:
           .\venv\Scripts\pip install --upgrade pip
           .\venv\Scripts\pip install -r requirements.txt -r requirements-build.txt
 
-      - name: NSIS 3 installieren
-        run: choco install nsis -y --no-progress
+      - name: NSIS 3 installieren (SourceForge)
+        shell: pwsh
+        run: |
+          $nsisDir = Join-Path $PWD ".tools\NSIS"
+          $candidates = @(
+            (Join-Path $nsisDir "makensis.exe"),
+            (Join-Path $nsisDir "Bin\makensis.exe"),
+            "${env:ProgramFiles(x86)}\NSIS\makensis.exe"
+          )
+          $existing = $candidates | Where-Object { Test-Path $_ } | Select-Object -First 1
+          if ($existing) {
+            Write-Host "NSIS bereits vorhanden: $existing"
+            exit 0
+          }
+          New-Item -ItemType Directory -Force -Path ".\.tools" | Out-Null
+          $setup = ".\.tools\nsis-setup.exe"
+          $url = "https://sourceforge.net/projects/nsis/files/NSIS%203/3.11/nsis-3.11-setup.exe/download"
+          $ok = $false
+          1..3 | ForEach-Object {
+            if ($ok) { return }
+            Write-Host "NSIS-Download Versuch $_/3..."
+            try {
+              Invoke-WebRequest -Uri $url -OutFile $setup -UseBasicParsing
+              $ok = $true
+            } catch {
+              Write-Host "Fehler: $_"
+              Start-Sleep -Seconds 5
+            }
+          }
+          if (-not $ok) { throw "NSIS-Download von SourceForge fehlgeschlagen" }
+          New-Item -ItemType Directory -Force -Path $nsisDir | Out-Null
+          $dest = (Resolve-Path $nsisDir).Path
+          Start-Process -FilePath $setup -ArgumentList "/S", "/D=$dest" -Wait
+          if (-not (Test-Path (Join-Path $nsisDir "makensis.exe"))) {
+            throw "NSIS silent install fehlgeschlagen (makensis.exe fehlt)"
+          }
+          Write-Host "NSIS installiert unter $dest"
 
       - name: Installer bauen (NSIS, wie Hermes Desktop)
         shell: pwsh
