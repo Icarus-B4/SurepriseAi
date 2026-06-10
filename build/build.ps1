@@ -57,18 +57,12 @@ if ($Installer) {
     ) | Where-Object { Test-Path $_ } | Select-Object -First 1
 
     if (-not $makensis) {
-        Write-Host "==> NSIS wird installiert (Hermes-Installer-Engine)..." -ForegroundColor Yellow
-        $nsisSetup = Join-Path $Root ".tools\nsis-setup.exe"
-        $nsisDir = Join-Path $Root ".tools\NSIS"
-        if (-not (Test-Path $nsisSetup)) {
-            Invoke-WebRequest -Uri "https://sourceforge.net/projects/nsis/files/NSIS%203/3.11/nsis-3.11-setup.exe/download" `
-                -OutFile $nsisSetup -UseBasicParsing
-        }
-        New-Item -ItemType Directory -Force -Path $nsisDir | Out-Null
-        Start-Process -FilePath $nsisSetup -ArgumentList "/S", "/D=$nsisDir" -Wait
+        Write-Host "==> NSIS wird installiert (ZIP portable)..." -ForegroundColor Yellow
+        & powershell -ExecutionPolicy Bypass -File (Join-Path $Root "build\install_nsis.ps1") -Root $Root
+        if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
         $makensis = @(
-            (Join-Path $nsisDir "makensis.exe"),
-            (Join-Path $nsisDir "Bin\makensis.exe")
+            (Join-Path $Root ".tools\NSIS\makensis.exe"),
+            (Join-Path $Root ".tools\NSIS\Bin\makensis.exe")
         ) | Where-Object { Test-Path $_ } | Select-Object -First 1
     }
 
