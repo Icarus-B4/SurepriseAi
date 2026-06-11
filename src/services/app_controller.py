@@ -142,6 +142,8 @@ class AppController(QObject):
     def _on_pipeline_ready(self, success: bool):
         self._update_privacy_badge()
         self._refresh_tray_tooltip()
+        if config.hotkey_enabled:
+            self.app.hotkey.restart()
         if success:
             if needs_onboarding():
                 QTimer.singleShot(400, self._show_welcome)
@@ -300,46 +302,12 @@ class AppController(QObject):
             self.app.window._fade_to(1.0)
             self.app.window.is_hovered = True
 
-    def handle_outside_click(self, global_x: int, global_y: int) -> None:
-        """Schließt/einklappt die Island bei Linksklick außerhalb der sichtbaren UI."""
-        window = self.app.window
-        if self._global_click_hits_auxiliary_window(global_x, global_y):
-            return
-        if not window.should_dismiss_for_global_click(global_x, global_y):
-            return
-
-        sm = self.app.state_machine
-        if sm.is_expanded:
-            self._close_expanded()
-            return
-        if sm.is_success:
-            sm.transition_to(IslandState.IDLE)
-        window.collapse_from_outside_click()
-
-    def _global_click_hits_auxiliary_window(self, global_x: int, global_y: int) -> bool:
-        skip = {self.app.window, self.app.toast}
-        overlay = getattr(self.app.window, "_outside_overlay", None)
-        if overlay is not None:
-            skip.add(overlay)
-        if getattr(self.app, "mini_fab", None):
-            skip.add(self.app.mini_fab)
-        if self._history_dialog and self._history_dialog.isVisible():
-            skip.add(self._history_dialog)
-
-        for widget in QApplication.topLevelWidgets():
-            if not widget.isVisible() or widget in skip:
-                continue
-            if widget.geometry().contains(global_x, global_y):
-                return True
-        return False
-
     def shutdown(self):
         try:
             from src.services import update_logger
             update_logger.write("AppController.shutdown() gestartet")
         except Exception:
             pass
-        self.app.outside_click.stop()
         self.app.hotkey.stop()
         if self.app.pipeline.is_recording:
             self.app.pipeline.stop_recording()

@@ -57,9 +57,8 @@ jobs:
 
             **Windows-Installer** – Doppelklick auf `SurepriseAi-Setup.exe`.
 
-            ### Neu in v0.1.17
-            - **Auto-Update:** Deinstallation → Neuinstallation → Neustart (Nutzerdaten in `%APPDATA%\\SurepriseAi` bleiben)
-            - **Keine Desktop-Patch-Datei** mehr – alte `.bat` wird beim Start entfernt
-            - Desktop-Verknüpfung & Autostart werden über Update hinweg beibehalten
+            ### Neu in v0.1.18
+            - **Fix: F8/Hotkey funktioniert wieder** – globaler pynput-Maus-Listener entfernt (blockierte Tastatur auf Windows)
+            - Klick-außerhalb schließt Expanded weiterhin über Qt-Overlay
 
-            Vollständiges Changelog: https://github.com/Icarus-B4/SurepriseAi/compare/v0.1.16...${{ github.ref_name }}
+            Vollständiges Changelog: https://github.com/Icarus-B4/SurepriseAi/compare/v0.1.17...${{ github.ref_name }}

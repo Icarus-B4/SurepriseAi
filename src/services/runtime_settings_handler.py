@@ -25,6 +25,14 @@ class RuntimeSettingsHandler:
             self.sync_mini_fab()
         if key in ("enable_presence_bar", ""):
             self.sync_presence_bar()
+        if key in ("enable_global_hotkey", "global_hotkey", "push_to_talk", ""):
+            self.sync_hotkey()
+
+    def sync_hotkey(self) -> None:
+        if config.hotkey_enabled:
+            self.app.hotkey.restart()
+        else:
+            self.app.hotkey.stop()
 
     def sync_presence_bar(self) -> None:
         window = self.app.window

@@ -95,6 +95,8 @@ class HotkeyService:
     def stop(self) -> None:
         """Stoppt den Keyboard-Listener."""
         self._is_running = False
+        self._recording_active = False
+        self._pressed_keys.clear()
         if self._listener:
             try:
                 self._listener.stop()
@@ -102,6 +104,11 @@ class HotkeyService:
                 pass
             self._listener = None
         print("[Hotkey] Listener gestoppt")
+
+    def restart(self) -> bool:
+        """Stoppt und startet den Listener neu (z. B. nach Einstellungsänderung)."""
+        self.stop()
+        return self.start()
 
     # ── Key-Handler ───────────────────────────────────────────────────────────
 
