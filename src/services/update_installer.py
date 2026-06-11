@@ -95,19 +95,15 @@ Remove-Item -LiteralPath $PSCommandPath -Force -ErrorAction SilentlyContinue
     ps_path.write_text(script, encoding="utf-8")
     update_logger.write(f"PowerShell-Launcher: {ps_path}")
 
-    flags = subprocess.DETACHED_PROCESS | subprocess.CREATE_NEW_PROCESS_GROUP
-    subprocess.Popen(
-        [
-            "powershell.exe",
-            "-NoProfile",
-            "-ExecutionPolicy",
-            "Bypass",
-            "-WindowStyle",
-            "Hidden",
-            "-File",
-            str(ps_path),
-        ],
-        close_fds=True,
-        creationflags=flags,
+    # cmd start /min – zuverlässiger als detached Popen direkt auf powershell.exe
+    ps_cmd = (
+        f'powershell.exe -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden '
+        f'-File "{ps_path}"'
     )
-    update_logger.write("PowerShell-Update gestartet (detached)")
+    subprocess.Popen(
+        f'cmd /c start "" /min {ps_cmd}',
+        shell=True,
+        close_fds=True,
+        creationflags=subprocess.DETACHED_PROCESS | subprocess.CREATE_NEW_PROCESS_GROUP,
+    )
+    update_logger.write("PowerShell-Update gestartet (cmd start /min)")

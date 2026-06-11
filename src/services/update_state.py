@@ -1,6 +1,6 @@
 """
 update_state.py
-Verhindert Update-Schleifen (Pending-Marker + Cooldown).
+Kurzer Schutz gegen Update-Schleifen – blockiert nicht dauerhaft.
 """
 
 from __future__ import annotations
@@ -9,12 +9,14 @@ import json
 import time
 from pathlib import Path
 
+from src.services import update_logger
 from src.services.update_service import parse_version
 from src.utils.app_paths import user_data_dir
 from src.version import __version__
 
 PENDING_FILE = user_data_dir() / "update_pending.json"
-_COOLDOWN_S = 6 * 3600  # 6 h kein Auto-Retry nach fehlgeschlagenem Versuch
+_ACTIVE_INSTALL_S = 120  # 2 min – vermutlich läuft Installation noch
+_STALE_PENDING_S = 300  # 5 min – fehlgeschlagen, Pending verwerfen
 
 
 def mark_pending(target_version: str, setup_path: str) -> None:
@@ -39,27 +41,46 @@ def clear_pending() -> None:
         pass
 
 
-def clear_if_updated() -> None:
+def _read_pending() -> dict | None:
     if not PENDING_FILE.exists():
-        return
+        return None
     try:
-        data = json.loads(PENDING_FILE.read_text(encoding="utf-8"))
+        return json.loads(PENDING_FILE.read_text(encoding="utf-8"))
     except (json.JSONDecodeError, OSError):
         clear_pending()
+        return None
+
+
+def reconcile_pending() -> None:
+    """Beim Start: erfolgreiches Update oder veraltetes Pending aufräumen."""
+    data = _read_pending()
+    if not data:
         return
+
     target = str(data.get("target", ""))
+    age = time.time() - float(data.get("started_at", 0))
+
     if target and parse_version(__version__) >= parse_version(target):
         clear_pending()
+        update_logger.write(f"Pending v{target} entfernt – jetzt v{__version__}")
+        return
+
+    if age > _STALE_PENDING_S:
+        clear_pending()
+        update_logger.write(
+            f"Veraltetes Pending v{target} entfernt "
+            f"(nach {int(age)} s, noch v{__version__})"
+        )
 
 
 def is_duplicate_attempt(target_version: str) -> bool:
-    if not PENDING_FILE.exists():
-        return False
-    try:
-        data = json.loads(PENDING_FILE.read_text(encoding="utf-8"))
-    except (json.JSONDecodeError, OSError):
+    data = _read_pending()
+    if not data:
         return False
     target = str(data.get("target", ""))
+    age = time.time() - float(data.get("started_at", 0))
+    if age > _ACTIVE_INSTALL_S:
+        return False
     return (
         target == target_version
         and parse_version(__version__) < parse_version(target_version)
@@ -67,15 +88,19 @@ def is_duplicate_attempt(target_version: str) -> bool:
 
 
 def should_auto_update(*, manual: bool = False) -> tuple[bool, str]:
-    """False = kein automatischer Download/Check (Schleifen-Schutz)."""
-    clear_if_updated()
-    if not PENDING_FILE.exists():
+    """manual=True: Pending immer verwerfen und erneut versuchen."""
+    reconcile_pending()
+
+    if manual:
+        if PENDING_FILE.exists():
+            data = _read_pending()
+            target = str(data.get("target", "?")) if data else "?"
+            clear_pending()
+            update_logger.write(f"Manueller Check: Pending v{target} verworfen")
         return True, ""
 
-    try:
-        data = json.loads(PENDING_FILE.read_text(encoding="utf-8"))
-    except (json.JSONDecodeError, OSError):
-        clear_pending()
+    data = _read_pending()
+    if not data:
         return True, ""
 
     target = str(data.get("target", "?"))
@@ -85,17 +110,11 @@ def should_auto_update(*, manual: bool = False) -> tuple[bool, str]:
         clear_pending()
         return True, ""
 
-    if age > _COOLDOWN_S:
-        clear_pending()
-        return True, f"Pending abgelaufen nach {int(age)}s – erneuter Versuch erlaubt"
-
-    if manual:
+    if age < _ACTIVE_INSTALL_S:
         return False, (
-            f"Update v{target} wurde bereits gestartet (vor {int(age)} s).\n"
-            "Bitte warten oder SurepriseAi-Setup.exe manuell ausführen."
+            f"Startup-Check übersprungen: Installation v{target} "
+            f"vermutlich aktiv (vor {int(age)} s)"
         )
 
-    return False, (
-        f"Startup-Check übersprungen: Update v{target} ausstehend "
-        f"(seit {int(age)} s, installiert v{__version__})"
-    )
+    clear_pending()
+    return True, f"Altes Pending v{target} verworfen – Startup-Check läuft"

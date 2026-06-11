@@ -67,7 +67,7 @@ class UpdateController:
         qt_app = app.app if hasattr(app, "app") else None
         self._signals = UpdateSignals(self, parent=qt_app)
         update_logger.write_session_header("UpdateController initialisiert")
-        update_state.clear_if_updated()
+        update_state.reconcile_pending()
 
     def schedule_startup_check(self) -> None:
         if not config.get_bool("check_updates_on_startup", True):
@@ -265,8 +265,7 @@ class UpdateController:
             self._notify(
                 "Update",
                 "Installation konnte nicht gestartet werden.\n"
-                f"Log: {update_logger.desktop_log_path()}\n"
-                "Bitte SurepriseAi-Setup.exe im Downloads-Ordner manuell ausführen.",
+                f"Log: {update_logger.desktop_log_path()}",
                 toast_ms=12_000,
                 icon=QSystemTrayIcon.MessageIcon.Warning,
                 error=True,

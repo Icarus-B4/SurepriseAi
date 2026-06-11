@@ -57,9 +57,9 @@ jobs:
 
             **Windows-Installer** – Doppelklick auf `SurepriseAi-Setup.exe`.
 
-            ### Neu in v0.1.15
-            - **Kein Desktop-Patch mehr** – Update nur via PowerShell in %TEMP%
-            - **Versionierter Download** (`SurepriseAi-Setup-vX.Y.Z.exe`) – kein falscher Installer-Cache
-            - Zuverlässiger Neustart nach NSIS exit=0
+            ### Neu in v0.1.16
+            - **Pending-Blockade behoben:** manueller Update-Check wirft altes Pending weg (kein 6-h-Lock)
+            - Veraltetes Pending nach 5 min automatisch gelöscht
+            - PowerShell-Start via `cmd start /min` (zuverlässiger)
 
-            Vollständiges Changelog: https://github.com/Icarus-B4/SurepriseAi/compare/v0.1.14...${{ github.ref_name }}
+            Vollständiges Changelog: https://github.com/Icarus-B4/SurepriseAi/compare/v0.1.15...${{ github.ref_name }}
