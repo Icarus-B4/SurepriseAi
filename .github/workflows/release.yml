@@ -57,8 +57,9 @@ jobs:
 
             **Windows-Installer** – Doppelklick auf `SurepriseAi-Setup.exe`.
 
-            ### Neu in v0.1.14
-            - **Auto-Neustart nach Update:** Batch startet SurepriseAi.exe mit WorkingDirectory + PowerShell-Fallback
-            - Log zeigt `App neu gestartet OK` oder Warnung
+            ### Neu in v0.1.15
+            - **Kein Desktop-Patch mehr** – Update nur via PowerShell in %TEMP%
+            - **Versionierter Download** (`SurepriseAi-Setup-vX.Y.Z.exe`) – kein falscher Installer-Cache
+            - Zuverlässiger Neustart nach NSIS exit=0
 
-            Vollständiges Changelog: https://github.com/Icarus-B4/SurepriseAi/compare/v0.1.13...${{ github.ref_name }}
+            Vollständiges Changelog: https://github.com/Icarus-B4/SurepriseAi/compare/v0.1.14...${{ github.ref_name }}

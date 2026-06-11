@@ -191,7 +191,11 @@ class UpdateController:
     def _download_worker(self, info: UpdateInfo) -> None:
         try:
             name = info.download_url.rsplit("/", 1)[-1] if info.download_url else ""
-            path = download_release_asset(info.download_url or "", name)
+            path = download_release_asset(
+                info.download_url or "",
+                name,
+                target_version=info.version,
+            )
             update_logger.write(f"Download-Worker fertig: {path!r}")
             self._signals.download_ready.emit(path, info)
         except Exception:
@@ -247,14 +251,14 @@ class UpdateController:
             QTimer.singleShot(600, self._open_releases_fallback)
 
     def _launch_installer(self, path: Path, target_version: str) -> None:
-        """Startet NSIS-Setup via Batch (taskkill + /S). Kein App-Quit – Batch beendet Prozess."""
+        """Startet NSIS-Setup via PowerShell in %TEMP% (taskkill + /S + Neustart)."""
         update_logger.write_session_header(
             f"Installer-Start für {path} (Ziel v{target_version})"
         )
         update_state.mark_pending(target_version, str(path))
         try:
             launch_update_installer(path)
-            update_logger.write("launch_update_installer: OK – Batch übernimmt taskkill + NSIS")
+            update_logger.write("launch_update_installer: OK – PowerShell übernimmt taskkill + NSIS")
         except Exception:
             update_state.clear_pending()
             update_logger.write_exception("Installer-Start fehlgeschlagen")
@@ -270,9 +274,8 @@ class UpdateController:
             return
         self._notify(
             "SurepriseAi Update",
-            f"v{target_version}: Installation startet…\n"
-            "App wird beendet. Notfall: Desktop\\SurepriseAi-JETZT-INSTALLIEREN.bat",
-            toast_ms=12_000,
+            f"v{target_version}: Installation startet…\nApp wird beendet und neu gestartet.",
+            toast_ms=10_000,
             icon=QSystemTrayIcon.MessageIcon.Information,
             update=True,
         )
