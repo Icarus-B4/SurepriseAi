@@ -16,16 +16,19 @@ def launch_update_installer(setup_path: Path) -> None:
     Installierte App: NSIS /S (silent) in bestehenden Ordner, danach Neustart via installer.nsi.
     Dev (run.py): normaler Wizard.
     """
-    path = str(setup_path)
+    path = Path(setup_path)
+    if not path.is_file():
+        raise FileNotFoundError(f"Setup nicht gefunden: {path}")
+
     if not is_frozen():
-        os.startfile(path)
+        os.startfile(str(path))
         return
 
     inst = str(install_root())
-    flags = subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0
-    # NSIS: /D= muss letzter Parameter sein
-    subprocess.Popen(
-        [path, "/S", f"/D={inst}"],
-        close_fds=True,
-        creationflags=flags,
-    )
+    cmd = [str(path), "/S", f"/D={inst}"]
+    if os.name == "nt":
+        flags = subprocess.DETACHED_PROCESS | subprocess.CREATE_NEW_PROCESS_GROUP
+    else:
+        flags = 0
+    subprocess.Popen(cmd, close_fds=True, creationflags=flags)
+    print(f"[Update] Installer gestartet: {' '.join(cmd)}")

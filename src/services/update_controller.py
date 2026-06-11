@@ -188,10 +188,23 @@ class UpdateController:
             QTimer.singleShot(600, self._open_releases_fallback)
 
     def _launch_installer(self, path) -> None:
-        """Beendet die App und startet NSIS-Setup im Silent-Modus (/S)."""
+        """Startet NSIS-Setup und beendet die App, damit Dateien freigegeben werden."""
         self._log(f"Starte Silent-Installer: {path}")
-        QTimer.singleShot(1000, self.app.controller.shutdown)
-        QTimer.singleShot(1600, lambda: launch_update_installer(path))
+        try:
+            launch_update_installer(path)
+        except Exception:
+            self._log(f"Installer-Start fehlgeschlagen:\n{traceback.format_exc()}")
+            self._notify(
+                "Update",
+                "Installation konnte nicht gestartet werden.\n"
+                "Bitte SurepriseAi-Setup.exe im Downloads-Ordner manuell ausführen.",
+                toast_ms=10_000,
+                icon=QSystemTrayIcon.MessageIcon.Warning,
+                error=True,
+            )
+            return
+        # App kurz danach beenden – Installer läuft bereits detached.
+        QTimer.singleShot(600, self.app.controller.shutdown)
 
     def open_releases_page(self) -> None:
         self._open_releases_fallback()
