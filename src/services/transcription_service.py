@@ -12,6 +12,18 @@ import numpy as np
 
 from .config_service import config
 
+
+def _log(msg: str) -> None:
+    """Konsolen-Log – darf die Pipeline nie abbrechen (Windows cp1252)."""
+    try:
+        print(msg)
+    except Exception:
+        try:
+            print(msg.encode("ascii", errors="replace").decode("ascii"))
+        except Exception:
+            pass
+
+
 # ── Sherpa-ONNX Import ────────────────────────────────────────────────────────
 try:
     import sherpa_onnx
@@ -112,7 +124,7 @@ class TranscriptionService:
             return True
 
         except Exception as e:
-            print(f"[Transcription] Parakeet-Fehler: {e} → Fallback zu Whisper")
+            _log(f"[Transcription] Parakeet-Fehler: {e} -> Fallback zu Whisper")
             return self._init_whisper()
 
     def _init_whisper(self) -> bool:
@@ -172,10 +184,11 @@ class TranscriptionService:
             if not self.initialize():
                 return ""
 
-        if self._parakeet_recognizer is not None:
-            return self._transcribe_parakeet(audio_data, is_partial=False)
-        elif self._whisper_model is not None:
-            return self._transcribe_whisper(audio_data)
+        with self._lock:
+            if self._parakeet_recognizer is not None:
+                return self._transcribe_parakeet(audio_data, is_partial=False)
+            if self._whisper_model is not None:
+                return self._transcribe_whisper(audio_data)
         return ""
 
     def transcribe_partial(self, audio_data: np.ndarray) -> str:
@@ -184,19 +197,18 @@ class TranscriptionService:
             if not self.initialize():
                 return ""
 
-        if self._partial_whisper_model is not None:
-            return self._transcribe_whisper_partial(audio_data)
-        if self._parakeet_recognizer is not None:
-            return self._transcribe_parakeet(audio_data, is_partial=True)
-        if self._whisper_model is not None:
-            return self._transcribe_whisper_partial(audio_data)
+        with self._lock:
+            if self._partial_whisper_model is not None:
+                return self._transcribe_whisper_partial(audio_data)
+            if self._parakeet_recognizer is not None:
+                return self._transcribe_parakeet(audio_data, is_partial=True)
+            if self._whisper_model is not None:
+                return self._transcribe_whisper_partial(audio_data)
         return ""
 
     def _transcribe_worker(self, audio_data: np.ndarray) -> None:
         """Thread-Worker für asynchrone Transkription."""
-        with self._lock:
-            result = self.transcribe(audio_data)
-
+        result = self.transcribe(audio_data)
         if self._on_result and result:
             self._on_result(result)
 
@@ -217,13 +229,14 @@ class TranscriptionService:
 
             result = self._parakeet_recognizer.get_result(stream)
             text = result.text.strip() if result else ""
-            mode = "Partial" if is_partial else "Final"
-            print(f"[Transcription] Parakeet ({mode}) → '{text[:50]}...'")
-            return text
-
         except Exception as e:
-            print(f"[Transcription] Parakeet-Transkriptions-Fehler: {e}")
+            _log(f"[Transcription] Parakeet-Transkriptions-Fehler: {e}")
             return ""
+
+        mode = "Partial" if is_partial else "Final"
+        preview = text[:50] + ("..." if len(text) > 50 else "")
+        _log(f"[Transcription] Parakeet ({mode}): '{preview}'")
+        return text
 
     def _transcribe_whisper(self, audio_data: np.ndarray) -> str:
         """Transkription mit faster-whisper."""
@@ -237,12 +250,16 @@ class TranscriptionService:
                 vad_filter=True,
             )
             text = " ".join(seg.text for seg in segments).strip()
-            print(f"[Transcription] Whisper ({config.transcription_language or 'auto'}, {task}) → '{text[:50]}...'")
-            return text
-
         except Exception as e:
-            print(f"[Transcription] Whisper-Transkriptions-Fehler: {e}")
+            _log(f"[Transcription] Whisper-Transkriptions-Fehler: {e}")
             return ""
+
+        preview = text[:50] + ("..." if len(text) > 50 else "")
+        _log(
+            f"[Transcription] Whisper ({config.transcription_language or 'auto'}, {task}): "
+            f"'{preview}'"
+        )
+        return text
 
     def _transcribe_whisper_partial(self, audio_data: np.ndarray) -> str:
         """Schnelle Live-Transkription ohne VAD und mit minimalem Beam-Search."""

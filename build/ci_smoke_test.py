@@ -36,6 +36,16 @@ def main() -> None:
     if result.info:
         assert is_newer(f"v{result.info.version}", "0.0.0")
 
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location(
+        "test_transcription", ROOT / "build" / "test_transcription.py"
+    )
+    mod = importlib.util.module_from_spec(spec)
+    assert spec.loader is not None
+    spec.loader.exec_module(mod)
+    mod.test_whisper_log_does_not_swallow_result()
+
     print(f"Smoke OK v{__version__}")
 
 

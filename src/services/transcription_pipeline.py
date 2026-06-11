@@ -120,6 +120,8 @@ class TranscriptionPipeline:
     def stop_recording(self) -> None:
         """Stoppt Aufnahme, beendet Live-Transkription und verarbeitet das Audio."""
         self._stop_partial_thread.set()
+        if self._partial_thread and self._partial_thread.is_alive():
+            self._partial_thread.join(timeout=3.0)
         audio_data = self.audio.stop_recording()
 
         if audio_data is None or len(audio_data) < 1600:
