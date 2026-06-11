@@ -41,6 +41,10 @@ class DynamicIslandWindow(QWidget):
         self._zone_visit_start: float | None = None
         self._zone_visit_expired = False
         self._was_in_trigger_zone = False
+        self._settings_dialog: SettingsWindow | None = None
+        self._pill_click_timer = QTimer(self)
+        self._pill_click_timer.setSingleShot(True)
+        self._pill_click_timer.timeout.connect(self._on_pill_single_click)
         
         self._init_ui()
         self._setup_position()
@@ -485,46 +489,75 @@ class DynamicIslandWindow(QWidget):
         if self.presence_bar.isVisible() and self.presence_bar.geometry().contains(point):
             if event.button() == Qt.MouseButton.LeftButton:
                 self._set_idle_revealed(True)
-                if self.state_machine.is_idle or self.state_machine.is_success:
-                    self.state_machine.transition_by_name("expanded")
+                self._schedule_pill_single_click()
             event.accept()
             return
 
         pill_rect = self.pill.geometry()
         if pill_rect.contains(point):
             if event.button() == Qt.MouseButton.RightButton:
-                # Stilwahl nur über Direkt-Chips im EXPANDED-Modus
                 if self.state_machine.is_idle or self.state_machine.is_success:
                     self.state_machine.transition_by_name("expanded")
                 event.accept()
             elif event.button() == Qt.MouseButton.LeftButton:
-                if self.state_machine.is_idle or self.state_machine.is_success:
-                    self.state_machine.transition_by_name("expanded")
-                # EXPANDED: Klick auf Pill-Inhalt schließt nicht (nur außerhalb / ✕)
+                self._schedule_pill_single_click()
                 event.accept()
+
+    def _schedule_pill_single_click(self) -> None:
+        """Einzelklick verzögert – Doppelklick öffnet/schließt Einstellungen statt Expanded."""
+        if not (self.state_machine.is_idle or self.state_machine.is_success):
+            return
+        self._pill_click_timer.start(280)
+
+    def _on_pill_single_click(self) -> None:
+        if self.state_machine.is_idle or self.state_machine.is_success:
+            self.state_machine.transition_by_name("expanded")
 
     def mouseDoubleClickEvent(self, event):
         pill_rect = self.pill.geometry()
         if pill_rect.contains(event.position().toPoint()):
             if event.button() == Qt.MouseButton.LeftButton:
-                self._on_open_settings()
+                self._pill_click_timer.stop()
+                self._toggle_settings()
                 event.accept()
 
     def _on_style_selected(self, style_key: str):
         pass
 
-    def _on_open_settings(self):
-        on_history = getattr(self, "open_history_callback", None)
-        dialog = SettingsWindow(self, on_open_history=on_history)
-        cb = getattr(self, "settings_changed_callback", None)
-        if cb:
-            dialog.setting_changed.connect(cb)
+    def _toggle_settings(self) -> None:
+        """Doppelklick: Einstellungen öffnen oder schließen (nur ein Fenster)."""
+        if self._settings_dialog is not None and self._settings_dialog.isVisible():
+            self._settings_dialog.close()
+            return
+
+        if self._settings_dialog is None:
+            on_history = getattr(self, "open_history_callback", None)
+            self._settings_dialog = SettingsWindow(self, on_open_history=on_history)
+            cb = getattr(self, "settings_changed_callback", None)
+            if cb:
+                self._settings_dialog.setting_changed.connect(cb)
+            self._settings_dialog.finished.connect(self._on_settings_closed)
+
         from PyQt6.QtWidgets import QApplication
         screen = QApplication.primaryScreen().geometry()
-        x = int(screen.left() + (screen.width() - dialog.width()) / 2.0)
-        y = int(screen.top() + (screen.height() - dialog.height()) / 2.0)
-        dialog.move(x, y)
-        dialog.show()
+        dlg = self._settings_dialog
+        x = int(screen.left() + (screen.width() - dlg.width()) / 2.0)
+        y = int(screen.top() + (screen.height() - dlg.height()) / 2.0)
+        dlg.move(x, y)
+        dlg.show()
+        dlg.raise_()
+        dlg.activateWindow()
+
+    def _on_settings_closed(self) -> None:
+        self._presence_hidden_for_settings = False
+        self._check_hover()
+
+    def _on_open_settings(self):
+        """Tray / externe Aufrufe – gleiche Toggle-Logik."""
+        if self._settings_dialog is not None and self._settings_dialog.isVisible():
+            self._settings_dialog.close()
+        else:
+            self._toggle_settings()
 
     def _on_quit_app(self):
         from PyQt6.QtWidgets import QApplication

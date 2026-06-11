@@ -4,7 +4,7 @@ Verwaltet die Event-Handler, Berechnungen und Signal-Kopplungen.
 Hält app.py schlank und unter 200 Zeilen.
 """
 
-from PyQt6.QtCore import QObject, QTimer
+from PyQt6.QtCore import QObject, QTimer, Qt
 from PyQt6.QtWidgets import QApplication
 from src.ui.island_states import IslandState
 from src.ui.polish_animator import PolishAnimator
@@ -40,12 +40,13 @@ class AppController(QObject):
 
     def connect_all(self):
         """Verknüpft alle Signale und Callbacks."""
-        self.app.signals.ready.connect(self._on_pipeline_ready)
-        self.app.signals.state_changed.connect(self._on_pipeline_state)
-        self.app.signals.result_ready.connect(self._on_pipeline_result)
-        self.app.signals.error_occurred.connect(self._on_pipeline_error)
-        self.app.signals.audio_level.connect(self._on_audio_level)
-        self.app.signals.partial_ready.connect(self._on_partial_result)
+        qc = Qt.ConnectionType.QueuedConnection
+        self.app.signals.ready.connect(self._on_pipeline_ready, qc)
+        self.app.signals.state_changed.connect(self._on_pipeline_state, qc)
+        self.app.signals.result_ready.connect(self._on_pipeline_result, qc)
+        self.app.signals.error_occurred.connect(self._on_pipeline_error, qc)
+        self.app.signals.audio_level.connect(self._on_audio_level, qc)
+        self.app.signals.partial_ready.connect(self._on_partial_result, qc)
 
         self.app.window.file_dropped_callback = self.app.pipeline.transcribe_audio_file
         self.app.window.url_dropped_callback = self._transcribe_media_url
@@ -192,7 +193,8 @@ class AppController(QObject):
         style_key = self.app.pipeline.session_style
         expanded = self.app.window.pill.expanded_widget
         expanded.set_active_style(style_key)
-        words = len(polished.split())
+        display_text = polished or self.current_corrected or raw
+        words = len(display_text.split())
         duration = self.app.pipeline.recording_duration
         wpm = int((words / duration) * 60) if duration > 0.5 else 0
         expanded.set_stats(words, wpm)
@@ -201,6 +203,10 @@ class AppController(QObject):
         self.usage_stats.record_dictation(words, wpm, duration)
         self._refresh_tray_tooltip()
         self._update_privacy_badge()
+
+        self.app.window.pill.set_expanded(display_text)
+        expanded.transcript_edit.setPlainText(display_text)
+        self.app.state_machine.transition_by_name("expanded")
 
         def _after_polish_animation() -> None:
             if config.auto_copy:

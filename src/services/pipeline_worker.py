@@ -43,11 +43,12 @@ class PipelineWorker:
         target_hwnd: Optional[int],
         style: Optional[str] = None,
         screen_context: Optional[str] = None,
+        live_fallback_text: Optional[str] = None,
     ) -> None:
         """Startet die Verarbeitung von Audiodaten in einem Daemon-Thread."""
         thread = threading.Thread(
             target=self._process_audio,
-            args=(audio_data, target_hwnd, style, screen_context),
+            args=(audio_data, target_hwnd, style, screen_context, live_fallback_text),
             daemon=True
         )
         thread.start()
@@ -72,11 +73,15 @@ class PipelineWorker:
         target_hwnd: Optional[int],
         style: Optional[str] = None,
         screen_context: Optional[str] = None,
+        live_fallback_text: Optional[str] = None,
     ) -> None:
         """Verarbeitet aufgezeichnete Audiodaten (Transkription, Korrektur, Polishing)."""
         try:
             dlog.write("PipelineWorker: Final-Transkription startet")
             raw_text = self.transcriber.transcribe(audio_data)
+            if (not raw_text or not raw_text.strip()) and live_fallback_text:
+                dlog.write(f"Final leer – nutze letztes Live-Partial ({len(live_fallback_text)} Zeichen)")
+                raw_text = live_fallback_text.strip()
             if not raw_text or not raw_text.strip():
                 dlog.end_dictation("FEHLER – keine Sprache erkannt (leerer Rohtext)")
                 dlog.write(
@@ -109,8 +114,8 @@ class PipelineWorker:
             dlog.end_dictation(
                 f"OK – raw={len(raw_text)} zeichen, final={len(final_text)} zeichen"
             )
+            # Expanded-UI wird in AppController._on_pipeline_result geöffnet (Race vermeiden)
             self.on_result(raw_text, final_text)
-            self.on_state_change("expanded")
 
         except Exception as e:
             dlog.write_exception("PipelineWorker Audio")

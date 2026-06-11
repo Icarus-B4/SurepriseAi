@@ -27,7 +27,7 @@ from .dictation_context_service import DictationContextService
 from . import dictation_logger as dlog
 
 # Live-Transkription: niedrige Latenz durch kurzes Polling und kleines Audiopuffer
-LIVE_POLL_INTERVAL_S = 0.15
+LIVE_POLL_INTERVAL_S = 0.45
 LIVE_MIN_SAMPLES = 3200       # ~0,2 s bei 16 kHz
 LIVE_MAX_SAMPLES = 16000 * 12  # Sliding Window: max. 12 s für schnelle Inferenz
 
@@ -62,6 +62,7 @@ class TranscriptionPipeline:
         self._stop_partial_thread = threading.Event()
         self.recording_start_time: float = 0.0
         self.recording_duration: float = 0.0
+        self._last_partial_text: str = ""
 
     def set_state_callback(self, cb: Callable[[str], None]) -> None:
         self._on_state_change = cb
@@ -111,6 +112,7 @@ class TranscriptionPipeline:
             )
             self.recording_start_time = time.time()
             self.recording_duration = 0.0
+            self._last_partial_text = ""
             resolved = resolve_style_for_hwnd(self._target_hwnd)
             self._session_style = resolved or config.selected_style
             self.dictation_context.capture_async(self._target_hwnd)
@@ -157,6 +159,7 @@ class TranscriptionPipeline:
             self._target_hwnd,
             style=self._session_style,
             screen_context=context,
+            live_fallback_text=self._last_partial_text or None,
         )
 
     def toggle(self) -> None:
@@ -222,6 +225,7 @@ class TranscriptionPipeline:
                 if text and text.strip() and text != last_text:
                     last_text = text
                     corrected = self.replacer.apply(text)
+                    self._last_partial_text = corrected
                     dlog.write(f"Live-Partial: '{corrected[:60]}'")
                     if self._on_partial:
                         self._on_partial(corrected)

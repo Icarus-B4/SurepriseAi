@@ -151,25 +151,13 @@ class TranscriptionService:
             return False
 
     def _init_partial_model(self) -> None:
-        """Lädt ein schnelles Whisper-Modell für Live-Zwischenergebnisse."""
+        """Live-Partials nutzen dasselbe Modell wie Final (konsistenter Text)."""
         if not WHISPER_AVAILABLE:
             return
-
-        main_size = config.get_str("whisper_model_size", "tiny")
-        if main_size == "tiny" and self._whisper_model is not None:
-            self._partial_whisper_model = self._whisper_model
-            return
-
-        try:
-            self._partial_whisper_model = WhisperModel(
-                "tiny",
-                device="cpu",
-                compute_type="int8",
-            )
-            print("[Transcription] Whisper 'tiny' für Live-Partials geladen OK")
-        except Exception as e:
-            print(f"[Transcription] Partial-Modell-Fehler: {e} – nutze Hauptmodell")
-            self._partial_whisper_model = self._whisper_model
+        self._partial_whisper_model = self._whisper_model
+        if self._partial_whisper_model is not None:
+            size = config.get_str("whisper_model_size", "tiny")
+            dlog.write(f"Live-Partial nutzt Hauptmodell whisper({size})")
 
     # ── Transkription ─────────────────────────────────────────────────────────
 
@@ -190,6 +178,10 @@ class TranscriptionService:
         peak = float(np.max(np.abs(audio)))
         if peak > 1.0:
             audio = audio / peak
+        elif peak > 0.001:
+            target = 0.85
+            if peak < target:
+                audio = audio * (target / peak)
         return np.ascontiguousarray(audio)
 
     def _active_engine_name(self) -> str:

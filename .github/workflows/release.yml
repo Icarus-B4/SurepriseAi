@@ -57,9 +57,9 @@ jobs:
 
             **Windows-Installer** – Doppelklick auf `SurepriseAi-Setup.exe`.
 
-            ### Neu in v0.1.20
-            - **Fix: „Keine Sprache erkannt“** – VAD filterte Diktat weg; Whisper ohne VAD + Parakeet-Fallback
-            - **Diktat-Diagnose-Log:** `Desktop\SurepriseAi-Diktat.log` und `%APPDATA%\SurepriseAi\dictation.log`
-            - Doppelklick auf Island öffnet wieder Einstellungen (README-konform)
+            ### Neu in v0.1.21
+            - **Fix: Leere Anzeige trotz Transkription** – Race zwischen Expanded-UI und Ergebnis behoben
+            - **Einstellungen:** Doppelklick öffnet/schließt ein Fenster (kein Mehrfach-Öffnen)
+            - **Bessere Erkennung:** Audio-Normalisierung, Live+Final nutzen dasselbe Whisper-Modell
 
-            Vollständiges Changelog: https://github.com/Icarus-B4/SurepriseAi/compare/v0.1.19...${{ github.ref_name }}
+            Vollständiges Changelog: https://github.com/Icarus-B4/SurepriseAi/compare/v0.1.20...${{ github.ref_name }}
