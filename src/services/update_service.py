@@ -136,9 +136,15 @@ def APP_UA() -> str:
 
 
 def _pick_installer_asset(assets: list) -> Optional[str]:
-    """Sucht ein Setup-EXE oder ZIP im Release."""
+    """Sucht Setup-EXE bevorzugt, sonst ZIP im Release."""
+    zip_url: Optional[str] = None
     for asset in assets:
         name = str(asset.get("name", "")).lower()
-        if name.endswith(".exe") or name.endswith(".zip"):
-            return str(asset.get("browser_download_url", "")) or None
-    return None
+        url = str(asset.get("browser_download_url", "")) or None
+        if not url:
+            continue
+        if name.endswith(".exe"):
+            return url
+        if name.endswith(".zip") and zip_url is None:
+            zip_url = url
+    return zip_url

@@ -334,6 +334,11 @@ class AppController(QObject):
         return False
 
     def shutdown(self):
+        try:
+            from src.services import update_logger
+            update_logger.write("AppController.shutdown() gestartet")
+        except Exception:
+            pass
         self.app.outside_click.stop()
         self.app.hotkey.stop()
         if self.app.pipeline.is_recording:
@@ -344,3 +349,8 @@ class AppController(QObject):
         self.app.toast.close()
         self.app.tray.hide()
         self.app.app.quit()
+        try:
+            from src.services import update_logger
+            update_logger.write("AppController.shutdown() → app.quit() aufgerufen")
+        except Exception:
+            pass

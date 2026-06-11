@@ -57,7 +57,8 @@ jobs:
 
             **Windows-Installer** – Doppelklick auf `SurepriseAi-Setup.exe`.
 
-            ### Neu in v0.1.9
-            - **Auto-Update-Fix:** Installer startet nach dem Download wieder automatisch (stille NSIS-Installation, App beendet sich danach)
+            ### Neu in v0.1.10
+            - **Auto-Update-Diagnose:** Log-Datei auf dem Desktop (`SurepriseAi-Update.log`) + verbesserter Installer-Start (ShellExecute)
+            - **Auto-Update-Fix:** Installer startet vor App-Exit (aus v0.1.9)
 
-            Vollständiges Changelog: https://github.com/Icarus-B4/SurepriseAi/compare/v0.1.8...${{ github.ref_name }}
+            Vollständiges Changelog: https://github.com/Icarus-B4/SurepriseAi/compare/v0.1.9...${{ github.ref_name }}
