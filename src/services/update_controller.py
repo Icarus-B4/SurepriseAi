@@ -16,7 +16,7 @@ from src.services import update_logger
 from src.services.config_service import config
 from src.services.update_service import UpdateCheckResult, UpdateInfo, UpdateService
 from src.services.update_downloader import download_release_asset
-from src.services.update_installer import launch_update_installer
+from src.services.update_installer import cleanup_desktop_update_artifacts, launch_update_installer
 from src.services import update_state
 from src.version import GITHUB_REPO, __version__
 
@@ -66,7 +66,9 @@ class UpdateController:
         self._pending_info: Optional[UpdateInfo] = None
         qt_app = app.app if hasattr(app, "app") else None
         self._signals = UpdateSignals(self, parent=qt_app)
+        cleanup_desktop_update_artifacts()
         update_logger.write_session_header("UpdateController initialisiert")
+        cleanup_desktop_update_artifacts()
         update_state.reconcile_pending()
 
     def schedule_startup_check(self) -> None:

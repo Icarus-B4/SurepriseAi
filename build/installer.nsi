@@ -1,5 +1,5 @@
-; SurepriseAi – NSIS Installer (Hermes Desktop: electron-builder → NSIS)
-; oneClick: false, allowToChangeInstallationDirectory: true, perMachine: false
+; SurepriseAi – NSIS Installer
+; Nutzerdaten: %APPDATA%\SurepriseAi (Config, Historie) – wird bei Deinstallation NICHT gelöscht.
 
 !include "MUI2.nsh"
 !include "Sections.nsh"
@@ -12,6 +12,7 @@
 !define APP_PUBLISHER "SurepriseAi"
 !define APP_EXE "SurepriseAi.exe"
 !define APP_URL "https://github.com/Icarus-B4/SurepriseAi"
+!define PREFS_KEY "Software\${APP_PUBLISHER}\Prefs"
 
 InstallDir "$LOCALAPPDATA\Programs\${APP_NAME}"
 InstallDirRegKey HKCU "Software\${APP_PUBLISHER}\${APP_NAME}" "InstallPath"
@@ -57,13 +58,13 @@ Function .onInit
   Call ConfigureSilentSections
 FunctionEnd
 
-; Kein Auto-Start nach Silent-Install – verhindert Update-Schleife bei fehlgeschlagener Installation.
-; Neustart übernimmt der Batch-Launcher (nur bei NSIS exit=0) oder MUI Finish (Wizard).
-
 Function un.onInit
+  ; Stille Deinstallation (/S) ohne Dialog – wichtig für Auto-Update
+  IfSilent un_silent
   MessageBox MB_ICONQUESTION|MB_YESNO|MB_DEFBUTTON2 \
-    "Möchten Sie ${APP_NAME} vollständig deinstallieren?" IDYES +2
+    "Möchten Sie ${APP_NAME} vollständig deinstallieren?$\r$\n$\r$\nIhre Einstellungen und Historie in AppData bleiben erhalten." IDYES +2
   Abort
+  un_silent:
 FunctionEnd
 
 Section "!Hauptprogramm" SecMain
@@ -99,11 +100,13 @@ SectionEnd
 
 Section "Desktop-Verknüpfung" SecDesktop
   CreateShortCut "$DESKTOP\${APP_NAME}.lnk" "$INSTDIR\${APP_EXE}" "" "$INSTDIR\SurepriseAi.ico"
+  WriteRegDWORD HKCU "${PREFS_KEY}" "WantDesktop" 1
 SectionEnd
 
 Section "Mit Windows starten" SecAutostart
   WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Run" \
     "${APP_NAME}" '"$INSTDIR\${APP_EXE}"'
+  WriteRegDWORD HKCU "${PREFS_KEY}" "WantAutostart" 1
 SectionEnd
 
 !insertmacro MUI_FUNCTION_DESCRIPTION_BEGIN
@@ -112,22 +115,35 @@ SectionEnd
   !insertmacro MUI_DESCRIPTION_TEXT ${SecAutostart} $(DESC_SecAutostart)
 !insertmacro MUI_FUNCTION_DESCRIPTION_END
 
-; Nach Section-Definitionen – SecDesktop/SecAutostart sind hier bekannt
 Function ConfigureSilentSections
   IfSilent 0 silent_done
-    IfFileExists "$DESKTOP\${APP_NAME}.lnk" 0 +2
+    ReadRegDWORD $R0 HKCU "${PREFS_KEY}" "WantDesktop"
+    IntCmp $R0 1 0 +2
       SectionSetFlags ${SecDesktop} ${SF_SELECTED}
-    ReadRegStr $1 HKCU "Software\Microsoft\Windows\CurrentVersion\Run" "${APP_NAME}"
-    StrCmp $1 "" silent_done 0
+    ReadRegDWORD $R0 HKCU "${PREFS_KEY}" "WantAutostart"
+    IntCmp $R0 1 0 silent_done
       SectionSetFlags ${SecAutostart} ${SF_SELECTED}
   silent_done:
 FunctionEnd
 
 Section "Uninstall"
+  ; Einstellungen für Neuinstallation merken (liegt außerhalb des Programmordners)
+  IfFileExists "$DESKTOP\${APP_NAME}.lnk" 0 +3
+    WriteRegDWORD HKCU "${PREFS_KEY}" "WantDesktop" 1
+    Goto +2
+  WriteRegDWORD HKCU "${PREFS_KEY}" "WantDesktop" 0
+
+  ReadRegStr $0 HKCU "Software\Microsoft\Windows\CurrentVersion\Run" "${APP_NAME}"
+  StrCmp $0 "" +3 0
+    WriteRegDWORD HKCU "${PREFS_KEY}" "WantAutostart" 1
+    Goto +2
+  WriteRegDWORD HKCU "${PREFS_KEY}" "WantAutostart" 0
+
+  ; Nur Programm entfernen – %APPDATA%\SurepriseAi (Config, Historie) bleibt!
   DeleteRegKey HKCU "Software\Microsoft\Windows\CurrentVersion\Run\${APP_NAME}"
   Delete "$DESKTOP\${APP_NAME}.lnk"
   RMDir /r "$SMPROGRAMS\${APP_NAME}"
   RMDir /r "$INSTDIR"
   DeleteRegKey HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_NAME}"
-  DeleteRegKey HKCU "Software\${APP_PUBLISHER}\${APP_NAME}"
+  DeleteRegValue HKCU "Software\${APP_PUBLISHER}\${APP_NAME}" "InstallPath"
 SectionEnd
