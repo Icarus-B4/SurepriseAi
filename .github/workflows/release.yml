@@ -57,14 +57,9 @@ jobs:
 
             **Windows-Installer** – Doppelklick auf `SurepriseAi-Setup.exe`.
 
-            ### Neu
-            - Auto-Update: Thread-sicherer Tray-Check, API-Fallback, SSL/certifi
-            - Fehlermeldung statt stiller „Bereits aktuell“-Meldung bei API-Problemen
+            ### Neu in v0.1.8
+            - **Presence-Bar Auto-Hide (Cinema-Modus):** nur in der oberen Trigger-Zone sichtbar, nach 5 Sekunden ausblenden; in den Einstellungen abschaltbar
+            - **Klick außerhalb:** schließt die Expanded-Ansicht wie der ✕-Button (zuverlässig auch beim wiederholten Öffnen)
+            - **Einstellungen:** einheitliche Typografie (Segoe UI) und verbessertes Stylesheet
 
-            ### Update testen
-            1. Ältere Version installiert lassen (z. B. v0.1.1)
-            2. Tray → **Nach Updates suchen…**
-            3. Toast „Update verfügbar!“ → Download nach `%USERPROFILE%\Downloads`
-            4. Setup startet automatisch
-
-            Vollständiges Changelog: https://github.com/Icarus-B4/SurepriseAi/compare/v0.1.1...${{ github.ref_name }}
+            Vollständiges Changelog: https://github.com/Icarus-B4/SurepriseAi/compare/v0.1.7...${{ github.ref_name }}

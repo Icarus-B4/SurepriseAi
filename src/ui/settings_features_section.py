@@ -7,7 +7,6 @@ from typing import Callable
 
 from PyQt6.QtWidgets import QVBoxLayout, QLabel, QLineEdit, QPushButton
 
-from src.ui.design_tokens import Colors, Typography
 from src.ui.toggle_switch import ToggleRow
 from src.services.config_service import config
 
@@ -47,6 +46,7 @@ def add_features_section(
         layout.addWidget(row)
         return row
 
+    _toggle("Presence-Bar Auto-Hide (nur oben, 5 s)", "enable_presence_bar")
     _toggle("Windows-Akzentfarbe verwenden", "use_windows_accent")
     _toggle("Privacy-Badge in Idle-Pill", "show_privacy_badge")
     _toggle("Mini-FAB (schwebender Mic-Button)", "enable_mini_fab")
@@ -75,9 +75,8 @@ def add_features_section(
         "Liest beim Diktatstart markierten Text und/oder OCR aus dem aktiven Fenster – "
         "hilft Ollama bei Eigennamen und Fachbegriffen. Alles lokal."
     )
+    ctx_hint.setObjectName("HintLabel")
     ctx_hint.setWordWrap(True)
-    ctx_hint.setFont(Typography.get_font(Typography.TINY))
-    ctx_hint.setStyleSheet(f"color: {Colors.TEXT_TERTIARY_HEX};")
     layout.addWidget(ctx_hint)
 
     add_section(layout, "App-Modi", "🪟")
@@ -85,9 +84,8 @@ def add_features_section(
     layout.addWidget(modes_row)
 
     modes_hint = QLabel("Fenster/Prozess = Stil, z. B. OUTLOOK=formal, slack=business")
+    modes_hint.setObjectName("HintLabel")
     modes_hint.setWordWrap(True)
-    modes_hint.setFont(Typography.get_font(Typography.TINY))
-    modes_hint.setStyleSheet(f"color: {Colors.TEXT_TERTIARY_HEX};")
     layout.addWidget(modes_hint)
 
     modes_edit = QLineEdit()

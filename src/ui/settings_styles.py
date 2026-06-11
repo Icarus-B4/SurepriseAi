@@ -1,6 +1,7 @@
 """
 settings_styles.py
 QSS-Stile für das Einstellungsfenster (Glassmorphism, Toggles, Inputs).
+Typografie ausschließlich über Design-Tokens – keine gemischten px/pt-Werte.
 """
 
 from src.ui.design_tokens import Colors, Typography
@@ -10,6 +11,8 @@ GLASS_BG = "rgba(22, 22, 28, 0.96)"
 GLASS_BORDER = "rgba(255, 255, 255, 0.12)"
 GLASS_ELEVATED = "rgba(36, 36, 44, 0.92)"
 
+_FONT = Typography.FONT_FAMILY
+
 
 def settings_stylesheet() -> str:
     """Gesamtes QSS für das Settings-Fenster."""
@@ -18,18 +21,49 @@ def settings_stylesheet() -> str:
             background-color: {GLASS_BG};
             border: 1px solid {GLASS_BORDER};
             border-radius: 16px;
-        }}
-        QLabel {{
+            font-family: "{_FONT}";
+            font-size: {Typography.SMALL}pt;
             color: {Colors.TEXT_PRIMARY_HEX};
-            font-family: "{Typography.FONT_FAMILY}";
+        }}
+
+        QLabel {{
+            font-family: "{_FONT}";
             background: transparent;
         }}
+
+        QLabel#SettingsWindowTitle {{
+            color: {Colors.TEXT_PRIMARY_HEX};
+            font-size: {Typography.MEDIUM}pt;
+            font-weight: 700;
+        }}
+
         QLabel#SectionTitle {{
             color: {Colors.TEXT_SECONDARY_HEX};
+            font-size: {Typography.SMALL}pt;
             font-weight: 600;
-            letter-spacing: 0.4px;
-            padding-top: 4px;
+            letter-spacing: 0.6px;
+            padding-top: 2px;
         }}
+
+        QLabel#SectionIcon {{
+            color: {Colors.ACCENT_BRIGHT_HEX};
+            font-size: {Typography.SMALL}pt;
+        }}
+
+        QLabel#FieldLabel,
+        QLabel#ToggleLabel {{
+            color: {Colors.TEXT_PRIMARY_HEX};
+            font-size: {Typography.SMALL}pt;
+            font-weight: 400;
+        }}
+
+        QLabel#HintLabel {{
+            color: {Colors.TEXT_TERTIARY_HEX};
+            font-size: {Typography.TINY}pt;
+            font-weight: 400;
+            line-height: 1.35;
+        }}
+
         QFrame#SectionDivider {{
             background: {Colors.BORDER_HEX};
             max-height: 1px;
@@ -68,9 +102,9 @@ def settings_stylesheet() -> str:
             color: {Colors.TEXT_PRIMARY_HEX};
             border: 1px solid {Colors.BORDER_HEX};
             border-radius: 8px;
-            padding: 9px 12px;
-            font-family: "{Typography.FONT_FAMILY}";
-            font-size: 13px;
+            padding: 8px 12px;
+            font-family: "{_FONT}";
+            font-size: {Typography.SMALL}pt;
             min-height: 20px;
         }}
         QComboBox {{
@@ -78,9 +112,9 @@ def settings_stylesheet() -> str:
             color: {Colors.TEXT_PRIMARY_HEX};
             border: 1px solid {Colors.BORDER_HEX};
             border-radius: 8px;
-            padding: 9px 32px 9px 12px;
-            font-family: "{Typography.FONT_FAMILY}";
-            font-size: 13px;
+            padding: 8px 32px 8px 12px;
+            font-family: "{_FONT}";
+            font-size: {Typography.SMALL}pt;
             min-height: 20px;
         }}
         QComboBox:focus, QLineEdit:focus {{
@@ -110,6 +144,8 @@ def settings_stylesheet() -> str:
             border: 1px solid {Colors.BORDER_HEX};
             border-radius: 8px;
             padding: 4px;
+            font-family: "{_FONT}";
+            font-size: {Typography.SMALL}pt;
             selection-background-color: {Colors.ACCENT_DARK_HEX};
         }}
 
@@ -119,7 +155,8 @@ def settings_stylesheet() -> str:
             border: 1px solid {Colors.BORDER_HEX};
             border-radius: 8px;
             padding: 10px 14px;
-            font-family: "{Typography.FONT_FAMILY}";
+            font-family: "{_FONT}";
+            font-size: {Typography.SMALL}pt;
             font-weight: 600;
         }}
         QPushButton:hover {{
@@ -130,7 +167,9 @@ def settings_stylesheet() -> str:
             background: transparent;
             border: none;
             color: {Colors.TEXT_SECONDARY_HEX};
-            font-size: 14px;
+            font-family: "Segoe UI Symbol";
+            font-size: {Typography.BODY}pt;
+            font-weight: 400;
             padding: 4px;
         }}
         QPushButton#CloseButton:hover {{

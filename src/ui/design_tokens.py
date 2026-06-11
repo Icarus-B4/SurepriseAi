@@ -11,7 +11,7 @@ from PyQt6.QtCore import QPoint
 # ── Windows Fluent Icons (Segoe MDL2 Assets / Segoe Fluent Icons) ─────────────
 # Nutzt die nativen System-Icon-Fonts von Windows für perfekten Windows-Look.
 class FluentIcons:
-    FONT_FAMILY = "Segoe UI Symbol, Segoe UI, sans-serif"
+    FONT_FAMILY = "Segoe UI Symbol"
     
     MICROPHONE = "🎙"
     SETTINGS   = "⚙"
@@ -98,9 +98,9 @@ class Spacing:
 # ── Typography ────────────────────────────────────────────────────────────────
 
 class Typography:
-    FONT_FAMILY = "Segoe UI Variable Display, Segoe UI, sans-serif"
+    FONT_FAMILY = "Segoe UI"
 
-    # Schriftgrößen
+    # Schriftgrößen (pt) – eine Skala für die gesamte App
     TINY   = 10
     SMALL  = 12
     BODY   = 14
@@ -110,14 +110,15 @@ class Typography:
 
     @classmethod
     def get_font(cls, size: int, bold: bool = False) -> QFont:
-        font = QFont(cls.FONT_FAMILY, size)
-        if bold:
-            font.setBold(True)
+        font = QFont(cls.FONT_FAMILY)
+        font.setPointSize(size)
+        font.setBold(bold)
         return font
 
     @classmethod
     def get_icon_font(cls, size: int) -> QFont:
-        font = QFont(FluentIcons.FONT_FAMILY, size)
+        font = QFont("Segoe UI Symbol")
+        font.setPointSize(size)
         return font
 
 # ── Dynamic Island Dimensionen ────────────────────────────────────────────────
@@ -128,9 +129,12 @@ class IslandSize:
     IDLE_HEIGHT = 44
 
     # Presence-Bar (kollabierte Dynamic Island, immer sichtbar im Idle)
-    PRESENCE_WIDTH  = 118
-    PRESENCE_HEIGHT = 11
-    PRESENCE_TOP_Y  = 4
+    PRESENCE_WIDTH          = 118
+    PRESENCE_HEIGHT         = 11
+    PRESENCE_TOP_Y          = 4
+    PRESENCE_IDLE_TIMEOUT_S = 5.0
+    PRESENCE_TRIGGER_HALF_W = 250
+    PRESENCE_TRIGGER_MAX_Y  = 120
 
     # RECORDING: Expandierte Pill mit Waveform
     RECORDING_WIDTH  = 360

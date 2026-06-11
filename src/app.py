@@ -13,6 +13,7 @@ from src.ui.toast_notification import ToastNotification
 from src.ui.island_states import IslandState, IslandStateMachine
 from src.services.transcription_pipeline import TranscriptionPipeline
 from src.services.hotkey_service import HotkeyService
+from src.services.outside_click_service import OutsideClickService, OutsideClickBridge
 from src.services.config_service import config
 from src.services.app_controller import AppController
 from src.ui.tray_icon import SurepriseTrayIcon
@@ -42,6 +43,8 @@ class SurepriseApp:
         self.signals = PipelineSignals()
         self.pipeline = TranscriptionPipeline()
         self.hotkey = HotkeyService()
+        self.outside_click_bridge = OutsideClickBridge()
+        self.outside_click = OutsideClickService(self.outside_click_bridge)
         self.state_machine = IslandStateMachine()
 
         # UI & Tray
@@ -61,6 +64,9 @@ class SurepriseApp:
         self.pipeline.initialize_async(on_ready=self.signals.ready.emit)
         if config.hotkey_enabled:
             self.hotkey.start()
+
+        self.outside_click_bridge.clicked.connect(self.controller.handle_outside_click)
+        self.outside_click.start()
 
         self._sync_mini_fab_at_start()
 

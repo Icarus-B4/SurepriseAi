@@ -34,12 +34,12 @@ class IslandPill(QFrame):
             QLabel {{
                 color: {Colors.TEXT_PRIMARY_HEX};
                 font-family: "{Typography.FONT_FAMILY}";
-                font-size: 13px;
+                font-size: {Typography.SMALL}pt;
                 background: transparent;
             }}
             QLabel#IconLabel {{
                 font-family: "{FluentIcons.FONT_FAMILY}";
-                font-size: 14px;
+                font-size: {Typography.BODY}pt;
                 color: {Colors.TEXT_SECONDARY_HEX};
             }}
         """)
@@ -282,12 +282,12 @@ class IslandPill(QFrame):
             QLabel {{
                 color: {Colors.TEXT_PRIMARY_HEX};
                 font-family: "{Typography.FONT_FAMILY}";
-                font-size: 13px;
+                font-size: {Typography.SMALL}pt;
                 background: transparent;
             }}
             QLabel#IconLabel {{
                 font-family: "{FluentIcons.FONT_FAMILY}";
-                font-size: 14px;
+                font-size: {Typography.BODY}pt;
                 color: {Colors.TEXT_SECONDARY_HEX};
             }}
         """)

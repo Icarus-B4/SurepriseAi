@@ -28,6 +28,7 @@ _DEFAULTS: dict[str, Any] = {
     "global_hotkey":           "f8",
     "enable_global_hotkey":    True,
     "enable_dynamic_island":   True,
+    "enable_presence_bar":     True,
     "dynamic_island_position": "top_center",
     "accent_color":            "indigo",
     "font_family":             "segoe_ui",

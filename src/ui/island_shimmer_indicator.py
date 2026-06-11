@@ -1,6 +1,7 @@
 """
 island_shimmer_indicator.py
 Kompakte Presence-Bar mit Shimmer-Animation – zeigt an, dass die Dynamic Island aktiv ist.
+Sichtbarkeit und Auto-Hide steuert dynamic_island.py (Parent).
 """
 
 from PyQt6.QtWidgets import QWidget

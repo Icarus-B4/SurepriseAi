@@ -7,7 +7,7 @@ from PyQt6.QtWidgets import QWidget, QHBoxLayout, QLabel
 from PyQt6.QtCore import Qt, pyqtSignal, QPropertyAnimation, QEasingCurve, pyqtProperty
 from PyQt6.QtGui import QPainter, QColor
 
-from src.ui.design_tokens import Colors, Typography, AnimationTokens
+from src.ui.design_tokens import Colors, AnimationTokens
 
 # Feste Toggle-Farben – Einstellungen bleiben visuell konsistent (kein Windows-Gelb)
 _TRACK_OFF = QColor("#3A3A42")
@@ -107,8 +107,7 @@ class ToggleRow(QWidget):
         row.setSpacing(12)
 
         lbl = QLabel(label)
-        lbl.setFont(Typography.get_font(13))
-        lbl.setStyleSheet(f"color: {Colors.TEXT_SECONDARY_HEX}; background: transparent;")
+        lbl.setObjectName("ToggleLabel")
         lbl.setWordWrap(True)
 
         row.addWidget(lbl, stretch=1)

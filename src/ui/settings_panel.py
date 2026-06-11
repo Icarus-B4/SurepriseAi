@@ -12,7 +12,7 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import Qt, QPoint, QRectF, pyqtSignal
 from PyQt6.QtGui import QColor, QPainterPath, QRegion
 
-from src.ui.design_tokens import Colors, Typography, FluentIcons
+from src.ui.design_tokens import FluentIcons
 from src.ui.settings_styles import settings_stylesheet
 from src.ui.settings_features_section import add_features_section
 from src.ui.toggle_switch import ToggleRow
@@ -60,7 +60,7 @@ class SettingsWindow(QDialog):
 
         header = QHBoxLayout()
         title = QLabel("Einstellungen")
-        title.setFont(Typography.get_font(Typography.MEDIUM, bold=True))
+        title.setObjectName("SettingsWindowTitle")
 
         close_btn = QPushButton(FluentIcons.CLOSE)
         close_btn.setObjectName("CloseButton")
@@ -76,10 +76,8 @@ class SettingsWindow(QDialog):
         scroll.setWidgetResizable(True)
         scroll.setFrameShape(QFrame.Shape.NoFrame)
         scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
-        scroll.setStyleSheet("QScrollArea { background: transparent; border: none; }")
 
         content = QWidget()
-        content.setStyleSheet("background: transparent;")
         scroll_layout = QVBoxLayout(content)
         scroll_layout.setContentsMargins(0, 2, 10, 8)
         scroll_layout.setSpacing(14)
@@ -145,9 +143,12 @@ class SettingsWindow(QDialog):
         if not island or not getattr(island, "_presence_hidden_for_settings", False):
             return
         island._presence_hidden_for_settings = False
-        if (island.state_machine.is_idle or island.state_machine.is_basics) and not island._idle_revealed:
-            island._position_presence_bar()
-            island.presence_bar.start()
+        if island.state_machine.is_idle or island.state_machine.is_basics:
+            if config.get_bool("enable_presence_bar", True):
+                island._check_hover()
+            elif not island._idle_revealed:
+                island._position_presence_bar()
+                island.presence_bar.start()
 
     def _add_section(self, layout: QVBoxLayout, title: str, icon: str) -> None:
         divider = QFrame()
@@ -159,11 +160,9 @@ class SettingsWindow(QDialog):
         row = QHBoxLayout()
         row.setSpacing(6)
         icon_lbl = QLabel(icon)
-        icon_lbl.setFont(Typography.get_font(Typography.SMALL))
-        icon_lbl.setStyleSheet(f"color: {Colors.ACCENT_BRIGHT_HEX}; background: transparent;")
+        icon_lbl.setObjectName("SectionIcon")
         title_lbl = QLabel(title.upper())
         title_lbl.setObjectName("SectionTitle")
-        title_lbl.setFont(Typography.get_font(Typography.TINY, bold=True))
         row.addWidget(icon_lbl)
         row.addWidget(title_lbl)
         row.addStretch()
@@ -177,8 +176,7 @@ class SettingsWindow(QDialog):
 
     def _add_dropdown(self, layout: QVBoxLayout, label: str, key: str, options: list) -> QComboBox:
         lbl = QLabel(label)
-        lbl.setFont(Typography.get_font(Typography.TINY))
-        lbl.setStyleSheet(f"color: {Colors.TEXT_SECONDARY_HEX}; margin-bottom: 2px;")
+        lbl.setObjectName("FieldLabel")
         cb = QComboBox()
         cb.addItems(options)
         cb.setCurrentText(config.get_str(key))
@@ -189,8 +187,7 @@ class SettingsWindow(QDialog):
 
     def _add_text_field(self, layout: QVBoxLayout, label: str, key: str) -> QLineEdit:
         lbl = QLabel(label)
-        lbl.setFont(Typography.get_font(Typography.TINY))
-        lbl.setStyleSheet(f"color: {Colors.TEXT_SECONDARY_HEX};")
+        lbl.setObjectName("FieldLabel")
         le = QLineEdit()
         le.setText(config.get_str(key))
         le.textChanged.connect(lambda val: config.set(key, val))
@@ -200,8 +197,7 @@ class SettingsWindow(QDialog):
 
     def _add_list_field(self, layout: QVBoxLayout, label: str, key: str) -> QLineEdit:
         lbl = QLabel(label)
-        lbl.setFont(Typography.get_font(Typography.TINY))
-        lbl.setStyleSheet(f"color: {Colors.TEXT_SECONDARY_HEX};")
+        lbl.setObjectName("FieldLabel")
         le = QLineEdit()
         le.setText(", ".join(config.get_list(key)))
 

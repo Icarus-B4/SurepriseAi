@@ -70,6 +70,8 @@ class AppController(QObject):
         expanded.style_clicked.connect(self._on_style_changed)
         expanded.url_import_clicked.connect(self._open_url_dialog)
 
+        self.app.window.outside_dismiss_callback = self._close_expanded
+
         self.app.state_machine.add_listener(self._on_internal_state_changed)
 
         self.app.pipeline.set_state_callback(self.app.signals.state_changed.emit)
@@ -268,6 +270,7 @@ class AppController(QObject):
     def _close_expanded(self):
         """Schließt Expanded und setzt die Island an die Startposition (oben zentriert)."""
         self.app.window.reset_to_start_position()
+        self.app.window.prepare_after_expanded_dismiss()
         self.app.state_machine.transition_to(IslandState.IDLE)
 
     def _copy_expanded_text(self):
@@ -297,7 +300,41 @@ class AppController(QObject):
             self.app.window._fade_to(1.0)
             self.app.window.is_hovered = True
 
+    def handle_outside_click(self, global_x: int, global_y: int) -> None:
+        """Schließt/einklappt die Island bei Linksklick außerhalb der sichtbaren UI."""
+        window = self.app.window
+        if self._global_click_hits_auxiliary_window(global_x, global_y):
+            return
+        if not window.should_dismiss_for_global_click(global_x, global_y):
+            return
+
+        sm = self.app.state_machine
+        if sm.is_expanded:
+            self._close_expanded()
+            return
+        if sm.is_success:
+            sm.transition_to(IslandState.IDLE)
+        window.collapse_from_outside_click()
+
+    def _global_click_hits_auxiliary_window(self, global_x: int, global_y: int) -> bool:
+        skip = {self.app.window, self.app.toast}
+        overlay = getattr(self.app.window, "_outside_overlay", None)
+        if overlay is not None:
+            skip.add(overlay)
+        if getattr(self.app, "mini_fab", None):
+            skip.add(self.app.mini_fab)
+        if self._history_dialog and self._history_dialog.isVisible():
+            skip.add(self._history_dialog)
+
+        for widget in QApplication.topLevelWidgets():
+            if not widget.isVisible() or widget in skip:
+                continue
+            if widget.geometry().contains(global_x, global_y):
+                return True
+        return False
+
     def shutdown(self):
+        self.app.outside_click.stop()
         self.app.hotkey.stop()
         if self.app.pipeline.is_recording:
             self.app.pipeline.stop_recording()

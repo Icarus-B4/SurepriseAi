@@ -23,6 +23,13 @@ class RuntimeSettingsHandler:
                 self.refresh_ui_accent()
         if key in ("enable_mini_fab", ""):
             self.sync_mini_fab()
+        if key in ("enable_presence_bar", ""):
+            self.sync_presence_bar()
+
+    def sync_presence_bar(self) -> None:
+        window = self.app.window
+        if window.state_machine.is_idle or window.state_machine.is_basics:
+            window._check_hover()
 
     def check_accent_changed(self) -> None:
         if not config.get_bool("use_windows_accent", True):
