@@ -57,8 +57,8 @@ jobs:
 
             **Windows-Installer** – Doppelklick auf `SurepriseAi-Setup.exe`.
 
-            ### Neu in v0.1.11
-            - **Auto-Update-Fix:** verzögerter Batch-Launcher wartet bis die App geschlossen ist, dann stille NSIS-Installation + Neustart
-            - Desktop-Log `SurepriseAi-Update.log` protokolliert jeden Schritt
+            ### Neu in v0.1.12
+            - **Update-Schleife behoben:** Pending-Marker blockiert erneute Downloads; Batch beendet SurepriseAi.exe per taskkill vor NSIS /S
+            - NSIS: SetOverwrite on; Desktop-Log zeigt NSIS exit-Code
 
-            Vollständiges Changelog: https://github.com/Icarus-B4/SurepriseAi/compare/v0.1.10...${{ github.ref_name }}
+            Vollständiges Changelog: https://github.com/Icarus-B4/SurepriseAi/compare/v0.1.11...${{ github.ref_name }}

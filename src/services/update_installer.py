@@ -11,13 +11,12 @@ from pathlib import Path
 from src.services import update_logger
 from src.utils.app_paths import install_root, is_frozen
 
-_BATCH_WAIT_PINGS = 4  # ~3 s – App beendet sich, EXE wird freigegeben
+_DESKTOP_LOG = r"%USERPROFILE%\Desktop\SurepriseAi-Update.log"
 
 
 def launch_update_installer(setup_path: Path) -> None:
     """
-    Führt das Setup aus.
-    Installierte App: verzögerter Batch-Launcher → NSIS /S, Neustart via installer.nsi.
+    Installierte App: Batch beendet SurepriseAi.exe, wartet, startet NSIS /S.
     Dev (run.py): normaler Wizard.
     """
     path = Path(setup_path)
@@ -37,28 +36,27 @@ def launch_update_installer(setup_path: Path) -> None:
 
     inst = str(install_root())
     update_logger.write(f"Silent-Install Ziel: {inst}")
-
-    if os.name == "nt":
-        _launch_windows_delayed_batch(path, inst)
-    else:
-        cmd = [str(path), "/S", f"/D={inst}"]
-        proc = subprocess.Popen(cmd, close_fds=True)
-        update_logger.write(f"Popen PID={proc.pid}")
+    _launch_windows_update_batch(path, inst)
 
 
-def _launch_windows_delayed_batch(setup: Path, inst_dir: str) -> None:
+def _launch_windows_update_batch(setup: Path, inst_dir: str) -> None:
     """
-    Schreibt eine Batch-Datei, wartet kurz und startet NSIS /S.
-    Zuverlässiger als direkter Aufruf aus der laufenden PyInstaller-EXE
-    (EXE ist dann bereits geschlossen, NSIS kann überschreiben).
+    Batch: taskkill → Wartezeit → NSIS /S → Log Exit-Code.
+    Kein App-shutdown nötig – taskkill beendet die laufende Instanz.
     """
     bat_path = Path(tempfile.gettempdir()) / f"sureprise_update_{os.getpid()}.bat"
     setup_str = str(setup.resolve())
+    log = _DESKTOP_LOG
     lines = [
         "@echo off",
-        f"ping 127.0.0.1 -n {_BATCH_WAIT_PINGS} >nul",
+        f'echo [%date% %time%] Batch-Update gestartet >> "{log}"',
+        f'echo   Setup={setup_str} >> "{log}"',
+        f'echo   INSTDIR={inst_dir} >> "{log}"',
+        "taskkill /IM SurepriseAi.exe /F >> \"%USERPROFILE%\\Desktop\\SurepriseAi-Update.log\" 2>&1",
+        "ping 127.0.0.1 -n 4 >nul",
+        f'echo [%date% %time%] NSIS /S startet >> "{log}"',
         f'"{setup_str}" /S /D={inst_dir}',
-        'if errorlevel 1 echo SurepriseAi Update fehlgeschlagen >> "%USERPROFILE%\\Desktop\\SurepriseAi-Update.log"',
+        f'echo [%date% %time%] NSIS exit=%ERRORLEVEL% >> "{log}"',
         'del /f /q "%~f0" 2>nul',
     ]
     bat_path.write_text("\r\n".join(lines) + "\r\n", encoding="utf-8")
@@ -66,44 +64,10 @@ def _launch_windows_delayed_batch(setup: Path, inst_dir: str) -> None:
     for line in lines:
         update_logger.write(f"  {line}")
 
-    try:
-        os.startfile(str(bat_path))
-        update_logger.write("Batch via os.startfile gestartet")
-        return
-    except Exception:
-        update_logger.write_exception("os.startfile Batch")
-
-    _launch_windows_shell_execute(setup, inst_dir)
-
-
-def _launch_windows_shell_execute(setup: Path, inst_dir: str) -> None:
-    """Fallback: ShellExecuteW, dann Popen."""
-    params = f'/S /D={inst_dir}'
-    cmd = [str(setup), "/S", f"/D={inst_dir}"]
-    try:
-        import ctypes
-
-        ret = ctypes.windll.shell32.ShellExecuteW(
-            None,
-            "open",
-            str(setup),
-            params,
-            str(setup.parent),
-            0,
-        )
-        update_logger.write(f"ShellExecuteW return={ret}")
-        if int(ret) > 32:
-            update_logger.write("ShellExecuteW: Installer gestartet")
-            return
-        update_logger.write(f"ShellExecuteW fehlgeschlagen (code {ret})")
-    except Exception:
-        update_logger.write_exception("ShellExecuteW")
-
     flags = subprocess.DETACHED_PROCESS | subprocess.CREATE_NEW_PROCESS_GROUP
-    try:
-        proc = subprocess.Popen(cmd, close_fds=True, creationflags=flags)
-        update_logger.write(f"Popen Fallback PID={proc.pid}")
-    except Exception:
-        update_logger.write_exception("Popen Fallback")
-        update_logger.write("Letzter Versuch: os.startfile Setup")
-        os.startfile(str(setup))
+    subprocess.Popen(
+        ["cmd.exe", "/c", str(bat_path)],
+        close_fds=True,
+        creationflags=flags,
+    )
+    update_logger.write("Batch via cmd.exe /c gestartet (detached)")

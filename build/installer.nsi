@@ -58,9 +58,11 @@ Function .onInit
 FunctionEnd
 
 Function .onInstSuccess
-  ; Nach stillem Auto-Update die neue Version starten
-  IfSilent 0 +2
+  ; Nach stillem Auto-Update die neue Version starten (nur wenn still)
+  IfSilent 0 done
+    Sleep 2000
     Exec '"$INSTDIR\${APP_EXE}"'
+  done:
 FunctionEnd
 
 Function un.onInit
@@ -72,6 +74,7 @@ FunctionEnd
 Section "!Hauptprogramm" SecMain
   SectionIn RO
   SetOutPath "$INSTDIR"
+  SetOverwrite on
   File /r "..\dist\SurepriseAi\*.*"
   File "assets\app_icon.ico"
   Rename "$INSTDIR\app_icon.ico" "$INSTDIR\SurepriseAi.ico"

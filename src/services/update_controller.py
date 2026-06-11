@@ -17,6 +17,7 @@ from src.services.config_service import config
 from src.services.update_service import UpdateCheckResult, UpdateInfo, UpdateService
 from src.services.update_downloader import download_release_asset
 from src.services.update_installer import launch_update_installer
+from src.services import update_state
 from src.version import GITHUB_REPO, __version__
 
 RELEASES_PAGE = f"https://github.com/{GITHUB_REPO}/releases/latest"
@@ -66,10 +67,16 @@ class UpdateController:
         qt_app = app.app if hasattr(app, "app") else None
         self._signals = UpdateSignals(self, parent=qt_app)
         update_logger.write_session_header("UpdateController initialisiert")
+        update_state.clear_if_updated()
 
     def schedule_startup_check(self) -> None:
         if not config.get_bool("check_updates_on_startup", True):
             update_logger.write("Startup-Check deaktiviert (check_updates_on_startup=false)")
+            return
+        allowed, msg = update_state.should_auto_update(manual=False)
+        if msg:
+            update_logger.write(msg)
+        if not allowed:
             return
         update_logger.write("Startup-Check geplant in 12s")
         QTimer.singleShot(12_000, lambda: self.check_now(silent=True))
@@ -77,6 +84,17 @@ class UpdateController:
     def check_now(self, silent: bool = False) -> None:
         if self._checking:
             update_logger.write("check_now übersprungen: Prüfung läuft bereits")
+            return
+        allowed, msg = update_state.should_auto_update(manual=not silent)
+        if not allowed:
+            update_logger.write(f"check_now blockiert: {msg.replace(chr(10), ' | ')}")
+            if not silent:
+                self._notify(
+                    "SurepriseAi Update",
+                    msg,
+                    toast_ms=10_000,
+                    icon=QSystemTrayIcon.MessageIcon.Warning,
+                )
             return
         self._checking = True
         update_logger.write_session_header(f"Update-Prüfung gestartet (silent={silent})")
@@ -119,6 +137,20 @@ class UpdateController:
             return
 
         info = result.info
+        if update_state.is_duplicate_attempt(info.version):
+            update_logger.write(
+                f"Update v{info.version} bereits pending – kein erneuter Download"
+            )
+            if not silent:
+                self._notify(
+                    "SurepriseAi Update",
+                    f"Installation v{info.version} läuft bereits.\n"
+                    "Bitte warten – Log: Desktop\\SurepriseAi-Update.log",
+                    toast_ms=10_000,
+                    icon=QSystemTrayIcon.MessageIcon.Information,
+                )
+            return
+
         update_logger.write(f"Update gefunden: v{info.version}")
         update_logger.write(f"  download_url={info.download_url}")
         update_logger.write(f"  page_url={info.page_url}")
@@ -187,7 +219,7 @@ class UpdateController:
                 icon=QSystemTrayIcon.MessageIcon.Information,
                 update=True,
             )
-            self._launch_installer(setup_path)
+            self._launch_installer(setup_path, info.version)
         elif setup_path:
             update_logger.write(
                 f"Zweig: Datei ohne .exe ({setup_path.suffix}) → öffne Downloads-Ordner"
@@ -214,13 +246,17 @@ class UpdateController:
             )
             QTimer.singleShot(600, self._open_releases_fallback)
 
-    def _launch_installer(self, path: Path) -> None:
-        """Startet NSIS-Setup und beendet die App, damit Dateien freigegeben werden."""
-        update_logger.write_session_header(f"Installer-Start für {path}")
+    def _launch_installer(self, path: Path, target_version: str) -> None:
+        """Startet NSIS-Setup via Batch (taskkill + /S). Kein App-Quit – Batch beendet Prozess."""
+        update_logger.write_session_header(
+            f"Installer-Start für {path} (Ziel v{target_version})"
+        )
+        update_state.mark_pending(target_version, str(path))
         try:
             launch_update_installer(path)
-            update_logger.write("launch_update_installer: OK")
+            update_logger.write("launch_update_installer: OK – Batch übernimmt taskkill + NSIS")
         except Exception:
+            update_state.clear_pending()
             update_logger.write_exception("Installer-Start fehlgeschlagen")
             self._notify(
                 "Update",
@@ -232,15 +268,13 @@ class UpdateController:
                 error=True,
             )
             return
-        update_logger.write("App-Shutdown in 400ms geplant (Batch wartet ~3s auf freie EXE)")
-        QTimer.singleShot(400, self._shutdown_for_update)
-
-    def _shutdown_for_update(self) -> None:
-        update_logger.write("shutdown_for_update() → controller.shutdown()")
-        try:
-            self.app.controller.shutdown()
-        except Exception:
-            update_logger.write_exception("shutdown_for_update")
+        self._notify(
+            "SurepriseAi Update",
+            f"v{target_version}: Installation startet…\nApp wird gleich beendet.",
+            toast_ms=8000,
+            icon=QSystemTrayIcon.MessageIcon.Information,
+            update=True,
+        )
 
     def open_releases_page(self) -> None:
         self._open_releases_fallback()
