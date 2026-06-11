@@ -24,6 +24,7 @@ from .pipeline_worker import PipelineWorker
 from .config_service import config
 from .app_mode_service import resolve_style_for_hwnd
 from .dictation_context_service import DictationContextService
+from . import dictation_logger as dlog
 
 # Live-Transkription: niedrige Latenz durch kurzes Polling und kleines Audiopuffer
 LIVE_POLL_INTERVAL_S = 0.15
@@ -102,6 +103,12 @@ class TranscriptionPipeline:
         success = self.audio.start_recording(device if device != "default" else None)
 
         if success:
+            dlog.begin_dictation()
+            dlog.log_kv(
+                "Aufnahme-Start",
+                device=device or "default",
+                target_hwnd=self._target_hwnd,
+            )
             self.recording_start_time = time.time()
             self.recording_duration = 0.0
             resolved = resolve_style_for_hwnd(self._target_hwnd)
@@ -114,6 +121,7 @@ class TranscriptionPipeline:
             self._partial_thread = threading.Thread(target=self._live_transcription_worker, daemon=True)
             self._partial_thread.start()
         else:
+            dlog.write("Aufnahme-Start FEHLGESCHLAGEN: Mikrofon nicht geoeffnet")
             self._emit_error("Mikrofon konnte nicht geöffnet werden.")
         return success
 
@@ -123,12 +131,17 @@ class TranscriptionPipeline:
         if self._partial_thread and self._partial_thread.is_alive():
             self._partial_thread.join(timeout=3.0)
         audio_data = self.audio.stop_recording()
+        dlog.log_audio("Stop-Audio", audio_data)
 
         if audio_data is None or len(audio_data) < 1600:
+            n = 0 if audio_data is None else len(audio_data)
+            dlog.end_dictation(f"abgebrochen – zu kurz ({n} samples, min 1600)")
+            self._emit_error("Aufnahme zu kurz. Bitte etwas länger sprechen.")
             self._emit_state("idle")
             return
 
         self.recording_duration = time.time() - self.recording_start_time
+        dlog.log_kv("Aufnahme-Stop", dauer_s=round(self.recording_duration, 2))
         self._emit_state("processing")
 
         context = self.dictation_context.get_context(
@@ -209,9 +222,11 @@ class TranscriptionPipeline:
                 if text and text.strip() and text != last_text:
                     last_text = text
                     corrected = self.replacer.apply(text)
+                    dlog.write(f"Live-Partial: '{corrected[:60]}'")
                     if self._on_partial:
                         self._on_partial(corrected)
             except Exception as e:
+                dlog.write_exception("Live-Transkript")
                 print(f"[Pipeline] Fehler Live-Transkript: {e}")
             finally:
                 self._partial_running = False

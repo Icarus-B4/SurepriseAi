@@ -90,10 +90,20 @@ class AudioService:
             if self._on_recording_start:
                 self._on_recording_start()
 
+            try:
+                from src.services import dictation_logger as dlog
+                dlog.write(f"Audio-Stream gestartet (device={device_id!r}, rate=16000)")
+            except Exception:
+                pass
             print("[Audio] Aufnahme gestartet")
             return True
 
         except Exception as e:
+            try:
+                from src.services import dictation_logger as dlog
+                dlog.write(f"Audio-Start FEHLER: {e}")
+            except Exception:
+                pass
             print(f"[Audio] Fehler beim Starten: {e}")
             self._recording = False
             return False

@@ -56,9 +56,12 @@ class SurepriseApp:
 
     def start(self):
         """Startet Services und die Qt-Ereignisschleife."""
+        from src.services import dictation_logger as dlog
+
+        dlog.write_session_header("SurepriseAi gestartet")
         apply_accent_from_config()
 
-        self.pipeline.initialize_async(on_ready=self.signals.ready.emit)
+        self.pipeline.initialize_async(on_ready=self._on_pipeline_initialized)
         self._sync_mini_fab_at_start()
 
         if config.hotkey_enabled:
@@ -71,6 +74,16 @@ class SurepriseApp:
         self.window.show()
         self.tray.show()
         sys.exit(self.app.exec())
+
+    def _on_pipeline_initialized(self, success: bool) -> None:
+        from src.services import dictation_logger as dlog
+
+        if success:
+            engine = self.pipeline.transcriber._active_engine_name()
+            dlog.write(f"Transkriptions-Modell bereit: {engine}")
+        else:
+            dlog.write("WARNUNG: Transkriptions-Modell konnte nicht geladen werden")
+        self.signals.ready.emit(success)
 
     def _sync_mini_fab_at_start(self):
         if config.get_bool("enable_mini_fab", False):

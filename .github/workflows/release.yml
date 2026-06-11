@@ -57,8 +57,9 @@ jobs:
 
             **Windows-Installer** – Doppelklick auf `SurepriseAi-Setup.exe`.
 
-            ### Neu in v0.1.19
-            - **Fix: Transkription funktioniert wieder unter Windows** – Unicode-Log zerstörte das Ergebnis
-            - Thread-Sicherheit: Live- und Final-Transkription blockieren sich nicht mehr
+            ### Neu in v0.1.20
+            - **Fix: „Keine Sprache erkannt“** – VAD filterte Diktat weg; Whisper ohne VAD + Parakeet-Fallback
+            - **Diktat-Diagnose-Log:** `Desktop\SurepriseAi-Diktat.log` und `%APPDATA%\SurepriseAi\dictation.log`
+            - Doppelklick auf Island öffnet wieder Einstellungen (README-konform)
 
-            Vollständiges Changelog: https://github.com/Icarus-B4/SurepriseAi/compare/v0.1.18...${{ github.ref_name }}
+            Vollständiges Changelog: https://github.com/Icarus-B4/SurepriseAi/compare/v0.1.19...${{ github.ref_name }}

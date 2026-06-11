@@ -11,6 +11,7 @@ from typing import Callable, Optional
 import numpy as np
 
 from .config_service import config
+from . import dictation_logger as dlog
 
 
 def _log(msg: str) -> None:
@@ -80,6 +81,9 @@ class TranscriptionService:
 
         if ok:
             self._init_partial_model()
+            dlog.write(f"Engine initialisiert: {self._active_engine_name()}")
+        else:
+            dlog.write("Engine-Initialisierung FEHLGESCHLAGEN")
         return ok
 
     def _init_parakeet(self) -> bool:
@@ -178,17 +182,47 @@ class TranscriptionService:
         )
         thread.start()
 
+    def _prepare_audio(self, audio_data: np.ndarray) -> np.ndarray:
+        """Float32 mono contiguous – erwartetes Format für alle Engines."""
+        audio = np.asarray(audio_data, dtype=np.float32).flatten()
+        if audio.size == 0:
+            return audio
+        peak = float(np.max(np.abs(audio)))
+        if peak > 1.0:
+            audio = audio / peak
+        return np.ascontiguousarray(audio)
+
+    def _active_engine_name(self) -> str:
+        if self._parakeet_recognizer is not None:
+            return "parakeet"
+        if self._whisper_model is not None:
+            return f"whisper({config.get_str('whisper_model_size', 'tiny')})"
+        return "none"
+
     def transcribe(self, audio_data: np.ndarray) -> str:
         """Synchrone Transkription (blockierend). Für Tests geeignet."""
         if not self._initialized:
             if not self.initialize():
+                dlog.write("Transcribe abgebrochen: Modell nicht initialisiert")
                 return ""
 
+        audio = self._prepare_audio(audio_data)
+        dlog.log_audio("Final-Audio", audio)
+
         with self._lock:
-            if self._parakeet_recognizer is not None:
-                return self._transcribe_parakeet(audio_data, is_partial=False)
+            engine = config.transcription_engine
+            if engine == "parakeet" and self._parakeet_recognizer is not None:
+                text = self._transcribe_parakeet(audio, is_partial=False)
+                if text.strip():
+                    return text
+                dlog.write("Parakeet lieferte leer – Whisper-Fallback")
+                if self._whisper_model is not None:
+                    return self._transcribe_whisper(audio)
+                return ""
+
             if self._whisper_model is not None:
-                return self._transcribe_whisper(audio_data)
+                return self._transcribe_whisper(audio)
+        dlog.write("Transcribe: keine Engine verfuegbar")
         return ""
 
     def transcribe_partial(self, audio_data: np.ndarray) -> str:
@@ -197,13 +231,14 @@ class TranscriptionService:
             if not self.initialize():
                 return ""
 
+        audio = self._prepare_audio(audio_data)
         with self._lock:
             if self._partial_whisper_model is not None:
-                return self._transcribe_whisper_partial(audio_data)
+                return self._transcribe_whisper_partial(audio)
             if self._parakeet_recognizer is not None:
-                return self._transcribe_parakeet(audio_data, is_partial=True)
+                return self._transcribe_parakeet(audio, is_partial=True)
             if self._whisper_model is not None:
-                return self._transcribe_whisper_partial(audio_data)
+                return self._transcribe_whisper_partial(audio)
         return ""
 
     def _transcribe_worker(self, audio_data: np.ndarray) -> None:
@@ -230,36 +265,64 @@ class TranscriptionService:
             result = self._parakeet_recognizer.get_result(stream)
             text = result.text.strip() if result else ""
         except Exception as e:
+            dlog.log_transcription_attempt("parakeet", partial=is_partial, error=str(e))
             _log(f"[Transcription] Parakeet-Transkriptions-Fehler: {e}")
             return ""
 
         mode = "Partial" if is_partial else "Final"
+        dlog.log_transcription_attempt(
+            "parakeet",
+            partial=is_partial,
+            text=text,
+        )
         preview = text[:50] + ("..." if len(text) > 50 else "")
         _log(f"[Transcription] Parakeet ({mode}): '{preview}'")
         return text
 
     def _transcribe_whisper(self, audio_data: np.ndarray) -> str:
-        """Transkription mit faster-whisper."""
-        try:
-            task = "translate" if config.translate_to_english else "transcribe"
-            segments, _ = self._whisper_model.transcribe(
-                audio_data,
-                beam_size=1,
-                language=config.transcription_language,
-                task=task,
-                vad_filter=True,
-            )
-            text = " ".join(seg.text for seg in segments).strip()
-        except Exception as e:
-            _log(f"[Transcription] Whisper-Transkriptions-Fehler: {e}")
-            return ""
+        """Transkription mit faster-whisper (VAD aus – Diktat ist bewusst gesprochen)."""
+        task = "translate" if config.translate_to_english else "transcribe"
+        lang = config.transcription_language
 
-        preview = text[:50] + ("..." if len(text) > 50 else "")
-        _log(
-            f"[Transcription] Whisper ({config.transcription_language or 'auto'}, {task}): "
-            f"'{preview}'"
-        )
-        return text
+        for vad_on in (False, True):
+            try:
+                seg_iter, info = self._whisper_model.transcribe(
+                    audio_data,
+                    beam_size=1,
+                    language=lang,
+                    task=task,
+                    vad_filter=vad_on,
+                )
+                segments = list(seg_iter)
+                text = " ".join(seg.text for seg in segments).strip()
+                dlog.log_transcription_attempt(
+                    self._active_engine_name(),
+                    vad=vad_on,
+                    partial=False,
+                    text=text,
+                    segment_count=len(segments),
+                )
+                if text:
+                    preview = text[:50] + ("..." if len(text) > 50 else "")
+                    _log(
+                        f"[Transcription] Whisper ({lang or 'auto'}, {task}, vad={vad_on}): "
+                        f"'{preview}'"
+                    )
+                    return text
+                if not vad_on:
+                    dlog.write("Whisper ohne VAD leer – Retry mit VAD")
+            except Exception as e:
+                dlog.log_transcription_attempt(
+                    self._active_engine_name(),
+                    vad=vad_on,
+                    partial=False,
+                    error=str(e),
+                )
+                _log(f"[Transcription] Whisper-Transkriptions-Fehler (vad={vad_on}): {e}")
+                if not vad_on:
+                    continue
+                return ""
+        return ""
 
     def _transcribe_whisper_partial(self, audio_data: np.ndarray) -> str:
         """Schnelle Live-Transkription ohne VAD und mit minimalem Beam-Search."""

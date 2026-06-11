@@ -10,6 +10,7 @@ from typing import Callable, Optional
 import numpy as np
 
 from src.services.config_service import config
+from src.services import dictation_logger as dlog
 
 
 class PipelineWorker:
@@ -74,9 +75,14 @@ class PipelineWorker:
     ) -> None:
         """Verarbeitet aufgezeichnete Audiodaten (Transkription, Korrektur, Polishing)."""
         try:
-            # 1. Transkription
+            dlog.write("PipelineWorker: Final-Transkription startet")
             raw_text = self.transcriber.transcribe(audio_data)
             if not raw_text or not raw_text.strip():
+                dlog.end_dictation("FEHLER – keine Sprache erkannt (leerer Rohtext)")
+                dlog.write(
+                    "HINWEIS: Log-Datei an Support senden: "
+                    f"{dlog.desktop_log_path()} oder {dlog.appdata_log_path()}"
+                )
                 self.on_error("Keine Sprache erkannt. Bitte nochmal versuchen.")
                 self.on_state_change("idle")
                 return
@@ -100,11 +106,15 @@ class PipelineWorker:
             if config.get_bool("auto_inject_text", True):
                 self.clipboard.inject_text(final_text, delay_ms=150, target_hwnd=target_hwnd)
 
-            # 5. UI-Rückmeldung – direkt in EXPANDED für Stil-Chips
+            dlog.end_dictation(
+                f"OK – raw={len(raw_text)} zeichen, final={len(final_text)} zeichen"
+            )
             self.on_result(raw_text, final_text)
             self.on_state_change("expanded")
 
         except Exception as e:
+            dlog.write_exception("PipelineWorker Audio")
+            dlog.end_dictation(f"EXCEPTION – {e}")
             print(f"[PipelineWorker] Fehler bei Audio-Verarbeitung: {e}")
             self.on_error(f"Verarbeitungsfehler: {str(e)}")
             self.on_state_change("idle")

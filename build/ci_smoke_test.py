@@ -46,6 +46,13 @@ def main() -> None:
     spec.loader.exec_module(mod)
     mod.test_whisper_log_does_not_swallow_result()
 
+    spec2 = importlib.util.spec_from_file_location("feature_audit", ROOT / "build" / "feature_audit.py")
+    audit_mod = importlib.util.module_from_spec(spec2)
+    assert spec2.loader is not None
+    spec2.loader.exec_module(audit_mod)
+    audit_result = audit_mod.run_audit()
+    assert not audit_result.failed, audit_result.failed
+
     print(f"Smoke OK v{__version__}")
 
 

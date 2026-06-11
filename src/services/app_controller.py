@@ -47,7 +47,6 @@ class AppController(QObject):
         self.app.signals.audio_level.connect(self._on_audio_level)
         self.app.signals.partial_ready.connect(self._on_partial_result)
 
-        self.app.window.pill.idle_widget.mouseDoubleClickEvent = lambda e: self.app.pipeline.toggle()
         self.app.window.file_dropped_callback = self.app.pipeline.transcribe_audio_file
         self.app.window.url_dropped_callback = self._transcribe_media_url
         self.app.window._on_style_selected = self._on_style_changed
