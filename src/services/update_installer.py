@@ -12,11 +12,12 @@ from src.services import update_logger
 from src.utils.app_paths import install_root, is_frozen
 
 _DESKTOP_LOG = r"%USERPROFILE%\Desktop\SurepriseAi-Update.log"
+_APP_EXE = "SurepriseAi.exe"
 
 
 def launch_update_installer(setup_path: Path) -> None:
     """
-    Installierte App: Batch beendet SurepriseAi.exe, wartet, startet NSIS /S.
+    Installierte App: Batch killt alle SurepriseAi-Prozesse, NSIS /S, Neustart bei Erfolg.
     Dev (run.py): normaler Wizard.
     """
     path = Path(setup_path)
@@ -29,34 +30,82 @@ def launch_update_installer(setup_path: Path) -> None:
     if not path.is_file():
         raise FileNotFoundError(f"Setup nicht gefunden: {path}")
 
+    inst = str(install_root())
+    write_desktop_install_helper(path, inst)
+
     if not is_frozen():
         update_logger.write("Dev-Modus: os.startfile (Wizard)")
         os.startfile(str(path))
         return
 
-    inst = str(install_root())
-    update_logger.write(f"Silent-Install Ziel: {inst}")
+    update_logger.write(f"Silent-Install Ziel (Registry): {inst}")
     _launch_windows_update_batch(path, inst)
 
 
-def _launch_windows_update_batch(setup: Path, inst_dir: str) -> None:
-    """
-    Batch: taskkill → Wartezeit → NSIS /S → Log Exit-Code.
-    Kein App-shutdown nötig – taskkill beendet die laufende Instanz.
-    """
-    bat_path = Path(tempfile.gettempdir()) / f"sureprise_update_{os.getpid()}.bat"
+def write_desktop_install_helper(setup: Path, inst_dir: str) -> None:
+    """Notfall-Batch auf dem Desktop – funktioniert auch ohne Auto-Update-Code."""
+    desktop = Path(os.environ.get("USERPROFILE", Path.home())) / "Desktop"
+    helper = desktop / "SurepriseAi-JETZT-INSTALLIEREN.bat"
     setup_str = str(setup.resolve())
+    exe = str(Path(inst_dir) / _APP_EXE)
     log = _DESKTOP_LOG
     lines = [
         "@echo off",
-        f'echo [%date% %time%] Batch-Update gestartet >> "{log}"',
-        f'echo   Setup={setup_str} >> "{log}"',
-        f'echo   INSTDIR={inst_dir} >> "{log}"',
-        "taskkill /IM SurepriseAi.exe /F >> \"%USERPROFILE%\\Desktop\\SurepriseAi-Update.log\" 2>&1",
-        "ping 127.0.0.1 -n 4 >nul",
-        f'echo [%date% %time%] NSIS /S startet >> "{log}"',
-        f'"{setup_str}" /S /D={inst_dir}',
-        f'echo [%date% %time%] NSIS exit=%ERRORLEVEL% >> "{log}"',
+        f'set "SETUP={setup_str}"',
+        f'set "INSTDIR={inst_dir}"',
+        f'set "LOG={log}"',
+        'echo [%date% %time%] === Manuelles/Auto Update === >> "%LOG%"',
+        ":killloop",
+        f'taskkill /IM {_APP_EXE} /F /T >> "%LOG%" 2>&1',
+        "ping 127.0.0.1 -n 2 >nul",
+        f'tasklist /FI "IMAGENAME eq {_APP_EXE}" 2>nul | find /I "{_APP_EXE}" >nul',
+        "if %ERRORLEVEL%==0 goto killloop",
+        "ping 127.0.0.1 -n 3 >nul",
+        'echo [%date% %time%] NSIS /S startet >> "%LOG%"',
+        '"%SETUP%" /S',
+        "set NSIS_ERR=%ERRORLEVEL%",
+        'echo [%date% %time%] NSIS exit=%NSIS_ERR% >> "%LOG%"',
+        "if %NSIS_ERR% NEQ 0 (",
+        '  echo FEHLER: Setup manuell per Doppelklick auf SurepriseAi-Setup.exe starten >> "%LOG%"',
+        "  pause",
+        "  exit /b 1",
+        ")",
+        "ping 127.0.0.1 -n 2 >nul",
+        f'start "" "{exe}"',
+        'echo [%date% %time%] App neu gestartet >> "%LOG%"',
+    ]
+    helper.write_text("\r\n".join(lines) + "\r\n", encoding="utf-8")
+    update_logger.write(f"Desktop-Hilfe: {helper}")
+
+
+def _launch_windows_update_batch(setup: Path, inst_dir: str) -> None:
+    """Startet identische Logik wie Desktop-Hilfe, detached via cmd."""
+    bat_path = Path(tempfile.gettempdir()) / f"sureprise_update_{os.getpid()}.bat"
+    setup_str = str(setup.resolve())
+    exe = str(Path(inst_dir) / _APP_EXE)
+    log = _DESKTOP_LOG
+    lines = [
+        "@echo off",
+        f'set "SETUP={setup_str}"',
+        f'set "INSTDIR={inst_dir}"',
+        f'set "LOG={log}"',
+        'echo [%date% %time%] === Batch-Update gestartet === >> "%LOG%"',
+        f'echo   Setup=%SETUP% >> "%LOG%"',
+        f'echo   INSTDIR=%INSTDIR% >> "%LOG%"',
+        ":killloop",
+        f'taskkill /IM {_APP_EXE} /F /T >> "%LOG%" 2>&1',
+        "ping 127.0.0.1 -n 2 >nul",
+        f'tasklist /FI "IMAGENAME eq {_APP_EXE}" 2>nul | find /I "{_APP_EXE}" >nul',
+        "if %ERRORLEVEL%==0 goto killloop",
+        "ping 127.0.0.1 -n 3 >nul",
+        'echo [%date% %time%] NSIS /S startet (ohne /D=, Registry-Pfad) >> "%LOG%"',
+        '"%SETUP%" /S',
+        "set NSIS_ERR=%ERRORLEVEL%",
+        'echo [%date% %time%] NSIS exit=%NSIS_ERR% >> "%LOG%"',
+        "if %NSIS_ERR% NEQ 0 exit /b 1",
+        "ping 127.0.0.1 -n 2 >nul",
+        f'start "" "{exe}"',
+        'echo [%date% %time%] App neu gestartet >> "%LOG%"',
         'del /f /q "%~f0" 2>nul',
     ]
     bat_path.write_text("\r\n".join(lines) + "\r\n", encoding="utf-8")

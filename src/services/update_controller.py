@@ -270,8 +270,9 @@ class UpdateController:
             return
         self._notify(
             "SurepriseAi Update",
-            f"v{target_version}: Installation startet…\nApp wird gleich beendet.",
-            toast_ms=8000,
+            f"v{target_version}: Installation startet…\n"
+            "App wird beendet. Notfall: Desktop\\SurepriseAi-JETZT-INSTALLIEREN.bat",
+            toast_ms=12_000,
             icon=QSystemTrayIcon.MessageIcon.Information,
             update=True,
         )

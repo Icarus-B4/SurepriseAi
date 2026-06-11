@@ -57,13 +57,8 @@ Function .onInit
   Call ConfigureSilentSections
 FunctionEnd
 
-Function .onInstSuccess
-  ; Nach stillem Auto-Update die neue Version starten (nur wenn still)
-  IfSilent 0 done
-    Sleep 2000
-    Exec '"$INSTDIR\${APP_EXE}"'
-  done:
-FunctionEnd
+; Kein Auto-Start nach Silent-Install – verhindert Update-Schleife bei fehlgeschlagener Installation.
+; Neustart übernimmt der Batch-Launcher (nur bei NSIS exit=0) oder MUI Finish (Wizard).
 
 Function un.onInit
   MessageBox MB_ICONQUESTION|MB_YESNO|MB_DEFBUTTON2 \

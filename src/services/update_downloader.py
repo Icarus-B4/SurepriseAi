@@ -11,6 +11,8 @@ from typing import Optional
 from src.services import update_logger
 from src.services.update_service import APP_UA, _ssl_context
 
+_MIN_SETUP_BYTES = 100_000_000  # ~100 MB – vorhandenes Setup wiederverwenden
+
 
 def download_release_asset(url: str, filename: str) -> Optional[Path]:
     """Lädt eine Release-Datei herunter und gibt den lokalen Pfad zurück."""
@@ -22,6 +24,11 @@ def download_release_asset(url: str, filename: str) -> Optional[Path]:
     dest_dir = Path(os.environ.get("USERPROFILE", Path.home())) / "Downloads"
     dest_dir.mkdir(parents=True, exist_ok=True)
     dest = dest_dir / filename
+    if dest.is_file() and dest.stat().st_size >= _MIN_SETUP_BYTES:
+        update_logger.write(
+            f"Setup bereits in Downloads ({dest.stat().st_size} bytes) – überspringe Download"
+        )
+        return dest
     try:
         req = urllib.request.Request(url, headers={"User-Agent": APP_UA()})
         with urllib.request.urlopen(req, timeout=120, context=_ssl_context()) as resp:

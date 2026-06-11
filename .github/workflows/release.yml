@@ -57,8 +57,9 @@ jobs:
 
             **Windows-Installer** – Doppelklick auf `SurepriseAi-Setup.exe`.
 
-            ### Neu in v0.1.12
-            - **Update-Schleife behoben:** Pending-Marker blockiert erneute Downloads; Batch beendet SurepriseAi.exe per taskkill vor NSIS /S
-            - NSIS: SetOverwrite on; Desktop-Log zeigt NSIS exit-Code
+            ### Neu in v0.1.13
+            - **Update-Schleife endgültig behoben:** kein NSIS-Auto-Neustart mehr; Batch killt Prozesse, `/S` ohne `/D=`, Neustart nur bei exit=0
+            - Kein erneuter 140-MB-Download wenn Setup schon in Downloads liegt
+            - Notfall: `Desktop\SurepriseAi-JETZT-INSTALLIEREN.bat`
 
-            Vollständiges Changelog: https://github.com/Icarus-B4/SurepriseAi/compare/v0.1.11...${{ github.ref_name }}
+            Vollständiges Changelog: https://github.com/Icarus-B4/SurepriseAi/compare/v0.1.12...${{ github.ref_name }}
