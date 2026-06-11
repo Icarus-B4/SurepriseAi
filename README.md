@@ -204,7 +204,7 @@ Release auf GitHub anlegen mit Tag `v0.1.1` und Asset `SurepriseAi-Setup.exe`.
 | Workflow | Trigger | Aufgabe |
 |----------|---------|---------|
 | **CI** | Push/PR auf `main` | Smoke-Test + `py_compile` aller Module |
-| **Release** | Git-Tag `v*` (z. B. `v0.1.10`) | PyInstaller + NSIS → `SurepriseAi-Setup.exe` als Release-Asset |
+| **Release** | Git-Tag `v*` (z. B. `v0.1.11`) | PyInstaller + NSIS → `SurepriseAi-Setup.exe` als Release-Asset |
 
 ### Ersten Release veröffentlichen
 

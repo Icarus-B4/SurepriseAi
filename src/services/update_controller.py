@@ -232,8 +232,8 @@ class UpdateController:
                 error=True,
             )
             return
-        update_logger.write("App-Shutdown in 1500ms geplant (Dateien freigeben)")
-        QTimer.singleShot(1500, self._shutdown_for_update)
+        update_logger.write("App-Shutdown in 400ms geplant (Batch wartet ~3s auf freie EXE)")
+        QTimer.singleShot(400, self._shutdown_for_update)
 
     def _shutdown_for_update(self) -> None:
         update_logger.write("shutdown_for_update() → controller.shutdown()")
