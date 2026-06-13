@@ -11,8 +11,9 @@ from PyQt6.QtWidgets import (
     QLabel, QFrame, QSizePolicy,
 )
 from PyQt6.QtCore import pyqtSignal, Qt
-from src.ui.design_tokens import Colors, Typography, FluentIcons
+from src.ui.design_tokens import Colors, Typography, FluentIcons, Radius
 from src.ui.drag_handle import DragHandleButton
+from src.ui.text_compare_slider import TextCompareSlider
 from src.services.config_service import config
 from src.services.style_definitions import STYLE_DEFINITIONS
 
@@ -28,6 +29,52 @@ class ExpandedPillWidget(QWidget):
         super().__init__(parent)
         self.chips: dict[str, QPushButton] = {}
         self._init_ui()
+
+    def _icon_button_style(self, hover_color: str) -> str:
+        return f"""
+            QPushButton {{
+                background: transparent;
+                border: none;
+                border-radius: 11px;
+                color: {Colors.TEXT_SECONDARY_HEX};
+                font-family: "{FluentIcons.FONT_FAMILY}";
+                font-size: 11px;
+            }}
+            QPushButton:hover {{
+                background: {Colors.CONTROL_FILL_HEX};
+                color: {hover_color};
+            }}
+        """
+
+    def _chip_style(self, active: bool) -> str:
+        if active:
+            return f"""
+                QPushButton {{
+                    background-color: {Colors.ACCENT_TINT_STRONG};
+                    color: {Colors.TEXT_PRIMARY_HEX};
+                    border: 1px solid {Colors.ACCENT_BRIGHT_HEX};
+                    border-radius: {Radius.MD}px;
+                    padding: 3px 8px;
+                }}
+                QPushButton:hover {{
+                    background-color: {Colors.ACCENT_HEX};
+                    border-color: {Colors.ACCENT_HEX};
+                }}
+            """
+        return f"""
+            QPushButton {{
+                background-color: transparent;
+                color: {Colors.TEXT_SECONDARY_HEX};
+                border: 1px solid {Colors.BORDER_SUBTLE_HEX};
+                border-radius: {Radius.MD}px;
+                padding: 3px 8px;
+            }}
+            QPushButton:hover {{
+                color: {Colors.TEXT_PRIMARY_HEX};
+                background-color: {Colors.CONTROL_FILL_HEX};
+                border-color: {Colors.BORDER_HIGHLIGHT};
+            }}
+        """
 
     def _init_ui(self):
         main_layout = QVBoxLayout(self)
@@ -101,11 +148,16 @@ class ExpandedPillWidget(QWidget):
 
         # ── 2. TEXT-BOX IN DER MITTE ──
         text_frame = QFrame(self)
+        text_frame.setObjectName("ExpandedTextFrame")
         text_frame.setStyleSheet(f"""
-            QFrame {{
-                background-color: {Colors.SURFACE_ELEVATED};
-                border: 1px solid {Colors.BORDER_HEX};
-                border-radius: 8px;
+            QFrame#ExpandedTextFrame {{
+                background: qlineargradient(
+                    x1:0, y1:0, x2:0, y2:1,
+                    stop:0 rgba(255, 255, 255, 0.055),
+                    stop:1 rgba(255, 255, 255, 0.025)
+                );
+                border: 1px solid {Colors.BORDER_HIGHLIGHT};
+                border-radius: {Radius.MD}px;
             }}
         """)
         frame_layout = QVBoxLayout(text_frame)
@@ -121,36 +173,18 @@ class ExpandedPillWidget(QWidget):
         # Mini Kopieren und Edit Buttons
         self.box_copy_btn = QPushButton(FluentIcons.COPY, self)
         self.box_copy_btn.setFixedSize(22, 22)
-        self.box_copy_btn.setStyleSheet(f"""
-            QPushButton {{ 
-                background: transparent; border: none; color: {Colors.TEXT_SECONDARY_HEX}; 
-                font-family: "{FluentIcons.FONT_FAMILY}"; font-size: 11px;
-            }}
-            QPushButton:hover {{ color: {Colors.SUCCESS_GREEN_HEX}; }}
-        """)
+        self.box_copy_btn.setStyleSheet(self._icon_button_style(Colors.SUCCESS_GREEN_HEX))
 
         self.box_undo_btn = QPushButton(FluentIcons.RETRY, self)
         self.box_undo_btn.setFixedSize(22, 22)
         self.box_undo_btn.setToolTip("Letzten Satz entfernen")
-        self.box_undo_btn.setStyleSheet(f"""
-            QPushButton {{
-                background: transparent; border: none; color: {Colors.TEXT_SECONDARY_HEX};
-                font-family: "{FluentIcons.FONT_FAMILY}"; font-size: 11px;
-            }}
-            QPushButton:hover {{ color: {Colors.ACCENT_BRIGHT_HEX}; }}
-        """)
+        self.box_undo_btn.setStyleSheet(self._icon_button_style(Colors.ACCENT_BRIGHT_HEX))
         self.box_undo_btn.clicked.connect(self.undo_clicked.emit)
 
         self.url_btn = QPushButton("🔗", self)
         self.url_btn.setFixedSize(22, 22)
         self.url_btn.setToolTip("YouTube/URL transkribieren")
-        self.url_btn.setStyleSheet(f"""
-            QPushButton {{
-                background: transparent; border: none; color: {Colors.TEXT_SECONDARY_HEX};
-                font-size: 11px;
-            }}
-            QPushButton:hover {{ color: {Colors.ACCENT_BRIGHT_HEX}; }}
-        """)
+        self.url_btn.setStyleSheet(self._icon_button_style(Colors.ACCENT_BRIGHT_HEX))
         self.url_btn.clicked.connect(self.url_import_clicked.emit)
         
         # Wir belegen den Box Copy-Button direkt mit der Kopierfunktion
@@ -162,22 +196,21 @@ class ExpandedPillWidget(QWidget):
         header_lay.addWidget(self.box_undo_btn)
         header_lay.addWidget(self.box_copy_btn)
         frame_layout.addLayout(header_lay)
+
+        self.polish_status = QLabel("Bereit für Polishing", self)
+        self.polish_status.setObjectName("PolishStatusLabel")
+        self.polish_status.setFont(Typography.get_font(Typography.TINY))
+        self.polish_status.setStyleSheet(f"color: {Colors.TEXT_SECONDARY_HEX};")
+        self.polish_status.setVisible(False)
+        frame_layout.addWidget(self.polish_status)
+
+        # Text-Vergleichs-Slider (Rohtext vs. Polished)
+        self.compare_slider = TextCompareSlider(self)
+        frame_layout.addWidget(self.compare_slider, stretch=1)
         
-        # QTextEdit (Rahmenlos)
-        self.transcript_edit = QTextEdit(self)
-        self.transcript_edit.setFont(Typography.get_font(Typography.SMALL))
-        self.transcript_edit.setStyleSheet(f"""
-            QTextEdit {{
-                background: transparent;
-                color: {Colors.TEXT_PRIMARY_HEX};
-                border: none;
-                padding: 0px;
-                font-family: "{Typography.FONT_FAMILY}";
-            }}
-            QScrollBar:vertical {{ border: none; background: transparent; width: 4px; }}
-            QScrollBar::handle:vertical {{ background: {Colors.BORDER_HEX}; border-radius: 2px; }}
-        """)
-        frame_layout.addWidget(self.transcript_edit)
+        # Alias für Kompatibilität mit bestehendem Code
+        self.transcript_edit = self.compare_slider.text_view
+        
         main_layout.addWidget(text_frame, stretch=1)
 
         # ── 3. STIL-CHIPS (zwei Zeilen, ohne Scrollbar) ──
@@ -229,49 +262,57 @@ class ExpandedPillWidget(QWidget):
         self.words_val.setText(str(words))
         self.wpm_val.setText(str(wpm))
 
+    def set_texts(self, raw: str, polished: str) -> None:
+        """Setzt Rohtext und polierten Text für die Diff-Ansicht."""
+        self.compare_slider.set_texts(raw, polished)
+
+    def set_raw_text(self, text: str) -> None:
+        """Setzt nur den Rohtext."""
+        self.compare_slider.set_raw_text(text)
+
+    def set_polished_text(self, text: str) -> None:
+        """Setzt nur den polierten Text."""
+        self.compare_slider.set_polished_text(text)
+
+    def get_polished_text(self) -> str:
+        """Gibt den aktuellen polierten Text zurück."""
+        return self.compare_slider.get_polished_text()
+
+    def show_diff_view(self) -> None:
+        """Wechselt zur Diff-Ansicht."""
+        self.compare_slider.show_diff_view()
+
     def set_active_style(self, active_key: str):
         """Färbt den ausgewählten Stil-Chip ein."""
         for key, btn in self.chips.items():
             btn.setEnabled(True)
             if key == active_key:
-                btn.setStyleSheet(f"""
-                    QPushButton {{
-                        background-color: {Colors.ACCENT_HEX};
-                        color: white;
-                        border: none;
-                        border-radius: 10px;
-                        padding: 3px 7px;
-                    }}
-                    QPushButton:hover {{ background-color: {Colors.ACCENT_BRIGHT_HEX}; }}
-                """)
+                btn.setStyleSheet(self._chip_style(active=True))
             else:
-                btn.setStyleSheet(f"""
-                    QPushButton {{
-                        background-color: transparent;
-                        color: {Colors.TEXT_SECONDARY_HEX};
-                        border: 1px solid {Colors.BORDER_HEX};
-                        border-radius: 10px;
-                        padding: 3px 7px;
-                    }}
-                    QPushButton:hover {{ 
-                        color: {Colors.TEXT_PRIMARY_HEX}; 
-                        background-color: {Colors.SURFACE_ELEVATED}; 
-                    }}
-                """)
+                btn.setStyleSheet(self._chip_style(active=False))
 
     def set_style_busy(self, busy: bool) -> None:
         """Deaktiviert Chips während Re-Polishing läuft."""
         for btn in self.chips.values():
             btn.setEnabled(not busy)
 
+    def set_polish_status(self, text: str | None) -> None:
+        """Zeigt oder verbirgt den Polishing-Status unter der Kopfzeile."""
+        if text:
+            self.polish_status.setText(text)
+            self.polish_status.show()
+        else:
+            self.polish_status.hide()
+
     def undo_last_sentence(self) -> bool:
-        """Entfernt den letzten Satz aus dem Textfeld. Gibt True zurück wenn geändert."""
-        text = self.transcript_edit.toPlainText().strip()
+        """Entfernt den letzten Satz aus dem polierten Text. Gibt True zurück wenn geändert."""
+        text = self.compare_slider.get_polished_text().strip()
         if not text:
             return False
         parts = re.split(r"(?<=[.!?…])\s+", text)
         if len(parts) <= 1:
-            self.transcript_edit.clear()
+            self.compare_slider.set_polished_text("")
             return True
-        self.transcript_edit.setPlainText(" ".join(parts[:-1]).strip())
+        new_text = " ".join(parts[:-1]).strip()
+        self.compare_slider.set_polished_text(new_text)
         return True

@@ -31,20 +31,40 @@ Kein Python nötig – der Installer enthält alles. Einstellungen liegen unter 
 | **Dynamic Island** | Schwebendes Overlay oben am Bildschirm – Idle, Aufnahme, Verarbeitung, Ergebnis |
 | **Live-Transkription** | Echtzeit-Anzeige des gesprochenen Textes während der Aufnahme |
 | **KI-Polishing** | Bereinigung und Stil-Umformung via **Ollama** (optional) oder schnellem Offline-Fallback |
-| **5 Stil-Chips** | Bereinigen · Business · Stichpunkte · Kompakt · Formell – sofort umschaltbar |
+| **7 Stil-Chips** | Bereinigen · Business · Stichpunkte · Kernpunkte · Kompakt · Lang · Formell – sofort umschaltbar |
 | **Whisper & Parakeet** | Lokale Spracherkennung (`faster-whisper` oder `sherpa-onnx`) |
 | **Auto-Typing** | Fertiger Text wird optional direkt in die aktive Anwendung eingefügt |
 | **System-Tray** | Steuerung im Hintergrund: Diktat, Stil, Einstellungen |
 | **Datei-Import** | Audio/Video per Drag & Drop auf die Island transkribieren |
 | **URL-Import** | YouTube, Vimeo, SoundCloud & Co. per Tray, Dialog oder Drag & Drop (yt-dlp) |
 | **Kontext-Polishing** | Markierter Text + optional OCR für bessere Ollama-Korrektur |
-| **Historien-Export** | Diktate als TXT, Markdown oder SRT exportieren |
+| **Lokale Auto-Korrektur** | Füllwörter, doppelte Wörter, Selbstkorrekturen, Leerzeichen und Satzanfänge werden lokal geglättet |
+| **2-Panel-Einstellungen** | Einstellungen und Diktat-Verlauf in einem professionellen Zwei-Spalten-Fenster |
+| **Diktat-Verlauf** | Suche, Audio-Playback, Diff-Slider, Stil-Switch und Export als TXT, Markdown oder SRT |
 
 ---
 
 ## Screenshots
 
 > Die App erscheint als dunkle, halbtransparente **Pill** oben zentriert und expandiert nach dem Diktat zur Vollansicht mit Statistiken, Textfeld und Stil-Chips.
+
+### Dynamic Island
+
+| Presence Bar | Idle Pill | Expanded View |
+|---|---|---|
+| <img src="screenshots/PresencBar-Dynamic-Island_Windows-SurepriseAi_.png" alt="SurepriseAi Presence Bar" width="260"> | <img src="screenshots/Dynamic-Island_Windows-SurepriseAi.png" alt="SurepriseAi Dynamic Island Idle" width="260"> | <img src="screenshots/Dynamic-Island_Windows-Expand-SurepriseAi.png" alt="SurepriseAi Dynamic Island Expanded" width="260"> |
+
+### Settings & Verlauf
+
+| Settings | 2-Panel Diktat-Verlauf |
+|---|---|
+| <img src="screenshots/Dynamic-Island_Windows-Settings-Menu-SurepriseAi.png" alt="SurepriseAi Einstellungen" width="390"> | <img src="screenshots/Screenshot%202026-06-13%20103140.png" alt="SurepriseAi 2-Panel Diktat-Verlauf" width="390"> |
+
+### Polishing & History Workflow
+
+| Diff-Ansicht | Stil-Switch im Verlauf | Detailansicht |
+|---|---|---|
+| <img src="screenshots/Screenshot%202026-06-13%20103251.png" alt="SurepriseAi Diff-Ansicht" width="260"> | <img src="screenshots/Screenshot%202026-06-13%20103340.png" alt="SurepriseAi Stil-Switch im Verlauf" width="260"> | <img src="screenshots/Screenshot%202026-06-13%20103621.png" alt="SurepriseAi History Detailansicht" width="260"> |
 
 ---
 
@@ -132,7 +152,9 @@ Nach dem Diktat (oder vor dem nächsten) einen **Stil-Chip** anklicken:
 | **Bereinigen** | Füllwörter entfernen, Satz glätten |
 | **Business** | Sachlicher, professioneller Ton |
 | **Stichpunkte** | Aufzählung mit `•` |
+| **Kernpunkte** | Wichtigste Aussagen als kompakte Bullet-Liste |
 | **Kompakt** | Auf das Wesentliche kürzen |
+| **Lang** | Inhalt ausführen und erweitern |
 | **Formell** | Höfliche, formelle Sprache |
 
 Der aktive Stil wird **indigo** hervorgehoben. Die Änderung erfolgt **sofort** (Offline-Fallback).
@@ -152,7 +174,9 @@ Der aktive Stil wird **indigo** hervorgehoben. Die Änderung erfolgt **sofort** 
 | Text kopieren | Kopieren-Icon im Textfeld |
 | Audio-Datei transkribieren | MP3/WAV/MP4 per Drag & Drop auf die Island |
 | Video-/Audio-URL transkribieren | Tray → **URL transkribieren…**, 🔗 in Expanded oder URL per Drag & Drop |
-| Diktat exportieren | Tray → Diktat-Verlauf → Eintrag wählen → **Exportieren…** (TXT/MD/SRT) |
+| Diktat-Verlauf öffnen | Tray → Diktat-Verlauf **oder** Einstellungen → Diktat-Verlauf |
+| Stil im Verlauf ändern | Diktat-Verlauf → Eintrag wählen → Stil-Chip anklicken |
+| Diktat exportieren | Diktat-Verlauf → Eintrag wählen → **Exportieren…** (TXT/MD/SRT) |
 | Kontext für Polishing | Text in Ziel-App markieren, dann F8 – Ollama nutzt Markierung automatisch |
 | Island ein-/ausblenden | Doppelklick auf Tray-Icon |
 | Basics-Modus (Power/Restart/Sleep) | Mausrad auf der Idle-Pill |
@@ -195,7 +219,7 @@ Der Wizard entspricht Hermes (`oneClick: false`, Installationsordner wählbar, B
 - Tray → **Nach Updates suchen…**
 - Bei neuem Release wird der Installer nach `Downloads\` geladen
 
-Release auf GitHub anlegen mit Tag `v0.1.1` und Asset `SurepriseAi-Setup.exe`.
+Release auf GitHub anlegen mit Tag `vX.Y.Z` und Asset `SurepriseAi-Setup.exe`.
 
 ---
 

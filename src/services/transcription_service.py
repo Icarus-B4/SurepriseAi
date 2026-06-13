@@ -280,10 +280,13 @@ class TranscriptionService:
             try:
                 seg_iter, info = self._whisper_model.transcribe(
                     audio_data,
-                    beam_size=1,
+                    beam_size=5,
+                    best_of=5,
+                    temperature=0.0,
                     language=lang,
                     task=task,
                     vad_filter=vad_on,
+                    condition_on_previous_text=True,
                 )
                 segments = list(seg_iter)
                 text = " ".join(seg.text for seg in segments).strip()
@@ -325,12 +328,13 @@ class TranscriptionService:
         try:
             segments, _ = model.transcribe(
                 audio_data,
-                beam_size=1,
-                best_of=1,
+                beam_size=2,
+                best_of=2,
+                temperature=0.0,
                 language=config.transcription_language,
                 task="transcribe",
                 vad_filter=False,
-                condition_on_previous_text=False,
+                condition_on_previous_text=True,
             )
             text = " ".join(seg.text for seg in segments).strip()
             return text

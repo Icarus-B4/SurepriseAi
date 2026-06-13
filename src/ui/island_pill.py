@@ -24,11 +24,20 @@ class IslandPill(QFrame):
         self._apply_pill_style()
         self._init_ui()
 
-    def _apply_pill_style(self):
-        self.setStyleSheet(f"""
+    def _pill_qss(self, border: str) -> str:
+        """Erzeugt das Pill-Stylesheet – eine Quelle für Normal- und Pulse-Look.
+
+        `border` ist die komplette CSS-border-Deklaration (z. B. '1px solid …').
+        Der Hintergrund ist ein subtiler vertikaler Glas-Gradient (oben heller).
+        """
+        return f"""
             QFrame#PillContainer {{
-                background-color: {Colors.ISLAND_BG_ALPHA};
-                border: 1px solid {Colors.BORDER_HEX};
+                background: qlineargradient(
+                    x1:0, y1:0, x2:0, y2:1,
+                    stop:0 {Colors.PILL_GRADIENT_TOP},
+                    stop:1 {Colors.PILL_GRADIENT_BOTTOM}
+                );
+                border: {border};
                 border-radius: {self._corner_radius}px;
             }}
             QLabel {{
@@ -42,7 +51,10 @@ class IslandPill(QFrame):
                 font-size: {Typography.BODY}pt;
                 color: {Colors.TEXT_SECONDARY_HEX};
             }}
-        """)
+        """
+
+    def _apply_pill_style(self):
+        self.setStyleSheet(self._pill_qss(f"1px solid {Colors.BORDER_HIGHLIGHT}"))
 
     def set_corner_radius(self, radius: int) -> None:
         """Passt die Ecken-Rundung an (Pill vs. Karten-Modus)."""
@@ -272,23 +284,5 @@ class IslandPill(QFrame):
 
     def play_settle_pulse(self) -> None:
         """Kurzer Indigo-Glow beim Wechsel Aufnahme → Verarbeitung."""
-        r = self._corner_radius
-        self.setStyleSheet(f"""
-            QFrame#PillContainer {{
-                background-color: {Colors.ISLAND_BG_ALPHA};
-                border: 2px solid {Colors.ACCENT_BRIGHT_HEX};
-                border-radius: {r}px;
-            }}
-            QLabel {{
-                color: {Colors.TEXT_PRIMARY_HEX};
-                font-family: "{Typography.FONT_FAMILY}";
-                font-size: {Typography.SMALL}pt;
-                background: transparent;
-            }}
-            QLabel#IconLabel {{
-                font-family: "{FluentIcons.FONT_FAMILY}";
-                font-size: {Typography.BODY}pt;
-                color: {Colors.TEXT_SECONDARY_HEX};
-            }}
-        """)
+        self.setStyleSheet(self._pill_qss(f"2px solid {Colors.ACCENT_BRIGHT_HEX}"))
         QTimer.singleShot(AnimationTokens.NORMAL, self._apply_pill_style)

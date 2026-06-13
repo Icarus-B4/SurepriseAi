@@ -7,14 +7,15 @@ Visualisiert den RMS-Pegel aus dem Mikrofon flüssig und performant.
 import random
 from PyQt6.QtWidgets import QWidget
 from PyQt6.QtCore import QTimer, Qt, QRectF
-from PyQt6.QtGui import QPainter, QBrush, QPen, QColor
+from PyQt6.QtGui import QPainter, QBrush, QLinearGradient, QColor
 from src.ui.design_tokens import IslandSize, Colors
+
 
 class WaveformWidget(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.bars = [IslandSize.WAVEFORM_MIN_H] * IslandSize.WAVEFORM_BARS
-        self.target_bars = [IslandSize.WAVEFORM_MIN_H] * IslandSize.WAVEFORM_BARS
+        self.bars: list[float] = [float(IslandSize.WAVEFORM_MIN_H)] * IslandSize.WAVEFORM_BARS
+        self.target_bars: list[float] = [float(IslandSize.WAVEFORM_MIN_H)] * IslandSize.WAVEFORM_BARS
         
         # Animations-Timer (ca. 40 FPS)
         self.timer = QTimer(self)
@@ -46,7 +47,7 @@ class WaveformWidget(QWidget):
 
     def reset_waveform(self):
         """Setzt alle Balken auf die minimale Höhe zurück."""
-        self.target_bars = [IslandSize.WAVEFORM_MIN_H] * IslandSize.WAVEFORM_BARS
+        self.target_bars = [float(IslandSize.WAVEFORM_MIN_H)] * IslandSize.WAVEFORM_BARS
 
     def _animate(self):
         """Interpoliert die aktuellen Balkenhöhen in Richtung der Zielhöhen."""
@@ -67,10 +68,6 @@ class WaveformWidget(QWidget):
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
         
-        # Bar styling
-        color = Colors.recording_red()
-        brush = QBrush(color)
-        painter.setBrush(brush)
         painter.setPen(Qt.PenStyle.NoPen)
         
         # Berechne Start-X, um die Balkengruppe horizontal zu zentrieren
@@ -86,5 +83,20 @@ class WaveformWidget(QWidget):
             y = (self.height() - bar_h) / 2.0
             
             rect = QRectF(x, y, IslandSize.WAVEFORM_BAR_W, bar_h)
-            # Abgerundete Balken
+
+            glow_rect = rect.adjusted(-1.2, -1.5, 1.2, 1.5)
+            glow_color = QColor(Colors.RECORDING_RED_HEX)
+            glow_color.setAlpha(42)
+            painter.setBrush(QBrush(glow_color))
+            painter.drawRoundedRect(
+                glow_rect,
+                IslandSize.WAVEFORM_BAR_W,
+                IslandSize.WAVEFORM_BAR_W,
+            )
+
+            gradient = QLinearGradient(rect.topLeft(), rect.bottomLeft())
+            gradient.setColorAt(0.0, QColor("#FF8A80"))
+            gradient.setColorAt(0.45, QColor(Colors.RECORDING_RED_HEX))
+            gradient.setColorAt(1.0, QColor("#C81E1E"))
+            painter.setBrush(QBrush(gradient))
             painter.drawRoundedRect(rect, IslandSize.WAVEFORM_BAR_W / 2.0, IslandSize.WAVEFORM_BAR_W / 2.0)

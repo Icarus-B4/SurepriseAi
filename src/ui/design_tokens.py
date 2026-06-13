@@ -2,11 +2,17 @@
 design_tokens.py
 Zentrales Design-System für SurepriseAi (PyQt6 Edition).
 Alle Farben, Abstände, Animationszeiten und Typografie an einem Ort.
-Folgt dem Design-Guide (8px Grid, ONE Akzentfarbe, Emil Kowalski Motion).
+
+Design-Prinzipien (abgeleitet aus DESIGN.md):
+  • Flat statt verschachtelt – Gruppierung über Whitespace + eine Haarlinie.
+  • Elevation durch weiche Schatten, nicht durch harte Rahmen.
+  • Eine Primitive pro Zweck (ein Schatten-Helfer, eine Motion-Kurve, ein Radius-Set).
+  • Tokens statt Literale – nie rohe Hex/rgba direkt in Widgets.
+Folgt dem 8px-Grid und EINER Akzentfarbe (Indigo, Laufzeit-überschreibbar).
 """
 
 from PyQt6.QtGui import QColor, QFont
-from PyQt6.QtCore import QPoint
+from PyQt6.QtCore import QPoint, QPointF, QEasingCurve
 
 # ── Windows Fluent Icons (Segoe MDL2 Assets / Segoe Fluent Icons) ─────────────
 # Nutzt die nativen System-Icon-Fonts von Windows für perfekten Windows-Look.
@@ -30,12 +36,16 @@ class FluentIcons:
 # ── Farben (Hex und QColor) ───────────────────────────────────────────────────
 
 class Colors:
-    # Hintergründe (Dunkles Theme)
+    # Hintergründe (Dunkles Theme – leicht blau-entsättigtes Near-Black für Tiefe)
     ISLAND_BG_HEX      = "#0D0D0F"
     ISLAND_BG_ALPHA    = "rgba(13, 13, 15, 0.90)"
     SURFACE_HEX        = "#1A1A1E"
     SURFACE_ELEVATED   = "#242428"
-    
+
+    # Glas-Gradient für die Pill (oben heller → unten tiefer = subtile Tiefe/Lichtkante)
+    PILL_GRADIENT_TOP    = "rgba(32, 32, 40, 0.94)"
+    PILL_GRADIENT_BOTTOM = "rgba(12, 12, 16, 0.96)"
+
     # Text
     TEXT_PRIMARY_HEX   = "#F5F5F7"
     TEXT_SECONDARY_HEX = "#8E8E93"
@@ -45,15 +55,25 @@ class Colors:
     ACCENT_HEX         = "#6366F1"
     ACCENT_BRIGHT_HEX  = "#818CF8"
     ACCENT_DARK_HEX    = "#4F46E5"
-    
+
+    # Akzent-Tints (für Glows, getönte Ränder, Hover-Fills)
+    ACCENT_GLOW        = "rgba(99, 102, 241, 0.45)"
+    ACCENT_TINT_HEX    = "rgba(99, 102, 241, 0.14)"
+    ACCENT_TINT_STRONG = "rgba(99, 102, 241, 0.22)"
+
     # State-Farben
     RECORDING_RED_HEX  = "#FF453A"
     SUCCESS_GREEN_HEX  = "#30D158"
     PROCESSING_BLUE_HEX = "#64D2FF"
 
-    # Rahmen
+    # Rahmen / Haarlinien (in absteigender Stärke)
     BORDER_HEX         = "rgba(255, 255, 255, 0.08)"
     BORDER_SUBTLE_HEX  = "rgba(255, 255, 255, 0.04)"
+    # Obere Lichtkante – simuliert Glas-Reflexion am oberen Pill-Rand
+    BORDER_HIGHLIGHT   = "rgba(255, 255, 255, 0.12)"
+    # Soft-Fill für ruhige Controls / Hover (vgl. --ui-bg-quaternary)
+    CONTROL_FILL_HEX   = "rgba(255, 255, 255, 0.06)"
+    CONTROL_HOVER_HEX  = "rgba(255, 255, 255, 0.10)"
 
     @classmethod
     def island_bg(cls) -> QColor:
@@ -99,6 +119,9 @@ class Spacing:
 
 class Typography:
     FONT_FAMILY = "Segoe UI"
+    # Variable-Optical-Sizing-Familie für UI; Segoe UI Variable falls verfügbar (Win11),
+    # sonst sauberer Fallback auf Segoe UI.
+    FONT_FAMILY_VARIABLE = "Segoe UI Variable Text"
 
     # Schriftgrößen (pt) – eine Skala für die gesamte App
     TINY   = 10
@@ -108,11 +131,29 @@ class Typography:
     LARGE  = 18
     TITLE  = 22
 
+    # Gewichte (QFont.Weight) – feinere Hierarchie als nur bold/regular
+    WEIGHT_REGULAR  = QFont.Weight.Normal      # 400
+    WEIGHT_MEDIUM   = QFont.Weight.Medium      # 500
+    WEIGHT_SEMIBOLD = QFont.Weight.DemiBold    # 600
+    WEIGHT_BOLD     = QFont.Weight.Bold        # 700
+
     @classmethod
-    def get_font(cls, size: int, bold: bool = False) -> QFont:
+    def get_font(
+        cls,
+        size: int,
+        bold: bool = False,
+        weight: QFont.Weight | None = None,
+        letter_spacing: float | None = None,
+    ) -> QFont:
         font = QFont(cls.FONT_FAMILY)
         font.setPointSize(size)
-        font.setBold(bold)
+        if weight is not None:
+            font.setWeight(weight)
+        else:
+            font.setBold(bold)
+        if letter_spacing is not None:
+            # Negative Werte verdichten Headlines – modernes, kompaktes Tracking
+            font.setLetterSpacing(QFont.SpacingType.PercentageSpacing, 100 + letter_spacing)
         return font
 
     @classmethod
@@ -120,6 +161,72 @@ class Typography:
         font = QFont("Segoe UI Symbol")
         font.setPointSize(size)
         return font
+
+
+# ── Radius (Ecken-Rundungen, zentral) ─────────────────────────────────────────
+
+class Radius:
+    XS   = 6
+    SM   = 8
+    MD   = 12
+    LG   = 16
+    XL   = 20
+    PILL = 999  # voll abgerundet (Kapselform)
+
+
+# ── Elevation (weiche Schatten = Tiefe, statt harter Rahmen) ──────────────────
+
+class Elevation:
+    """Wiederverwendbare Drop-Shadow-Ebenen. Eine Primitive für alle Overlays."""
+
+    # (blur, dy, alpha) – downward-weighted Kontakt→Ambient-Falloff
+    LOW    = (18, 4, 120)
+    MEDIUM = (28, 8, 150)
+    HIGH   = (44, 14, 170)
+
+    @staticmethod
+    def apply(widget, level: tuple[int, int, int] = MEDIUM, dx: int = 0):
+        """Hängt einen weichen Schatten an ein Widget (überschreibt vorhandenen Effekt)."""
+        from PyQt6.QtWidgets import QGraphicsDropShadowEffect
+
+        blur, dy, alpha = level
+        effect = QGraphicsDropShadowEffect(widget)
+        effect.setBlurRadius(blur)
+        effect.setOffset(dx, dy)
+        effect.setColor(QColor(0, 0, 0, alpha))
+        widget.setGraphicsEffect(effect)
+        return effect
+
+
+# ── Motion (Easing-Kurven als Token = ein Motion-System) ──────────────────────
+
+class Motion:
+    """Premium-Bewegung. Schnelle, funktionale Übergänge mit ruhigem Ausklang."""
+
+    # Dauer (ms) – Spiegel der AnimationTokens, für neuen Motion-Code
+    FAST   = 140
+    BASE   = 200
+    SLOW   = 320
+    SLOWER = 420
+
+    @staticmethod
+    def spring(overshoot: float = 1.1) -> QEasingCurve:
+        """Sanfter Überschwinger – lebendig, aber ohne Wackel-Bounce (default 1.7)."""
+        curve = QEasingCurve(QEasingCurve.Type.OutBack)
+        curve.setOvershoot(overshoot)
+        return curve
+
+    @staticmethod
+    def smooth() -> QEasingCurve:
+        """Schneller Start, weiches Settle – ideal für Größen-/Opacity-Wechsel."""
+        return QEasingCurve(QEasingCurve.Type.OutExpo)
+
+    @staticmethod
+    def emphasized() -> QEasingCurve:
+        """Material-3 emphasized decelerate (cubic-bezier 0.05, 0.7, 0.1, 1.0)."""
+        curve = QEasingCurve(QEasingCurve.Type.BezierSpline)
+        curve.addCubicBezierSegment(QPointF(0.05, 0.7), QPointF(0.1, 1.0), QPointF(1.0, 1.0))
+        return curve
 
 # ── Dynamic Island Dimensionen ────────────────────────────────────────────────
 
@@ -152,6 +259,8 @@ class IslandSize:
     EXPANDED_WIDTH  = 620
     EXPANDED_HEIGHT = 348
     EXPANDED_RADIUS = 16
+    EXPANDED_MIN_HEIGHT = 348
+    EXPANDED_MAX_HEIGHT = 348
 
     # Trägerfenster – muss größer als EXPANDED sein, sonst werden Ecken abgeschnitten
     WINDOW_WIDTH  = EXPANDED_WIDTH + 32

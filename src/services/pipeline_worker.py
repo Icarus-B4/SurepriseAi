@@ -11,6 +11,7 @@ import numpy as np
 
 from src.services.config_service import config
 from src.services import dictation_logger as dlog
+from src.utils.text_cleaner import bereinige_text
 
 
 class PipelineWorker:
@@ -92,8 +93,9 @@ class PipelineWorker:
                 self.on_state_change("idle")
                 return
 
-            # 2. Vokabular-Korrekturen
-            corrected_text = self.replacer.apply(raw_text)
+            # 2. Lokale Auto-Korrektur + Vokabular-Korrekturen
+            corrected_text = bereinige_text(raw_text)
+            corrected_text = self.replacer.apply(corrected_text)
 
             # 3. KI-Polishing mit Session- oder Standard-Stil
             active_style = style or config.selected_style
@@ -140,7 +142,8 @@ class PipelineWorker:
                 self.on_state_change("idle")
                 return
 
-            corrected_text = self.replacer.apply(raw_text)
+            corrected_text = bereinige_text(raw_text)
+            corrected_text = self.replacer.apply(corrected_text)
             active_style = style or config.selected_style
             polished_text = self.polisher.polish(
                 corrected_text,

@@ -9,7 +9,7 @@ import re
 
 from PyQt6.QtWidgets import QWidget, QLabel, QVBoxLayout
 from PyQt6.QtCore import Qt, QTimer, QPropertyAnimation
-from src.ui.design_tokens import Colors, Typography
+from src.ui.design_tokens import Colors, Typography, Radius
 
 _SENTENCE_SPLIT = re.compile(r"(?<=[.!?…])\s+")
 
@@ -73,14 +73,17 @@ class ToastNotification(QWidget):
 
     def _apply_style(self, is_live: bool, text_color: str = Colors.TEXT_PRIMARY_HEX):
         self._is_live = is_live
-        radius = 12 if is_live else 20
+        radius = Radius.MD if is_live else Radius.XL
         padding_v = 12 if is_live else 8
-        bg_color = "rgba(13, 13, 15, 0.95)"
 
         self.container.setStyleSheet(f"""
             QWidget#ToastContainer {{
-                background-color: {bg_color};
-                border: 1px solid rgba(255, 255, 255, 0.12);
+                background: qlineargradient(
+                    x1:0, y1:0, x2:0, y2:1,
+                    stop:0 {Colors.PILL_GRADIENT_TOP},
+                    stop:1 {Colors.PILL_GRADIENT_BOTTOM}
+                );
+                border: 1px solid {Colors.BORDER_HIGHLIGHT};
                 border-radius: {radius}px;
                 padding: {padding_v}px 16px;
             }}
@@ -126,6 +129,9 @@ class ToastNotification(QWidget):
         self._live_plain = text.strip()
 
         self.title_label.setText("LIVE-TRANSKRIPTION")
+        self.title_label.setStyleSheet(
+            f"color: {Colors.ACCENT_BRIGHT_HEX}; letter-spacing: 1px;"
+        )
         self.title_label.show()
         self.label.setAlignment(Qt.AlignmentFlag.AlignLeft)
         self._render_live_html(self._live_plain, settled=False)
@@ -141,6 +147,9 @@ class ToastNotification(QWidget):
         final = (text or self._live_plain).strip()
         self._live_plain = final
         self.title_label.setText("TRANSKRIPT")
+        self.title_label.setStyleSheet(
+            f"color: {Colors.SUCCESS_GREEN_HEX}; letter-spacing: 1px;"
+        )
         self._render_live_html(final, settled=True)
         self._position_and_show()
 
@@ -208,10 +217,7 @@ class ToastNotification(QWidget):
         self.fade_animation.setStartValue(self.windowOpacity())
         self.fade_animation.setEndValue(0.0)
         self._disconnect_fade_finished()
-        self.fade_animation.finished.connect(
-            self.hide,
-            Qt.ConnectionType.SingleShotConnection,
-        )
+        self.fade_animation.finished.connect(self.hide)
         self.fade_animation.start()
 
     def _position_and_show(self):

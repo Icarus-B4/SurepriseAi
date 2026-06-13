@@ -85,6 +85,7 @@ class AppController(QObject):
 
         self.app.window.settings_changed_callback = self.apply_runtime_setting
         self.app.window.open_history_callback = self._open_history
+        self.app.window.history_service = self.history
         self.runtime_settings = RuntimeSettingsHandler(self.app)
 
         self._refresh_tray_tooltip()
@@ -97,13 +98,16 @@ class AppController(QObject):
             return self.current_corrected
         if self.current_raw.strip():
             return self.app.pipeline.replacer.apply(self.current_raw)
-        return self.app.window.pill.expanded_widget.transcript_edit.toPlainText().strip()
+        expanded = self.app.window.pill.expanded_widget
+        return expanded.get_polished_text().strip() or expanded.transcript_edit.toPlainText().strip()
 
-    def _apply_text_to_ui(self, text: str, style_key: str) -> None:
-        """Schreibt Ergebnis sofort ins Expanded-Widget."""
+    def _apply_text_to_ui(self, text: str, style_key: str, raw: str = "") -> None:
+        """Schreibt Ergebnis sofort ins Expanded-Widget mit Diff-Ansicht."""
         self._polish_animator.cancel()
         expanded = self.app.window.pill.expanded_widget
-        expanded.transcript_edit.setPlainText(text)
+        # Setze beide Texte für die Diff-Ansicht
+        raw_text = raw or self.current_raw or self.current_corrected or ""
+        expanded.set_texts(raw_text, text)
         expanded.set_active_style(style_key)
         duration = self.app.pipeline.recording_duration
         words = len(text.split())
@@ -194,6 +198,7 @@ class AppController(QObject):
         expanded = self.app.window.pill.expanded_widget
         expanded.set_active_style(style_key)
         display_text = polished or self.current_corrected or raw
+        raw_for_diff = self.current_corrected or raw
         words = len(display_text.split())
         duration = self.app.pipeline.recording_duration
         wpm = int((words / duration) * 60) if duration > 0.5 else 0
@@ -213,16 +218,26 @@ class AppController(QObject):
         self._refresh_tray_tooltip()
         self._update_privacy_badge()
 
+        # Stacked-Widget auf Expanded-Ansicht umschalten (Index 4) …
         self.app.window.pill.set_expanded(display_text)
-        expanded.transcript_edit.setPlainText(display_text)
+        # … und beide Texte für die Diff-Ansicht setzen
+        expanded.set_texts(raw_for_diff, display_text)
         self.app.state_machine.transition_by_name("expanded")
 
         def _after_polish_animation() -> None:
+            expanded.set_polish_status(None)
+            # Nach Animation: Diff-Ansicht zeigen
+            expanded.show_diff_view()
             if config.auto_copy:
                 QApplication.clipboard().setText(polished)
             self.app.toast.show_success("Text bereinigt und in Zwischenablage kopiert!")
 
-        self._polish_animator.play(raw, polished, on_finished=_after_polish_animation)
+        def _on_polish_progress(step: int, total: int, mode: str) -> None:
+            label = "Vergleich" if mode == "html" else "Finale"
+            expanded.set_polish_status(f"Polishing {step}/{total} · {label}")
+
+        expanded.set_polish_status("Polishing startet…")
+        self._polish_animator.play(raw_for_diff, polished, on_finished=_after_polish_animation, on_progress=_on_polish_progress)
 
     def _on_pipeline_error(self, message: str):
         self.app.toast.show_error(message)
@@ -258,10 +273,14 @@ class AppController(QObject):
 
     def _on_internal_state_changed(self, prev_state, new_state):
         if new_state == IslandState.EXPANDED:
-            text = self.current_polished or self.current_corrected or self.current_raw
-            self.app.window.pill.set_expanded(text)
-            if text and not self._polish_animator.is_running():
-                self._apply_text_to_ui(text, self.app.pipeline.session_style)
+            polished = self.current_polished or self.current_corrected or self.current_raw
+            raw = self.current_corrected or self.current_raw
+            expanded = self.app.window.pill.expanded_widget
+            # Stacked-Widget auf Expanded-Ansicht umschalten (Index 4)
+            self.app.window.pill.set_expanded(polished)
+            expanded.set_texts(raw, polished)
+            if polished and not self._polish_animator.is_running():
+                self._apply_text_to_ui(polished, self.app.pipeline.session_style, raw)
 
     def _open_history(self):
         if self._history_dialog is None:
@@ -290,7 +309,9 @@ class AppController(QObject):
         self.app.state_machine.transition_to(IslandState.IDLE)
 
     def _copy_expanded_text(self):
-        text = self.app.window.pill.expanded_widget.transcript_edit.toPlainText()
+        text = self.app.window.pill.expanded_widget.get_polished_text()
+        if not text:
+            text = self.app.window.pill.expanded_widget.transcript_edit.toPlainText()
         QApplication.clipboard().setText(text)
         self.app.toast.show_success("In Zwischenablage kopiert!")
 
@@ -299,7 +320,7 @@ class AppController(QObject):
         if not expanded.undo_last_sentence():
             self.app.toast.show_message("Kein Satz zum Entfernen", duration_ms=1200)
             return
-        text = expanded.transcript_edit.toPlainText()
+        text = expanded.get_polished_text()
         self.current_polished = text
         words = len(text.split()) if text else 0
         duration = self.app.pipeline.recording_duration

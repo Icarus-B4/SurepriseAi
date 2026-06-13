@@ -4,11 +4,12 @@ Haupt-Overlay-Fenster (Dynamic Island) in PyQt6.
 Verwaltet das rahmenlose transparente Trägerfenster.
 """
 
+import subprocess
 import time
 
 from PyQt6.QtWidgets import QWidget, QVBoxLayout, QApplication
 from PyQt6.QtCore import Qt, QPropertyAnimation, QEasingCurve, pyqtProperty, QPoint, QTimer, QRect
-from src.ui.design_tokens import IslandSize, Colors, AnimationTokens
+from src.ui.design_tokens import IslandSize, Colors, AnimationTokens, Motion
 from src.ui.island_pill import IslandPill
 from src.ui.island_shimmer_indicator import IslandShimmerIndicator
 from src.ui.island_states import IslandState
@@ -252,7 +253,7 @@ class DynamicIslandWindow(QWidget):
         return self.pill.height()
 
     def _set_pill_height(self, h: int):
-        self.pill.setFixedHeight(h)
+        self.pill.setFixedHeight(max(1, h))
         
     pill_height = pyqtProperty(int, fget=_get_pill_height, fset=_set_pill_height)
 
@@ -261,14 +262,14 @@ class DynamicIslandWindow(QWidget):
         self.anim_w.setDuration(AnimationTokens.NORMAL)
         self.anim_w.setStartValue(self.pill.width())
         self.anim_w.setEndValue(target_w)
-        self.anim_w.setEasingCurve(QEasingCurve.Type.OutBack)
-        
+        self.anim_w.setEasingCurve(Motion.spring())
+
         self.anim_h = QPropertyAnimation(self, b"pill_height")
         self.anim_h.setDuration(AnimationTokens.NORMAL)
         self.anim_h.setStartValue(self.pill.height())
         self.anim_h.setEndValue(target_h)
-        self.anim_h.setEasingCurve(QEasingCurve.Type.OutBack)
-        
+        self.anim_h.setEasingCurve(Motion.spring())
+
         self.anim_w.start()
         self.anim_h.start()
 
@@ -370,8 +371,8 @@ class DynamicIslandWindow(QWidget):
 
     def _handle_power_click(self):
         if self._confirm_state == "power":
-            import os
-            os.system("shutdown /s /t 0")
+            # Sichere Ausführung ohne Shell: kein Benutzereingabetext beteiligt.
+            subprocess.run(["shutdown", "/s", "/t", "0"], check=False)
         else:
             self._confirm_state = "power"
             self.pill.basics_label.setText("Sicher? (Power)")
@@ -379,16 +380,16 @@ class DynamicIslandWindow(QWidget):
 
     def _handle_restart_click(self):
         if self._confirm_state == "restart":
-            import os
-            os.system("shutdown /r /t 0")
+            # Sichere Ausführung ohne Shell: kein Benutzereingabetext beteiligt.
+            subprocess.run(["shutdown", "/r", "/t", "0"], check=False)
         else:
             self._confirm_state = "restart"
             self.pill.basics_label.setText("Sicher? (Restart)")
             self._confirm_timer.start(3000)
 
     def _handle_sleep_click(self):
-        import os
-        os.system("rundll32.exe powrprof.dll,SetSuspendState 0,1,0")
+        # Sichere Ausführung ohne Shell: feste Windows-Parameter.
+        subprocess.run(["rundll32.exe", "powrprof.dll,SetSuspendState", "0,1,0"], check=False)
 
     def _reset_confirm_state(self):
         self._confirm_state = None
@@ -532,7 +533,12 @@ class DynamicIslandWindow(QWidget):
 
         if self._settings_dialog is None:
             on_history = getattr(self, "open_history_callback", None)
-            self._settings_dialog = SettingsWindow(self, on_open_history=on_history)
+            history_service = getattr(self, "history_service", None)
+            self._settings_dialog = SettingsWindow(
+                self,
+                on_open_history=on_history,
+                history_service=history_service,
+            )
             cb = getattr(self, "settings_changed_callback", None)
             if cb:
                 self._settings_dialog.setting_changed.connect(cb)

@@ -4,19 +4,23 @@ Einstellungs-Panel für SurepriseAi in PyQt6.
 Glas-Optik mit abgerundeten Ecken und sauberem Scroll-Layout.
 """
 
+from typing import Any, cast
+
 from PyQt6.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QLabel,
     QComboBox, QLineEdit, QPushButton, QWidget, QScrollArea, QFrame,
-    QGraphicsDropShadowEffect,
+    QGraphicsDropShadowEffect, QSizePolicy, QStackedWidget,
 )
 from PyQt6.QtCore import Qt, QPoint, QRectF, pyqtSignal
 from PyQt6.QtGui import QColor, QPainterPath, QRegion
 
 from src.ui.design_tokens import FluentIcons
+from src.ui.history_dialog import HistoryDialog
 from src.ui.settings_styles import settings_stylesheet
 from src.ui.settings_features_section import add_features_section
 from src.ui.toggle_switch import ToggleRow
 from src.services.config_service import config
+from src.services.dictation_history import DictationHistoryService
 
 _CORNER_RADIUS = 16
 
@@ -26,18 +30,31 @@ class SettingsWindow(QDialog):
 
     setting_changed = pyqtSignal(str)
 
-    def __init__(self, parent=None, on_open_history=None):
+    def __init__(
+        self,
+        parent=None,
+        on_open_history=None,
+        history_service: DictationHistoryService | None = None,
+    ):
         super().__init__(parent)
         self._on_open_history = on_open_history
+        self._history_service = history_service
+        self._history_view: HistoryDialog | None = None
         self._container: QWidget | None = None
+        self._container_layout: QHBoxLayout | None = None
+        self._content_stack: QStackedWidget | None = None
+        self._settings_page: QWidget | None = None
+        self._history_nav_btn: QPushButton | None = None
+        self._settings_nav_btn: QPushButton | None = None
+        self._settings_widgets: list[QWidget] = []
         self.setWindowFlags(
             Qt.WindowType.FramelessWindowHint |
             Qt.WindowType.WindowStaysOnTopHint |
             Qt.WindowType.Dialog
         )
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
-        self.setMinimumSize(440, 640)
-        self.resize(440, 680)
+        self.setMinimumSize(1180, 720)
+        self.resize(1280, 760)
         self.drag_position = QPoint()
         self._init_ui()
 
@@ -54,13 +71,30 @@ class SettingsWindow(QDialog):
         shadow.setColor(QColor(0, 0, 0, 100))
         container.setGraphicsEffect(shadow)
 
-        layout = QVBoxLayout(container)
-        layout.setContentsMargins(22, 18, 22, 22)
-        layout.setSpacing(12)
+        layout = QHBoxLayout(container)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
+        self._container_layout = layout
+
+        sidebar = self._build_sidebar()
+        layout.addWidget(sidebar)
+
+        self._content_stack = QStackedWidget(container)
+        self._content_stack.setObjectName("SettingsContentStack")
+        self._settings_page = QWidget(container)
+        settings_layout = QVBoxLayout(self._settings_page)
+        settings_layout.setContentsMargins(22, 18, 22, 22)
+        settings_layout.setSpacing(12)
+
+        hero = QFrame()
+        hero.setObjectName("SettingsHero")
+        hero_layout = QVBoxLayout(hero)
+        hero_layout.setContentsMargins(16, 14, 16, 14)
+        hero_layout.setSpacing(4)
 
         header = QHBoxLayout()
         title = QLabel("Einstellungen")
-        title.setObjectName("SettingsWindowTitle")
+        title.setObjectName("SettingsHeroTitle")
 
         close_btn = QPushButton(FluentIcons.CLOSE)
         close_btn.setObjectName("CloseButton")
@@ -70,7 +104,12 @@ class SettingsWindow(QDialog):
         header.addWidget(title)
         header.addStretch()
         header.addWidget(close_btn)
-        layout.addLayout(header)
+        hero_layout.addLayout(header)
+        subtitle = QLabel("Design, Aufnahme, Kontext und Diktat-Verlauf an einem Ort")
+        subtitle.setObjectName("SettingsHeroSubtitle")
+        hero_layout.addWidget(subtitle)
+        settings_layout.addWidget(hero)
+        self._settings_widgets.append(hero)
 
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
@@ -107,16 +146,56 @@ class SettingsWindow(QDialog):
             scroll_layout,
             self._add_section,
             lambda key: self.setting_changed.emit(key),
-            on_open_history=self._on_open_history,
+            on_open_history=self._open_history_inside_settings,
         )
 
         scroll_layout.addStretch(1)
         scroll.setWidget(content)
-        layout.addWidget(scroll, stretch=1)
+        settings_layout.addWidget(scroll, stretch=1)
+        self._settings_widgets.append(scroll)
+        self._content_stack.addWidget(self._settings_page)
+        layout.addWidget(self._content_stack, stretch=1)
 
         main_layout = QVBoxLayout(self)
         main_layout.setContentsMargins(16, 16, 16, 16)
         main_layout.addWidget(container)
+
+    def _build_sidebar(self) -> QWidget:
+        sidebar = QWidget(self)
+        sidebar.setObjectName("SettingsSidebar")
+        sidebar.setFixedWidth(190)
+        layout = QVBoxLayout(sidebar)
+        layout.setContentsMargins(14, 18, 14, 16)
+        layout.setSpacing(8)
+
+        self._settings_nav_btn = self._make_nav_button("⚙  Einstellungen")
+        self._history_nav_btn = self._make_nav_button("📜  Diktat-Verlauf")
+        self._settings_nav_btn.clicked.connect(self.show_settings)
+        self._history_nav_btn.clicked.connect(self._open_history_inside_settings)
+
+        layout.addWidget(self._settings_nav_btn)
+        layout.addWidget(self._history_nav_btn)
+        layout.addStretch(1)
+
+        brand = QLabel("SurepriseAi", sidebar)
+        brand.setObjectName("SettingsSidebarBrand")
+        layout.addWidget(brand)
+        self._set_active_nav("settings")
+        return sidebar
+
+    def _make_nav_button(self, text: str) -> QPushButton:
+        btn = QPushButton(text, self)
+        btn.setObjectName("SidebarNavButton")
+        btn.setCheckable(True)
+        btn.setMinimumHeight(38)
+        btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        return btn
+
+    def _set_active_nav(self, view: str) -> None:
+        if self._settings_nav_btn is not None:
+            self._settings_nav_btn.setChecked(view == "settings")
+        if self._history_nav_btn is not None:
+            self._history_nav_btn.setChecked(view == "history")
 
     def _apply_rounded_mask(self) -> None:
         """Schneidet Container und Fenster auf abgerundetes Rechteck zu."""
@@ -131,15 +210,62 @@ class SettingsWindow(QDialog):
         region = QRegion(path.toFillPolygon().toPolygon())
         self._container.setMask(region)
 
+    def _open_history_inside_settings(self) -> None:
+        """Öffnet den Diktat-Verlauf im selben Settings-Fenster."""
+        if self._history_service is None:
+            if self._on_open_history:
+                self._on_open_history()
+            return
+        self.show_history()
+
+    def show_history(self) -> None:
+        """Wechselt rechts in die eingebettete Verlauf-Ansicht."""
+        if not self._content_stack or not self._container:
+            return
+        history_service = self._history_service
+        if history_service is None:
+            return
+
+        if self._history_view is None:
+            self._history_view = HistoryDialog(
+                history_service,
+                self._container,
+                embedded=True,
+            )
+            self._history_view.setWindowFlags(Qt.WindowType.Widget)
+            self._history_view.setSizePolicy(
+                QSizePolicy.Policy.Expanding,
+                QSizePolicy.Policy.Expanding,
+            )
+            self._history_view.finished.connect(lambda _result: self.show_settings())
+            self._content_stack.addWidget(self._history_view)
+
+        self._history_view._refresh_list()
+        self._content_stack.setCurrentWidget(self._history_view)
+        self._set_active_nav("history")
+        self.setMinimumSize(1180, 720)
+        self.resize(max(self.width(), 1280), max(self.height(), 760))
+        self._apply_rounded_mask()
+
+    def show_settings(self) -> None:
+        """Kehrt rechts aus dem Verlauf zurück in die Einstellungen."""
+        if self._history_view is not None:
+            self._history_view._player.stop()
+        if self._content_stack is not None and self._settings_page is not None:
+            self._content_stack.setCurrentWidget(self._settings_page)
+        self._set_active_nav("settings")
+        self.setMinimumSize(1180, 720)
+        self._apply_rounded_mask()
+
     def _hide_island_presence(self) -> None:
-        island = self.parent()
+        island = cast(Any, self.parent())
         if island and hasattr(island, "presence_bar"):
             island._presence_hidden_for_settings = True
             island.presence_bar.stop()
             island.presence_bar.hide()
 
     def _restore_island_presence(self) -> None:
-        island = self.parent()
+        island = cast(Any, self.parent())
         if not island or not getattr(island, "_presence_hidden_for_settings", False):
             return
         island._presence_hidden_for_settings = False

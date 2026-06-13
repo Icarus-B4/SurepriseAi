@@ -1,11 +1,10 @@
 """
 dictation_history.py
-Persistente Diktat-Historie mit Suche und erneutem Kopieren.
+Persistente Diktat-Historie mit Suche, Löschen und erneutem Kopieren.
 """
 
 import json
 from datetime import datetime
-from pathlib import Path
 from typing import Any
 
 from .config_service import config
@@ -81,3 +80,23 @@ class DictationHistoryService:
             if q in e.get("polished", "").lower()
             or q in e.get("raw", "").lower()
         ]
+
+    def delete(self, entry_id: str) -> bool:
+        """Entfernt einen Historien-Eintrag per ID."""
+        before = len(self._entries)
+        self._entries = [e for e in self._entries if e.get("id") != entry_id]
+        if len(self._entries) == before:
+            return False
+        self._save()
+        return True
+
+    def update(self, entry_id: str, updates: dict[str, Any]) -> bool:
+        """Aktualisiert Felder eines Historien-Eintrags per ID."""
+        if not entry_id:
+            return False
+        for entry in self._entries:
+            if entry.get("id") == entry_id:
+                entry.update(updates)
+                self._save()
+                return True
+        return False

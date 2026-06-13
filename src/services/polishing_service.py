@@ -58,20 +58,28 @@ class PolishingService:
         import re
 
         if style == "bullet_points":
-            parts = [s.strip() for s in re.split(r'(?<=[.!?])\s+|,\s+|\s+und\s+', text) if s.strip()]
+            parts = [
+                s.strip(" .,:;")
+                for s in re.split(r'(?<=[.!?])\s+|[;:]\s+|,\s+|\s+und\s+', text)
+                if s.strip(" .,:;")
+            ]
             if len(parts) <= 1:
                 t = text.strip()
                 return f"• {t[0].upper() + t[1:]}" if t else text
-            return "\n".join(f"• {s[0].upper() + s[1:]}" for s in parts)
+            return "\n".join(f"• {s[0].upper() + s[1:]}" for s in parts if s)
 
         if style == "key_points":
-            sentences = [s.strip() for s in re.split(r'(?<=[.!?])\s+', text) if s.strip()]
+            sentences = [
+                s.strip(" .,:;")
+                for s in re.split(r'(?<=[.!?])\s+|[;:]\s+|,\s+', text)
+                if s.strip(" .,:;")
+            ]
             if not sentences:
                 return text
             ranked = sorted(sentences, key=lambda s: len(s.split()), reverse=True)
-            top = ranked[: min(5, max(3, len(ranked)))]
+            top = ranked[: min(5, max(1, len(ranked)))]
             top.sort(key=lambda s: sentences.index(s))
-            return "\n".join(f"• {s[0].upper() + s[1:]}" for s in top)
+            return "\n".join(f"• {s[0].upper() + s[1:]}" for s in top if s)
 
         if style == "concise":
             sentences = [s.strip() for s in re.split(r'(?<=[.!?])\s+', text) if s.strip()]

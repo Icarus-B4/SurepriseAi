@@ -5,7 +5,7 @@ Einstellungs-Sektion für Erscheinungsbild, Mini-FAB, App-Modi und Historie.
 
 from typing import Callable
 
-from PyQt6.QtWidgets import QVBoxLayout, QLabel, QLineEdit, QPushButton
+from PyQt6.QtWidgets import QVBoxLayout, QLabel, QLineEdit, QPushButton, QFrame
 
 from src.ui.toggle_switch import ToggleRow
 from src.services.config_service import config
@@ -38,12 +38,18 @@ def add_features_section(
     on_open_history: Callable[[], None] | None = None,
 ) -> None:
     """Baut die Sektion Erscheinungsbild & Integration."""
-    add_section(layout, "Erscheinungsbild", "🎨")
+    card = QFrame()
+    card.setObjectName("SettingsSectionCard")
+    card_layout = QVBoxLayout(card)
+    card_layout.setContentsMargins(14, 12, 14, 12)
+    card_layout.setSpacing(8)
+
+    add_section(card_layout, "Erscheinungsbild", "🎨")
 
     def _toggle(label: str, key: str) -> ToggleRow:
         row = ToggleRow(label, checked=config.get_bool(key))
         row.toggled.connect(lambda checked, k=key: (_save_bool(k, checked), on_change(k)))
-        layout.addWidget(row)
+        card_layout.addWidget(row)
         return row
 
     _toggle("Presence-Bar Auto-Hide (nur oben, 5 s)", "enable_presence_bar")
@@ -52,12 +58,12 @@ def add_features_section(
     _toggle("Mini-FAB (schwebender Mic-Button)", "enable_mini_fab")
     _toggle("Updates beim Start prüfen", "check_updates_on_startup")
 
-    add_section(layout, "Bildschirmkontext (OCR)", "👁")
+    add_section(card_layout, "Bildschirmkontext (OCR)", "👁")
     ctx_row = ToggleRow("Bildschirmkontext für Polishing (lokal, Windows-OCR)", checked=config.get_bool("enable_screen_context"))
     ctx_row.toggled.connect(
         lambda checked: (_save_bool("enable_screen_context", checked), on_change("enable_screen_context"))
     )
-    layout.addWidget(ctx_row)
+    card_layout.addWidget(ctx_row)
 
     sel_row = ToggleRow(
         "Markierten Text als Kontext (Ctrl+C beim Diktatstart)",
@@ -69,7 +75,7 @@ def add_features_section(
             on_change("enable_selected_text_context"),
         )
     )
-    layout.addWidget(sel_row)
+    card_layout.addWidget(sel_row)
 
     ctx_hint = QLabel(
         "Liest beim Diktatstart markierten Text und/oder OCR aus dem aktiven Fenster – "
@@ -77,22 +83,22 @@ def add_features_section(
     )
     ctx_hint.setObjectName("HintLabel")
     ctx_hint.setWordWrap(True)
-    layout.addWidget(ctx_hint)
+    card_layout.addWidget(ctx_hint)
 
-    add_section(layout, "App-Modi", "🪟")
+    add_section(card_layout, "App-Modi", "🪟")
     modes_row = ToggleRow("Stil automatisch je nach aktivem Fenster", checked=config.get_bool("enable_app_modes"))
-    layout.addWidget(modes_row)
+    card_layout.addWidget(modes_row)
 
     modes_hint = QLabel("Fenster/Prozess = Stil, z. B. OUTLOOK=formal, slack=business")
     modes_hint.setObjectName("HintLabel")
     modes_hint.setWordWrap(True)
-    layout.addWidget(modes_hint)
+    card_layout.addWidget(modes_hint)
 
     modes_edit = QLineEdit()
     modes_edit.setPlaceholderText("OUTLOOK=formal, slack=business, discord=casual")
     modes_edit.setText(_format_app_modes(config.get("app_modes", {})))
     modes_edit.setCursorPosition(0)
-    layout.addWidget(modes_edit)
+    card_layout.addWidget(modes_edit)
 
     def _save_modes() -> None:
         parsed = _parse_app_modes(modes_edit.text())
@@ -105,10 +111,13 @@ def add_features_section(
     )
 
     if on_open_history:
-        add_section(layout, "Verlauf", "📜")
+        add_section(card_layout, "Verlauf", "📜")
         history_btn = QPushButton("Diktat-Verlauf öffnen")
         history_btn.clicked.connect(on_open_history)
-        layout.addWidget(history_btn)
+        history_btn.setObjectName("HistoryButton")
+        card_layout.addWidget(history_btn)
+
+    layout.addWidget(card)
 
 
 def _save_bool(key: str, value: bool) -> None:

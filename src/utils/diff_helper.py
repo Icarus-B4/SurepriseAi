@@ -15,7 +15,7 @@ Frame = Tuple[str, str]  # ("plain"|"html", inhalt)
 def generate_diff_frames(
     raw: str,
     polished: str,
-    batch_size: int = 2,
+    batch_size: int = 1,
 ) -> List[Frame]:
     """Erzeugt Animations-Frames: Rohtext → Diff-HTML → finales Plain-Polish."""
     raw = (raw or "").strip()
