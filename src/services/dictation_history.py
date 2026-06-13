@@ -47,6 +47,9 @@ class DictationHistoryService:
         words: int,
         wpm: int,
         style: str,
+        audio_path: str | None = None,
+        live_transcript: str | None = None,
+        duration_s: float | None = None,
     ) -> None:
         """Neuen Historien-Eintrag vorne einfügen."""
         entry = {
@@ -57,6 +60,9 @@ class DictationHistoryService:
             "words": words,
             "wpm": wpm,
             "style": style,
+            "audio_path": audio_path or "",
+            "live_transcript": live_transcript or "",
+            "duration_s": round(duration_s, 2) if duration_s is not None else None,
         }
         self._entries.insert(0, entry)
         limit = config.get_int("dictation_history_max", 50)

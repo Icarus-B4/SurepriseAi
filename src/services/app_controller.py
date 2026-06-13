@@ -199,7 +199,16 @@ class AppController(QObject):
         wpm = int((words / duration) * 60) if duration > 0.5 else 0
         expanded.set_stats(words, wpm)
 
-        self.history.add(raw, polished, words, wpm, style_key)
+        self.history.add(
+            raw,
+            polished,
+            words,
+            wpm,
+            style_key,
+            audio_path=self.app.pipeline.last_audio_path,
+            live_transcript=self._last_live_text,
+            duration_s=duration,
+        )
         self.usage_stats.record_dictation(words, wpm, duration)
         self._refresh_tray_tooltip()
         self._update_privacy_badge()

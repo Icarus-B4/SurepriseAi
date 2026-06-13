@@ -8,6 +8,7 @@ import threading
 import time
 from typing import Callable, Optional
 import numpy as np
+import wave
 
 try:
     import ctypes
@@ -25,6 +26,7 @@ from .config_service import config
 from .app_mode_service import resolve_style_for_hwnd
 from .dictation_context_service import DictationContextService
 from . import dictation_logger as dlog
+from src.utils.app_paths import user_data_dir
 
 # Live-Transkription: niedrige Latenz durch kurzes Polling und kleines Audiopuffer
 LIVE_POLL_INTERVAL_S = 0.45
@@ -63,6 +65,7 @@ class TranscriptionPipeline:
         self.recording_start_time: float = 0.0
         self.recording_duration: float = 0.0
         self._last_partial_text: str = ""
+        self.last_audio_path: Optional[str] = None
 
     def set_state_callback(self, cb: Callable[[str], None]) -> None:
         self._on_state_change = cb
@@ -113,6 +116,7 @@ class TranscriptionPipeline:
             self.recording_start_time = time.time()
             self.recording_duration = 0.0
             self._last_partial_text = ""
+            self.last_audio_path = None
             resolved = resolve_style_for_hwnd(self._target_hwnd)
             self._session_style = resolved or config.selected_style
             self.dictation_context.capture_async(self._target_hwnd)
@@ -144,6 +148,7 @@ class TranscriptionPipeline:
 
         self.recording_duration = time.time() - self.recording_start_time
         dlog.log_kv("Aufnahme-Stop", dauer_s=round(self.recording_duration, 2))
+        self.last_audio_path = self._save_recording_audio(audio_data)
         self._emit_state("processing")
 
         context = self.dictation_context.get_context(
@@ -161,6 +166,26 @@ class TranscriptionPipeline:
             screen_context=context,
             live_fallback_text=self._last_partial_text or None,
         )
+
+    def _save_recording_audio(self, audio_data: np.ndarray) -> Optional[str]:
+        """Speichert das Diktat als WAV für Verlauf/Playback."""
+        try:
+            audio_dir = user_data_dir() / "recordings"
+            audio_dir.mkdir(parents=True, exist_ok=True)
+            path = audio_dir / f"diktat_{time.strftime('%Y%m%d_%H%M%S')}.wav"
+            samples = np.asarray(audio_data, dtype=np.float32).flatten()
+            samples = np.clip(samples, -1.0, 1.0)
+            pcm = (samples * 32767.0).astype(np.int16)
+            with wave.open(str(path), "wb") as wf:
+                wf.setnchannels(1)
+                wf.setsampwidth(2)
+                wf.setframerate(16000)
+                wf.writeframes(pcm.tobytes())
+            dlog.write(f"Audio gespeichert: {path}")
+            return str(path)
+        except Exception:
+            dlog.write_exception("Audio speichern")
+            return None
 
     def toggle(self) -> None:
         if self.audio.is_recording:

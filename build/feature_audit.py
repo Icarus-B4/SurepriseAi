@@ -233,6 +233,25 @@ def audit_history_export(r: AuditResult) -> None:
     r.ok("Historien-Export: TXT, Markdown, SRT")
 
 
+def audit_history_audio_playback(r: AuditResult) -> None:
+    from src.services.dictation_history import DictationHistoryService
+    from src.ui.history_dialog import HistoryDialog
+
+    add_sig = inspect.signature(DictationHistoryService.add)
+    for field in ("audio_path", "live_transcript", "duration_s"):
+        if field not in add_sig.parameters:
+            r.fail(f"History-Audio: add() speichert {field} nicht")
+            return
+
+    src = (ROOT / "src/ui/history_dialog.py").read_text(encoding="utf-8")
+    required = ("QMediaPlayer", "QAudioOutput", "audio_path", "live_transcript", "_toggle_playback")
+    missing = [token for token in required if token not in src]
+    if missing:
+        r.fail(f"History-Audio: UI-Playback fehlt: {missing}")
+        return
+    r.ok("History-Audio: WAV-Playback + Live/Final-Transkriptansicht vorhanden")
+
+
 def audit_hotkey(r: AuditResult) -> None:
     from src.services.hotkey_service import HotkeyService, PYNPUT_AVAILABLE
 
@@ -310,6 +329,7 @@ def run_audit() -> AuditResult:
         audit_url_import,
         audit_context_polishing,
         audit_history_export,
+        audit_history_audio_playback,
         audit_hotkey,
         audit_updates,
         audit_readme_controls,
