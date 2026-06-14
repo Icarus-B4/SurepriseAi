@@ -104,10 +104,37 @@ Section "Desktop-Verknüpfung" SecDesktop
 SectionEnd
 
 Section "Mit Windows starten" SecAutostart
-  WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Run" \
-    "${APP_NAME}" '"$INSTDIR\${APP_EXE}"'
-  WriteRegDWORD HKCU "${PREFS_KEY}" "WantAutostart" 1
+  ; Registry-Eintrag wird in .onInstSuccess gesetzt (Section nur für Checkbox).
 SectionEnd
+
+Function WriteAutostart
+  FileOpen $0 "$INSTDIR\LaunchSurepriseAi.vbs" w
+  FileWrite $0 'Set sh = CreateObject("WScript.Shell")$\r$\n'
+  FileWrite $0 'Set fso = CreateObject("Scripting.FileSystemObject")$\r$\n'
+  FileWrite $0 'dir = fso.GetParentFolderName(WScript.ScriptFullName)$\r$\n'
+  FileWrite $0 'sh.CurrentDirectory = dir$\r$\n'
+  FileWrite $0 'sh.Run Chr(34) & dir & "\${APP_EXE}" & Chr(34), 0, False$\r$\n'
+  FileClose $0
+  WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Run" \
+    "${APP_NAME}" '"$INSTDIR\LaunchSurepriseAi.vbs"'
+  WriteRegDWORD HKCU "${PREFS_KEY}" "WantAutostart" 1
+FunctionEnd
+
+Function RemoveAutostart
+  DeleteRegValue HKCU "Software\Microsoft\Windows\CurrentVersion\Run" "${APP_NAME}"
+  Delete "$INSTDIR\LaunchSurepriseAi.vbs"
+  WriteRegDWORD HKCU "${PREFS_KEY}" "WantAutostart" 0
+FunctionEnd
+
+Function .onInstSuccess
+  SectionGetFlags ${SecAutostart} $0
+  IntOp $0 $0 & ${SF_SELECTED}
+  IntCmp $0 ${SF_SELECTED} 0 +3
+    Call WriteAutostart
+    Goto inst_done
+  Call RemoveAutostart
+  inst_done:
+FunctionEnd
 
 !insertmacro MUI_FUNCTION_DESCRIPTION_BEGIN
   !insertmacro MUI_DESCRIPTION_TEXT ${SecMain} $(DESC_SecMain)
@@ -140,7 +167,7 @@ Section "Uninstall"
   WriteRegDWORD HKCU "${PREFS_KEY}" "WantAutostart" 0
 
   ; Nur Programm entfernen – %APPDATA%\SurepriseAi (Config, Historie) bleibt!
-  DeleteRegKey HKCU "Software\Microsoft\Windows\CurrentVersion\Run\${APP_NAME}"
+  DeleteRegValue HKCU "Software\Microsoft\Windows\CurrentVersion\Run" "${APP_NAME}"
   Delete "$DESKTOP\${APP_NAME}.lnk"
   RMDir /r "$SMPROGRAMS\${APP_NAME}"
   RMDir /r "$INSTDIR"

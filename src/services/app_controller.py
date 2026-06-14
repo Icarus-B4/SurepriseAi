@@ -12,6 +12,7 @@ from src.ui.history_dialog import HistoryDialog
 from src.ui.url_transcribe_dialog import UrlTranscribeDialog
 from src.ui.welcome_dialog import WelcomeDialog
 from src.utils.app_paths import mark_onboarding_done, needs_onboarding
+from src.utils import autostart
 from src.services.config_service import config
 from src.services.style_definitions import style_label
 from src.services.dictation_history import DictationHistoryService
@@ -40,6 +41,7 @@ class AppController(QObject):
 
     def connect_all(self):
         """Verknüpft alle Signale und Callbacks."""
+        autostart.sync_from_installer()
         qc = Qt.ConnectionType.QueuedConnection
         self.app.signals.ready.connect(self._on_pipeline_ready, qc)
         self.app.signals.state_changed.connect(self._on_pipeline_state, qc)

@@ -20,6 +20,8 @@
 3. Optional: Desktop-Verknüpfung, Autostart mit Windows
 4. Nach der Installation: **Tray-Icon** unten rechts → **F8** zum Diktieren
 
+Autostart lässt sich auch jederzeit in **Einstellungen → Mit Windows starten** umschalten.
+
 Kein Python nötig – der Installer enthält alles. Einstellungen liegen unter `%APPDATA%\SurepriseAi\`.
 
 ---

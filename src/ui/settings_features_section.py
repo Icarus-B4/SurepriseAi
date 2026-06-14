@@ -9,6 +9,8 @@ from PyQt6.QtWidgets import QVBoxLayout, QLabel, QLineEdit, QPushButton, QFrame
 
 from src.ui.toggle_switch import ToggleRow
 from src.services.config_service import config
+from src.utils.app_paths import is_frozen
+from src.utils import autostart
 
 
 def _parse_app_modes(text: str) -> dict[str, str]:
@@ -57,6 +59,16 @@ def add_features_section(
     _toggle("Privacy-Badge in Idle-Pill", "show_privacy_badge")
     _toggle("Mini-FAB (schwebender Mic-Button)", "enable_mini_fab")
     _toggle("Updates beim Start prüfen", "check_updates_on_startup")
+
+    if is_frozen():
+        autostart_row = ToggleRow(
+            "Mit Windows starten",
+            checked=autostart.is_enabled(),
+        )
+        autostart_row.toggled.connect(
+            lambda checked: autostart.set_enabled(checked)
+        )
+        card_layout.addWidget(autostart_row)
 
     add_section(card_layout, "Bildschirmkontext (OCR)", "👁")
     ctx_row = ToggleRow("Bildschirmkontext für Polishing (lokal, Windows-OCR)", checked=config.get_bool("enable_screen_context"))

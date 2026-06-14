@@ -57,11 +57,10 @@ jobs:
 
             **Windows-Installer** – Doppelklick auf `SurepriseAi-Setup.exe`.
 
-            ### Neu in v0.1.24
-            - **2-Panel-Einstellungen:** Settings und Diktat-Verlauf laufen jetzt in einem professionellen Zwei-Spalten-Fenster.
-            - **Verbesserter Diktat-Verlauf:** Audio-Playback, Diff-Slider, Live-Transkript und Stil-Switch in einer aufgeräumten Detailansicht.
-            - **Alle 7 Stil-Chips im Verlauf:** Bereinigen, Business, Stichpunkte, Kernpunkte, Kompakt, Lang und Formell können nachträglich angewendet werden.
-            - **Lokale Auto-Korrektur:** Füllwörter, doppelte Wörter, Selbstkorrekturen, Leerzeichen und Satzanfänge werden vor dem Polishing bereinigt.
-            - **UI-Politur:** Modernere Dynamic Island, bessere Waveform, Glas-Gradienten, lesbarere Diff-Ansicht und aktualisierte README-Screenshot-Galerie.
+            ### Neu in v0.1.25
+            - **Autostart repariert:** Windows-Start funktioniert wieder zuverlässig – VBS-Launcher mit korrektem Working Directory.
+            - **Installer-Fix:** Registry-Eintrag wird beim Deinstallieren korrekt entfernt (`DeleteRegValue` statt fehlerhaftem `DeleteRegKey`).
+            - **Einstellungen:** Neuer Toggle „Mit Windows starten“ in den installierten App-Einstellungen.
+            - **Migration:** Bestehende Autostart-Einträge werden beim App-Start automatisch auf den neuen Launcher umgestellt.
 
-            Vollständiges Changelog: https://github.com/Icarus-B4/SurepriseAi/compare/v0.1.23...${{ github.ref_name }}
+            Vollständiges Changelog: https://github.com/Icarus-B4/SurepriseAi/compare/v0.1.24...${{ github.ref_name }}
