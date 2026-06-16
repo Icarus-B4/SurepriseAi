@@ -41,8 +41,10 @@ import_test.log
 .agent/recordings/*.wav
 .agent/transcriptions/*.txt
 .agent/CONVERSATION_MEMORY.md
+.agent/VOICEINK_MEMORY.md
+.agent/debug-*.log
 
-
+ 
 # ── Lokale Konfiguration (Vorlage: config.example.json) ─────────────────────────
 config.json
 
