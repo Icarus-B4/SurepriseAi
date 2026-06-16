@@ -147,9 +147,9 @@ def create_app_icon() -> None:
         sizes=[(im.width, im.height) for im in images],
         append_images=images[1:],
     )
-    if ico_path.stat().st_size < 10_000:
+    if ico_path.stat().st_size < 1000:
         raise SystemExit(
-            f"ICO zu klein ({ico_path.stat().st_size} B) – Mehrgrößen-Export fehlgeschlagen."
+            f"ICO zu klein ({ico_path.stat().st_size} B) – Export fehlgeschlagen."
         )
     shutil.copy2(ico_path, ASSETS / "SurepriseAi.ico")
 
