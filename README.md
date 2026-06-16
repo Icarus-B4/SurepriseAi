@@ -46,11 +46,17 @@ Kein Python nötig – der Installer enthält alles. Einstellungen liegen unter 
 
 ---
 
-## Screenshots
+## Screenshots & Demo
 
-> Die App erscheint als dunkle, halbtransparente **Pill** oben zentriert und expandiert nach dem Diktat zur Vollansicht mit Statistiken, Textfeld und Stil-Chips.
+> Die App erscheint als dunkle, halbtransparente **Pill** oben zentriert und reagiert dynamisch auf deine Aktionen.
 
-### Dynamic Island
+### Demo (Animierter Ablauf)
+
+Hier ist ein automatisierter Durchlauf aller wichtigen Funktionen (Aufnahme, Live-Transkription im Toast, Expanded-Ansicht mit Stil-Chips und Einstellungen):
+
+![SurepriseAi Präsentations-Demo](screenshots/demo.gif)
+
+### Screenshots der Dynamic Island
 
 | Presence Bar | Idle Pill | Expanded View |
 |---|---|---|
