@@ -5,11 +5,14 @@ from pathlib import Path
 
 import certifi
 
-import certifi
-
 ROOT = Path(SPECPATH).resolve().parent
 SRC = ROOT / "src"
 _ICON = ROOT / "build" / "assets" / "app_icon.ico"
+_ICON_DATAS = []
+if (ROOT / "App_icon.png").is_file():
+    _ICON_DATAS.append((str(ROOT / "App_icon.png"), "."))
+if _ICON.is_file():
+    _ICON_DATAS.append((str(_ICON), "."))
 
 try:
     import PyQt6
@@ -36,6 +39,7 @@ a = Analysis(
         (str(ROOT / "LICENSE"), "."),
         (str(ROOT / "sounds"), "sounds"),
         (certifi.where(), "certifi"),
+        *_ICON_DATAS,
         *_EXTRA_DATAS,
     ],
     hiddenimports=[

@@ -10,6 +10,7 @@ from PyQt6.QtCore import Qt, pyqtSignal
 from src.services.config_service import config
 from src.services.style_definitions import STYLE_DEFINITIONS
 from src.ui.design_tokens import Colors
+from src.utils.app_icon import load_app_icon
 from src.version import __version__
 
 
@@ -37,7 +38,11 @@ class SurepriseTrayIcon(QSystemTrayIcon):
         self._init_menu()
 
     def _create_tray_icon(self) -> QIcon:
-        """Zeichnet ein minimalistisches System-Tray-Icon (Dynamic-Island-Form)."""
+        """Lädt App_icon.png / SurepriseAi.ico oder zeichnet Fallback."""
+        icon = load_app_icon()
+        if not icon.isNull():
+            return icon
+
         pixmap = QPixmap(16, 16)
         pixmap.fill(Qt.GlobalColor.transparent)
         

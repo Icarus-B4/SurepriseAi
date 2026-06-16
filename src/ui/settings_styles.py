@@ -89,46 +89,31 @@ def settings_stylesheet() -> str:
             letter-spacing: 0.6px;
         }}
 
-        QFrame#OllamaStatusBadge {{
-            border-radius: 12px;
-            border: 1px solid {border};
-            background-color: rgba(255, 255, 255, 0.03);
-        }}
-        QFrame#OllamaStatusBadge[ollamaStatus="offline"] {{
-            background: qlineargradient(
-                x1: 0, y1: 0, x2: 1, y2: 0,
-                stop: 0 rgba(255, 69, 58, 0.14),
-                stop: 1 rgba(255, 69, 58, 0.05)
-            );
-            border: 1px solid rgba(255, 69, 58, 0.38);
-        }}
-        QFrame#OllamaStatusBadge[ollamaStatus="pending"] {{
-            background: qlineargradient(
-                x1: 0, y1: 0, x2: 1, y2: 0,
-                stop: 0 rgba(255, 214, 10, 0.16),
-                stop: 1 rgba(255, 214, 10, 0.05)
-            );
-            border: 1px solid rgba(255, 214, 10, 0.42);
-        }}
-        QFrame#OllamaStatusBadge[ollamaStatus="connected"] {{
-            background: qlineargradient(
-                x1: 0, y1: 0, x2: 1, y2: 0,
-                stop: 0 rgba(48, 209, 88, 0.18),
-                stop: 1 rgba(48, 209, 88, 0.06)
-            );
-            border: 1px solid rgba(48, 209, 88, 0.42);
-        }}
         QLabel#OllamaStatusText {{
-            color: {text_primary};
+            color: {text_secondary};
         }}
-        QFrame#OllamaStatusBadge[ollamaStatus="offline"] QLabel#OllamaStatusText {{
-            color: {recording_red};
+
+        QFrame#OllamaStatusDot {{
+            border-radius: 14px;
+            border: 1px solid {border};
+            background-color: rgba(255, 255, 255, 0.04);
         }}
-        QFrame#OllamaStatusBadge[ollamaStatus="pending"] QLabel#OllamaStatusText {{
-            color: {warning_amber};
+        QFrame#OllamaStatusDot[ollamaStatus="offline"] {{
+            border: 1px solid rgba(255, 69, 58, 0.55);
+            background-color: rgba(255, 69, 58, 0.16);
         }}
-        QFrame#OllamaStatusBadge[ollamaStatus="connected"] QLabel#OllamaStatusText {{
-            color: {success_green};
+        QFrame#OllamaStatusDot[ollamaStatus="pending"] {{
+            border: 1px solid rgba(255, 214, 10, 0.55);
+            background-color: rgba(255, 214, 10, 0.16);
+        }}
+        QFrame#OllamaStatusDot[ollamaStatus="connected"] {{
+            border: 1px solid rgba(48, 209, 88, 0.55);
+            background-color: rgba(48, 209, 88, 0.16);
+        }}
+        QLabel#OllamaStatusIcon {{
+            background: transparent;
+            border: none;
+            font-size: 13px;
         }}
 
         QFrame#OllamaControlCard {{

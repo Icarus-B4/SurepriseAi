@@ -57,10 +57,8 @@ jobs:
 
             **Windows-Installer** – Doppelklick auf `SurepriseAi-Setup.exe`.
 
-            ### Neu in v0.1.29
-            - **Übersetzung:** „Auf Deutsch übersetzen“ plus Hotkeys F6 (DE) / F7 (EN) für Diktat mit Übersetzung.
-            - **Sounds:** Pfad-Fix für Installer, Sound-Auswahl mit Vorschau, Kenney-Soundpaket.
-            - **Ollama:** Starten & Beenden aus den Einstellungen, farbiges Status-Badge (🔴/🟡/🟢).
-            - **UI:** Versionsnummer in der Settings-Sidebar, modernisierte KI-Polishing-Karte.
+            ### Neu in v0.1.30
+            - **App-Icon:** Setup.exe, SurepriseAi.exe und Tray nutzen `App_icon.png` (Multi-Size-ICO-Fix für Windows).
+            - **Ollama:** Zuverlässigeres Beenden, kompakteres Status-Badge in den Einstellungen.
 
-            Vollständiges Changelog: https://github.com/Icarus-B4/SurepriseAi/compare/v0.1.28...${{ github.ref_name }}
+            Vollständiges Changelog: https://github.com/Icarus-B4/SurepriseAi/compare/v0.1.29...${{ github.ref_name }}

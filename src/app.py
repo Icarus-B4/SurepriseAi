@@ -17,6 +17,7 @@ from src.services.config_service import config
 from src.services.app_controller import AppController
 from src.ui.tray_icon import SurepriseTrayIcon
 from src.ui.accent_theme import apply_accent_from_config
+from src.utils.app_icon import load_app_icon
 
 
 class PipelineSignals(QObject):
@@ -36,10 +37,9 @@ class SurepriseApp:
     """
 
     def __init__(self):
-        from PyQt6.QtGui import QIcon
         self.app = QApplication(sys.argv)
         self.app.setQuitOnLastWindowClosed(False)
-        self.app.setWindowIcon(QIcon("App_icon.png"))
+        self.app.setWindowIcon(load_app_icon())
 
         self.signals = PipelineSignals()
         self.pipeline = TranscriptionPipeline()

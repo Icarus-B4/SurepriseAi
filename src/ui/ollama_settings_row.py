@@ -23,6 +23,7 @@ class OllamaSettingsRow(QWidget):
     def __init__(self, parent=None) -> None:
         super().__init__(parent)
         self._busy = False
+        self._watchdog: QTimer | None = None
         self._build_ui()
         self.refresh_status()
 
@@ -38,7 +39,8 @@ class OllamaSettingsRow(QWidget):
         card_layout.setSpacing(12)
 
         self._badge = OllamaStatusBadge(card)
-        card_layout.addWidget(self._badge, stretch=1)
+        card_layout.addWidget(self._badge)
+        card_layout.addStretch()
 
         actions = QHBoxLayout()
         actions.setSpacing(8)
@@ -65,9 +67,12 @@ class OllamaSettingsRow(QWidget):
         outer.addWidget(card)
 
     def refresh_status(self) -> None:
-        if self._busy:
-            return
         from src.services.ollama_launcher import is_running
+
+        if self._busy:
+            if self._watchdog is not None:
+                self._watchdog.stop()
+            self._busy = False
 
         if is_running(config.get_str("ollama_url")):
             self._set_idle_state("connected", "verbunden", "stop")
@@ -90,7 +95,23 @@ class OllamaSettingsRow(QWidget):
         self._busy = True
         self._badge.set_state("pending", detail)
         self._action_btn.setEnabled(False)
-        self._refresh_btn.setEnabled(False)
+        self._refresh_btn.setEnabled(True)
+        if self._watchdog is not None:
+            self._watchdog.stop()
+        self._watchdog = QTimer(self)
+        self._watchdog.setSingleShot(True)
+        self._watchdog.timeout.connect(self._force_reset_busy)
+        self._watchdog.start(14_000)
+
+    def _force_reset_busy(self) -> None:
+        if not self._busy:
+            return
+        self._busy = False
+        self.refresh_status()
+        self.action_finished.emit(
+            False,
+            "Zeitüberschreitung – bitte Status mit ↻ prüfen.",
+        )
 
     def _on_action_clicked(self) -> None:
         if self._busy:
@@ -104,7 +125,14 @@ class OllamaSettingsRow(QWidget):
             self._run_worker(self._start_worker)
 
     def _run_worker(self, worker: Callable[[], tuple[bool, str]]) -> None:
-        threading.Thread(target=lambda: self._finish_worker(worker()), daemon=True).start()
+        def _target() -> None:
+            try:
+                result = worker()
+            except Exception as exc:
+                result = (False, f"Fehler: {exc}")
+            QTimer.singleShot(0, lambda: self._on_worker_finished(*result))
+
+        threading.Thread(target=_target, daemon=True).start()
 
     def _start_worker(self) -> tuple[bool, str]:
         from src.services.ollama_launcher import start_ollama
@@ -116,11 +144,9 @@ class OllamaSettingsRow(QWidget):
 
         return stop_ollama()
 
-    def _finish_worker(self, result: tuple[bool, str]) -> None:
-        ok, message = result
-        QTimer.singleShot(0, lambda: self._on_worker_finished(ok, message))
-
     def _on_worker_finished(self, ok: bool, message: str) -> None:
+        if self._watchdog is not None:
+            self._watchdog.stop()
         self._busy = False
         self.refresh_status()
         self.action_finished.emit(ok, message)
