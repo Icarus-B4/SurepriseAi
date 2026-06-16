@@ -54,12 +54,20 @@ class HotkeyService:
         # Callbacks
         self._on_start: Optional[Callable[[], None]] = None
         self._on_stop: Optional[Callable[[], None]] = None
+        self._on_translate_de: Optional[Callable[[], None]] = None
+        self._on_translate_en: Optional[Callable[[], None]] = None
 
     def set_start_callback(self, cb: Callable[[], None]) -> None:
         self._on_start = cb
 
     def set_stop_callback(self, cb: Callable[[], None]) -> None:
         self._on_stop = cb
+
+    def set_translate_de_callback(self, cb: Callable[[], None]) -> None:
+        self._on_translate_de = cb
+
+    def set_translate_en_callback(self, cb: Callable[[], None]) -> None:
+        self._on_translate_en = cb
 
     # ── Listener-Steuerung ────────────────────────────────────────────────────
 
@@ -86,7 +94,13 @@ class HotkeyService:
             self._is_running = True
             hotkey = config.global_hotkey
             mode = "Push-to-Talk" if config.push_to_talk else "Toggle"
-            print(f"[Hotkey] Listener gestartet – '{hotkey}' ({mode}-Modus)")
+            extras = ""
+            if config.get_bool("enable_translate_hotkeys", True):
+                extras = (
+                    f", Übersetzung DE={config.get_str('translate_german_hotkey', 'f6')}"
+                    f", EN={config.get_str('translate_english_hotkey', 'f7')}"
+                )
+            print(f"[Hotkey] Listener gestartet – '{hotkey}' ({mode}-Modus){extras}")
             return True
         except Exception as e:
             print(f"[Hotkey] Fehler beim Starten: {e}")
@@ -112,23 +126,23 @@ class HotkeyService:
 
     # ── Key-Handler ───────────────────────────────────────────────────────────
 
-    def _get_hotkey_key(self) -> Optional[object]:
-        """Gibt den konfigurierten Hotkey als pynput-Key zurück."""
-        hotkey_str = config.global_hotkey.lower().strip()
-
-        # Sondertatsten (F1–F12)
-        if hotkey_str in _SPECIAL_KEYS:
-            return _SPECIAL_KEYS[hotkey_str]
-
-        # Normale Buchstaben/Zahlen
+    def _resolve_key(self, hotkey_str: str) -> Optional[object]:
+        """Gibt einen Hotkey-String als pynput-Key zurück."""
+        key_name = hotkey_str.lower().strip()
+        if key_name in _SPECIAL_KEYS:
+            return _SPECIAL_KEYS[key_name]
         try:
-            return pynput_kb.KeyCode.from_char(hotkey_str)
+            return pynput_kb.KeyCode.from_char(key_name)
         except Exception:
             return None
 
-    def _key_matches(self, key: object) -> bool:
-        """Prüft ob der gedrückte Tastendruck dem konfigurierten Hotkey entspricht."""
-        target = self._get_hotkey_key()
+    def _get_hotkey_key(self) -> Optional[object]:
+        """Gibt den konfigurierten Aufnahme-Hotkey als pynput-Key zurück."""
+        return self._resolve_key(config.global_hotkey)
+
+    def _key_matches(self, key: object, hotkey_str: Optional[str] = None) -> bool:
+        """Prüft ob der gedrückte Tastendruck dem Hotkey entspricht."""
+        target = self._resolve_key(hotkey_str) if hotkey_str else self._get_hotkey_key()
         if target is None:
             return False
         return key == target
@@ -139,6 +153,16 @@ class HotkeyService:
         if key in self._pressed_keys:
             return
         self._pressed_keys.add(key)
+
+        if config.get_bool("enable_translate_hotkeys", True):
+            de_key = config.get_str("translate_german_hotkey", "f6")
+            en_key = config.get_str("translate_english_hotkey", "f7")
+            if self._key_matches(key, de_key) and self._on_translate_de:
+                threading.Thread(target=self._on_translate_de, daemon=True).start()
+                return
+            if self._key_matches(key, en_key) and self._on_translate_en:
+                threading.Thread(target=self._on_translate_en, daemon=True).start()
+                return
 
         if not self._key_matches(key):
             return
@@ -168,7 +192,7 @@ class HotkeyService:
         if not config.push_to_talk:
             return
 
-        if self._key_matches(key) and self._recording_active:
+        if self._key_matches(key, config.global_hotkey) and self._recording_active:
             self._recording_active = False
             if self._on_stop:
                 threading.Thread(target=self._on_stop, daemon=True).start()

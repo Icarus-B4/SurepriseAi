@@ -25,6 +25,10 @@
     "push_to_talk": true,
     "transcription_language": "auto",
     "translate_to_english": false,
+    "translate_to_german": false,
+    "enable_translate_hotkeys": true,
+    "translate_german_hotkey": "f6",
+    "translate_english_hotkey": "f7",
     "enable_app_modes": true,
     "app_modes": {
         "OUTLOOK": "formal",

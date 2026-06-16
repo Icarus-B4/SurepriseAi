@@ -191,7 +191,7 @@ class TranscriptionService:
             return f"whisper({config.get_str('whisper_model_size', 'tiny')})"
         return "none"
 
-    def transcribe(self, audio_data: np.ndarray) -> str:
+    def transcribe(self, audio_data: np.ndarray, translate_mode: Optional[str] = None) -> str:
         """Synchrone Transkription (blockierend). Für Tests geeignet."""
         if not self._initialized:
             if not self.initialize():
@@ -209,11 +209,11 @@ class TranscriptionService:
                     return text
                 dlog.write("Parakeet lieferte leer – Whisper-Fallback")
                 if self._whisper_model is not None:
-                    return self._transcribe_whisper(audio)
+                    return self._transcribe_whisper(audio, translate_mode=translate_mode)
                 return ""
 
             if self._whisper_model is not None:
-                return self._transcribe_whisper(audio)
+                return self._transcribe_whisper(audio, translate_mode=translate_mode)
         dlog.write("Transcribe: keine Engine verfuegbar")
         return ""
 
@@ -271,9 +271,12 @@ class TranscriptionService:
         _log(f"[Transcription] Parakeet ({mode}): '{preview}'")
         return text
 
-    def _transcribe_whisper(self, audio_data: np.ndarray) -> str:
+    def _transcribe_whisper(self, audio_data: np.ndarray, translate_mode: Optional[str] = None) -> str:
         """Transkription mit faster-whisper (VAD aus – Diktat ist bewusst gesprochen)."""
-        task = "translate" if config.translate_to_english else "transcribe"
+        use_translate = translate_mode == "en" or (
+            translate_mode is None and config.translate_to_english
+        )
+        task = "translate" if use_translate else "transcribe"
         lang = config.transcription_language
 
         for vad_on in (False, True):

@@ -57,9 +57,10 @@ jobs:
 
             **Windows-Installer** – Doppelklick auf `SurepriseAi-Setup.exe`.
 
-            ### Neu in v0.1.28
-            - **Aufnahme-Sounds:** Akustisches Feedback beim Start und Stopp der Diktat-Aufnahme.
-            - **Einstellungen:** Sounds ein/aus, wählbare Start- und Stopp-Sounds mit Vorschau.
-            - **Sound-Bibliothek:** Zusätzliche CC0-Interface-Sounds (Kenney) zur Auswahl.
+            ### Neu in v0.1.29
+            - **Übersetzung:** „Auf Deutsch übersetzen“ plus Hotkeys F6 (DE) / F7 (EN) für Diktat mit Übersetzung.
+            - **Sounds:** Pfad-Fix für Installer, Sound-Auswahl mit Vorschau, Kenney-Soundpaket.
+            - **Ollama:** Starten & Beenden aus den Einstellungen, farbiges Status-Badge (🔴/🟡/🟢).
+            - **UI:** Versionsnummer in der Settings-Sidebar, modernisierte KI-Polishing-Karte.
 
-            Vollständiges Changelog: https://github.com/Icarus-B4/SurepriseAi/compare/v0.1.27...${{ github.ref_name }}
+            Vollständiges Changelog: https://github.com/Icarus-B4/SurepriseAi/compare/v0.1.28...${{ github.ref_name }}

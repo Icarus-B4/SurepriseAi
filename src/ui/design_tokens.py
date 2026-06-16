@@ -65,6 +65,7 @@ class Colors:
     RECORDING_RED_HEX  = "#FF453A"
     SUCCESS_GREEN_HEX  = "#30D158"
     PROCESSING_BLUE_HEX = "#64D2FF"
+    WARNING_AMBER_HEX  = "#FFD60A"
 
     # Rahmen / Haarlinien (in absteigender Stärke)
     BORDER_HEX         = "rgba(255, 255, 255, 0.08)"
@@ -166,11 +167,11 @@ class Typography:
 # ── Radius (Ecken-Rundungen, zentral) ─────────────────────────────────────────
 
 class Radius:
-    XS   = 6
-    SM   = 8
-    MD   = 12
-    LG   = 16
-    XL   = 20
+    XS   = 4
+    SM   = 6
+    MD   = 10
+    LG   = 14
+    XL   = 18
     PILL = 999  # voll abgerundet (Kapselform)
 
 

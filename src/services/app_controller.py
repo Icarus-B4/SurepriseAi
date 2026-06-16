@@ -86,6 +86,8 @@ class AppController(QObject):
 
         self.app.hotkey.set_start_callback(self.app.pipeline.start_recording)
         self.app.hotkey.set_stop_callback(self.app.pipeline.stop_recording)
+        self.app.hotkey.set_translate_de_callback(lambda: self._start_dictation_translate("de"))
+        self.app.hotkey.set_translate_en_callback(lambda: self._start_dictation_translate("en"))
 
         self.app.window.settings_changed_callback = self.apply_runtime_setting
         self.app.window.open_history_callback = self._open_history
@@ -94,6 +96,7 @@ class AppController(QObject):
         self.app.window.request_style_change_callback = self._on_style_changed
         self.app.window.history_service = self.history
         self.app.window.recording_sound_preview_callback = self.recording_sounds.preview
+        self.app.window.show_settings_toast = self._show_settings_toast
         self.runtime_settings = RuntimeSettingsHandler(self.app)
 
         self._refresh_tray_tooltip()
@@ -150,6 +153,25 @@ class AppController(QObject):
             self.app.window.pill.set_privacy_badge("Lokal · Ollama")
         else:
             self.app.window.pill.set_privacy_badge("Offline · lokal")
+
+    def _show_settings_toast(self, message: str, success: bool) -> None:
+        if success:
+            self.app.toast.show_success(message)
+        else:
+            self.app.toast.show_error(message)
+        self.app.pipeline.polisher.check_ollama_status()
+        self._update_privacy_badge()
+
+    def _start_dictation_translate(self, lang: str) -> None:
+        """Startet Diktat mit Übersetzungsmodus (F6=DE, F7=EN)."""
+        if self.app.pipeline.is_recording:
+            return
+        label = "Deutsch" if lang == "de" else "Englisch"
+        if self.app.pipeline.start_recording(translate_mode=lang):
+            self.app.toast.show_message(
+                f"Diktat mit Übersetzung ({label})…",
+                duration_ms=1600,
+            )
 
     def _on_pipeline_ready(self, success: bool):
         self._update_privacy_badge()

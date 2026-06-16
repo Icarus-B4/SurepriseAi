@@ -141,6 +141,39 @@ class PolishingService:
 
         return text
 
+    def translate_to_language(self, text: str, target_lang: str) -> str:
+        """Übersetzt Rohtext nach Deutsch oder Englisch (Ollama, sonst unverändert)."""
+        if not text or not text.strip():
+            return text
+        target = "Deutsche" if target_lang == "de" else "Englische"
+        prompt = (
+            f"Übersetze den folgenden Text ins {target}. "
+            "Antworte NUR mit der Übersetzung, ohne Erklärungen.\n\n"
+            f"Text:\n{text}"
+        )
+        translated = self._call_ollama_raw(prompt)
+        return translated if translated and translated.strip() else text
+
+    def _call_ollama_raw(self, prompt: str) -> Optional[str]:
+        url = f"{config.ollama_url}/api/generate"
+        payload = json.dumps({
+            "model": config.ollama_model,
+            "prompt": prompt,
+            "stream": False,
+            "options": {"temperature": 0.2, "num_predict": 600},
+        }).encode("utf-8")
+        try:
+            req = urllib.request.Request(url, data=payload, headers={"Content-Type": "application/json"})
+            with urllib.request.urlopen(req, timeout=config.polishing_timeout) as r:
+                res = json.loads(r.read().decode("utf-8"))
+                result = res.get("response", "").strip()
+                if result:
+                    self._ollama_available = True
+                    return result
+        except Exception:
+            self._ollama_available = False
+        return None
+
     def _call_ollama(
         self,
         text: str,

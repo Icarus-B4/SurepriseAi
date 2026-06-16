@@ -61,13 +61,134 @@ def settings_stylesheet() -> str:
         }}
 
         QLabel#SettingsSidebarBrand {{
-            color: {text_tertiary};
+            color: {text_primary};
+            background: transparent;
+            border: none;
+            padding: 0;
+            font-size: {small}pt;
+            font-weight: 700;
+        }}
+
+        QWidget#SettingsSidebarBrandBox {{
             background-color: rgba(255, 255, 255, 0.04);
             border: 1px solid rgba(255, 255, 255, 0.08);
             border-radius: 10px;
-            padding: 10px 12px;
+        }}
+
+        QLabel#SettingsSidebarVersion {{
+            color: {text_tertiary};
+            background: transparent;
+            border: none;
+            padding: 0;
             font-size: {tiny}pt;
+            font-weight: 500;
+        }}
+
+        QLabel#OllamaStatusPrefix {{
+            color: {text_tertiary};
+            letter-spacing: 0.6px;
+        }}
+
+        QFrame#OllamaStatusBadge {{
+            border-radius: 12px;
+            border: 1px solid {border};
+            background-color: rgba(255, 255, 255, 0.03);
+        }}
+        QFrame#OllamaStatusBadge[ollamaStatus="offline"] {{
+            background: qlineargradient(
+                x1: 0, y1: 0, x2: 1, y2: 0,
+                stop: 0 rgba(255, 69, 58, 0.14),
+                stop: 1 rgba(255, 69, 58, 0.05)
+            );
+            border: 1px solid rgba(255, 69, 58, 0.38);
+        }}
+        QFrame#OllamaStatusBadge[ollamaStatus="pending"] {{
+            background: qlineargradient(
+                x1: 0, y1: 0, x2: 1, y2: 0,
+                stop: 0 rgba(255, 214, 10, 0.16),
+                stop: 1 rgba(255, 214, 10, 0.05)
+            );
+            border: 1px solid rgba(255, 214, 10, 0.42);
+        }}
+        QFrame#OllamaStatusBadge[ollamaStatus="connected"] {{
+            background: qlineargradient(
+                x1: 0, y1: 0, x2: 1, y2: 0,
+                stop: 0 rgba(48, 209, 88, 0.18),
+                stop: 1 rgba(48, 209, 88, 0.06)
+            );
+            border: 1px solid rgba(48, 209, 88, 0.42);
+        }}
+        QLabel#OllamaStatusText {{
+            color: {text_primary};
+        }}
+        QFrame#OllamaStatusBadge[ollamaStatus="offline"] QLabel#OllamaStatusText {{
+            color: {recording_red};
+        }}
+        QFrame#OllamaStatusBadge[ollamaStatus="pending"] QLabel#OllamaStatusText {{
+            color: {warning_amber};
+        }}
+        QFrame#OllamaStatusBadge[ollamaStatus="connected"] QLabel#OllamaStatusText {{
+            color: {success_green};
+        }}
+
+        QFrame#OllamaControlCard {{
+            background: qlineargradient(
+                x1: 0, y1: 0, x2: 1, y2: 1,
+                stop: 0 rgba(99, 102, 241, 0.10),
+                stop: 1 rgba(255, 255, 255, 0.02)
+            );
+            border: 1px solid rgba(129, 140, 248, 0.18);
+            border-radius: 14px;
+        }}
+
+        QPushButton#OllamaRefreshButton {{
+            background-color: {elevated};
+            color: {text_secondary};
+            border: 1px solid {border};
+            border-radius: 10px;
+            font-size: {medium}pt;
+            padding: 0;
+        }}
+        QPushButton#OllamaRefreshButton:hover {{
+            color: {text_primary};
+            border-color: {accent};
+        }}
+
+        QPushButton#OllamaActionButton {{
+            border-radius: 10px;
+            padding: 8px 16px;
+            font-size: {small}pt;
             font-weight: 700;
+        }}
+        QPushButton#OllamaActionButton[ollamaAction="start"] {{
+            background: qlineargradient(
+                x1: 0, y1: 0, x2: 1, y2: 1,
+                stop: 0 {accent_bright},
+                stop: 1 {accent}
+            );
+            color: white;
+            border: none;
+        }}
+        QPushButton#OllamaActionButton[ollamaAction="start"]:hover {{
+            background: qlineargradient(
+                x1: 0, y1: 0, x2: 1, y2: 1,
+                stop: 0 #A5B4FC,
+                stop: 1 {accent_bright}
+            );
+        }}
+        QPushButton#OllamaActionButton[ollamaAction="stop"] {{
+            background-color: rgba(255, 69, 58, 0.10);
+            color: {recording_red};
+            border: 1px solid rgba(255, 69, 58, 0.45);
+        }}
+        QPushButton#OllamaActionButton[ollamaAction="stop"]:hover {{
+            background-color: rgba(255, 69, 58, 0.18);
+            border-color: {recording_red};
+        }}
+        QPushButton#OllamaActionButton:disabled {{
+            color: {text_tertiary};
+            background-color: {elevated};
+            border: 1px solid {border};
         }}
 
         QWidget#SettingsHero {{
@@ -230,6 +351,19 @@ def settings_stylesheet() -> str:
             selection-background-color: {accent_dark};
         }}
 
+        QPushButton#SoundPreviewButton {{
+            background-color: {elevated};
+            color: {text_primary};
+            border: 1px solid {border};
+            border-radius: 8px;
+            font-size: {small}pt;
+            padding: 0;
+        }}
+        QPushButton#SoundPreviewButton:hover {{
+            border-color: {accent};
+            color: {accent_bright};
+        }}
+
         QPushButton {{
             background-color: {elevated};
             color: {text_primary};
@@ -296,4 +430,6 @@ def settings_stylesheet() -> str:
         accent_dark=Colors.ACCENT_DARK_HEX,
         border=Colors.BORDER_HEX,
         recording_red=Colors.RECORDING_RED_HEX,
+        success_green=Colors.SUCCESS_GREEN_HEX,
+        warning_amber=Colors.WARNING_AMBER_HEX,
     )

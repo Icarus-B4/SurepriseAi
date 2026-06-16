@@ -39,6 +39,10 @@ _DEFAULTS: dict[str, Any] = {
     "push_to_talk":            False,
     "transcription_language":  "auto",
     "translate_to_english":    False,
+    "translate_to_german":     False,
+    "enable_translate_hotkeys": True,
+    "translate_german_hotkey": "f6",
+    "translate_english_hotkey": "f7",
     "enable_app_modes":        True,
     "app_modes": {
         "OUTLOOK": "formal",
@@ -183,6 +187,10 @@ class ConfigService:
     @property
     def translate_to_english(self) -> bool:
         return self.get_bool("translate_to_english", False)
+
+    @property
+    def translate_to_german(self) -> bool:
+        return self.get_bool("translate_to_german", False)
 
     @property
     def models_dir(self) -> Path:

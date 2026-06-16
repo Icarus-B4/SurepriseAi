@@ -45,11 +45,12 @@ class PipelineWorker:
         style: Optional[str] = None,
         screen_context: Optional[str] = None,
         live_fallback_text: Optional[str] = None,
+        translate_mode: Optional[str] = None,
     ) -> None:
         """Startet die Verarbeitung von Audiodaten in einem Daemon-Thread."""
         thread = threading.Thread(
             target=self._process_audio,
-            args=(audio_data, target_hwnd, style, screen_context, live_fallback_text),
+            args=(audio_data, target_hwnd, style, screen_context, live_fallback_text, translate_mode),
             daemon=True
         )
         thread.start()
@@ -75,11 +76,12 @@ class PipelineWorker:
         style: Optional[str] = None,
         screen_context: Optional[str] = None,
         live_fallback_text: Optional[str] = None,
+        translate_mode: Optional[str] = None,
     ) -> None:
         """Verarbeitet aufgezeichnete Audiodaten (Transkription, Korrektur, Polishing)."""
         try:
             dlog.write("PipelineWorker: Final-Transkription startet")
-            raw_text = self.transcriber.transcribe(audio_data)
+            raw_text = self.transcriber.transcribe(audio_data, translate_mode=translate_mode)
             if (not raw_text or not raw_text.strip()) and live_fallback_text:
                 dlog.write(f"Final leer – nutze letztes Live-Partial ({len(live_fallback_text)} Zeichen)")
                 raw_text = live_fallback_text.strip()
@@ -96,6 +98,18 @@ class PipelineWorker:
             # 2. Lokale Auto-Korrektur + Vokabular-Korrekturen
             corrected_text = bereinige_text(raw_text)
             corrected_text = self.replacer.apply(corrected_text)
+
+            effective_translate = translate_mode
+            if effective_translate is None:
+                if config.translate_to_german:
+                    effective_translate = "de"
+                elif config.translate_to_english:
+                    effective_translate = "en"
+
+            if effective_translate == "de":
+                corrected_text = self.polisher.translate_to_language(corrected_text, "de")
+            elif effective_translate == "en" and self.transcriber._active_engine_name() == "parakeet":
+                corrected_text = self.polisher.translate_to_language(corrected_text, "en")
 
             # 3. KI-Polishing mit Session- oder Standard-Stil
             active_style = style or config.selected_style

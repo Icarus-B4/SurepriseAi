@@ -66,6 +66,7 @@ class TranscriptionPipeline:
         self.recording_duration: float = 0.0
         self._last_partial_text: str = ""
         self.last_audio_path: Optional[str] = None
+        self._session_translate: Optional[str] = None  # "de", "en" oder None
 
     def set_state_callback(self, cb: Callable[[str], None]) -> None:
         self._on_state_change = cb
@@ -97,10 +98,19 @@ class TranscriptionPipeline:
             if on_ready: on_ready(res)
         threading.Thread(target=_worker, daemon=True).start()
 
-    def start_recording(self) -> bool:
+    def start_recording(self, translate_mode: Optional[str] = None) -> bool:
         """Startet die Aufnahme und den Live-Transkriptionstypist."""
         if self.audio.is_recording:
             return True
+
+        if translate_mode in ("de", "en"):
+            self._session_translate = translate_mode
+        elif config.translate_to_german:
+            self._session_translate = "de"
+        elif config.translate_to_english:
+            self._session_translate = "en"
+        else:
+            self._session_translate = None
 
         self._capture_target_window()
         device = config.get_str("recording_device")
@@ -165,7 +175,9 @@ class TranscriptionPipeline:
             style=self._session_style,
             screen_context=context,
             live_fallback_text=self._last_partial_text or None,
+            translate_mode=self._session_translate,
         )
+        self._session_translate = None
 
     def _save_recording_audio(self, audio_data: np.ndarray) -> Optional[str]:
         """Speichert das Diktat als WAV für Verlauf/Playback."""

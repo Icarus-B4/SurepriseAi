@@ -5,9 +5,25 @@ from pathlib import Path
 
 import certifi
 
+import certifi
+
 ROOT = Path(SPECPATH).resolve().parent
 SRC = ROOT / "src"
 _ICON = ROOT / "build" / "assets" / "app_icon.ico"
+
+try:
+    import PyQt6
+
+    _PYQT6_ROOT = Path(PyQt6.__file__).resolve().parent
+    _QT_MULTIMEDIA_PLUGINS = _PYQT6_ROOT / "Qt6" / "plugins" / "multimedia"
+except Exception:
+    _QT_MULTIMEDIA_PLUGINS = None
+
+_EXTRA_DATAS = []
+if _QT_MULTIMEDIA_PLUGINS and _QT_MULTIMEDIA_PLUGINS.is_dir():
+    _EXTRA_DATAS.append(
+        (str(_QT_MULTIMEDIA_PLUGINS), "PyQt6/Qt6/plugins/multimedia")
+    )
 
 block_cipher = None
 
@@ -20,6 +36,7 @@ a = Analysis(
         (str(ROOT / "LICENSE"), "."),
         (str(ROOT / "sounds"), "sounds"),
         (certifi.where(), "certifi"),
+        *_EXTRA_DATAS,
     ],
     hiddenimports=[
         "PyQt6.sip",

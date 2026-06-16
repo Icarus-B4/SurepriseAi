@@ -4,6 +4,7 @@ Einstellungs-Panel für SurepriseAi in PyQt6.
 Glas-Optik mit abgerundeten Ecken und sauberem Scroll-Layout.
 """
 
+from PyQt6 import sip
 from typing import Any, cast
 
 from PyQt6.QtWidgets import (
@@ -11,7 +12,7 @@ from PyQt6.QtWidgets import (
     QComboBox, QLineEdit, QPushButton, QWidget, QScrollArea, QFrame,
     QGraphicsDropShadowEffect, QSizePolicy, QStackedWidget,
 )
-from PyQt6.QtCore import Qt, QPoint, QRectF, pyqtSignal
+from PyQt6.QtCore import Qt, QPoint, QRectF, pyqtSignal, QTimer
 from PyQt6.QtGui import QColor, QPainterPath, QRegion
 
 from src.ui.design_tokens import FluentIcons
@@ -22,6 +23,7 @@ from src.ui.toggle_switch import ToggleRow
 from src.services.config_service import config
 from src.services.dictation_history import DictationHistoryService
 from src.services.recording_sound_service import RecordingSoundService
+from src.ui.ollama_settings_row import OllamaSettingsRow
 
 _CORNER_RADIUS = 16
 
@@ -51,6 +53,7 @@ class SettingsWindow(QDialog):
         self._history_nav_btn: QPushButton | None = None
         self._settings_nav_btn: QPushButton | None = None
         self._settings_widgets: list[QWidget] = []
+        self._preview_sounds = RecordingSoundService(self)
         self.setWindowFlags(
             Qt.WindowType.FramelessWindowHint |
             Qt.WindowType.WindowStaysOnTopHint |
@@ -129,7 +132,12 @@ class SettingsWindow(QDialog):
         self.engine_combo = self._add_dropdown(scroll_layout, "Transkriptions-Engine", "transcription_engine", ["parakeet", "whisper"])
         self.whisper_combo = self._add_dropdown(scroll_layout, "Whisper-Modell (Fallback)", "whisper_model_size", ["tiny", "base", "small"])
         self.lang_combo = self._add_dropdown(scroll_layout, "Diktier-Sprache", "transcription_language", ["auto", "de", "en", "fr", "es", "it"])
-        self.translate_check = self._add_checkbox(scroll_layout, "Auf Englisch übersetzen (Whisper)", "translate_to_english")
+        self.translate_de_check = self._add_checkbox(scroll_layout, "Auf Deutsch übersetzen", "translate_to_german")
+        self.translate_en_check = self._add_checkbox(scroll_layout, "Auf Englisch übersetzen (Whisper)", "translate_to_english")
+        self._wire_exclusive_translate_toggles()
+        self.translate_hotkeys_check = self._add_checkbox(scroll_layout, "Übersetzungs-Hotkeys aktiv", "enable_translate_hotkeys")
+        self.translate_de_hotkey_edit = self._add_text_field(scroll_layout, "Hotkey Deutsch (z. B. f6)", "translate_german_hotkey")
+        self.translate_en_hotkey_edit = self._add_text_field(scroll_layout, "Hotkey Englisch (z. B. f7)", "translate_english_hotkey")
 
         self._add_section(scroll_layout, "Aufnahme-Sounds", "🔊")
         self.sounds_check = self._add_checkbox(scroll_layout, "Sounds bei Start/Stopp", "enable_recording_sounds")
@@ -140,6 +148,9 @@ class SettingsWindow(QDialog):
         self.polish_check = self._add_checkbox(scroll_layout, "Ollama Polishing aktivieren", "ollama_polishing")
         self.url_edit = self._add_text_field(scroll_layout, "Ollama URL", "ollama_url")
         self.model_edit = self._add_text_field(scroll_layout, "Ollama Modell", "ollama_model")
+        self._ollama_row = OllamaSettingsRow()
+        self._ollama_row.action_finished.connect(self._on_ollama_action_finished)
+        scroll_layout.addWidget(self._ollama_row)
 
         self._add_section(scroll_layout, "Verhalten", FluentIcons.SETTINGS)
         self.hotkey_check = self._add_checkbox(scroll_layout, "Globaler Hotkey aktiviert", "enable_global_hotkey")
@@ -209,9 +220,22 @@ class SettingsWindow(QDialog):
 
         layout.addStretch(1)
 
-        brand = QLabel("SurepriseAi", sidebar)
-        brand.setObjectName("SettingsSidebarBrand")
-        layout.addWidget(brand)
+        from src.version import __version__
+
+        brand_box = QWidget(sidebar)
+        brand_box.setObjectName("SettingsSidebarBrandBox")
+        brand_layout = QVBoxLayout(brand_box)
+        brand_layout.setContentsMargins(10, 10, 10, 10)
+        brand_layout.setSpacing(2)
+
+        brand_name = QLabel("SurepriseAi", sidebar)
+        brand_name.setObjectName("SettingsSidebarBrand")
+        brand_ver = QLabel(f"v{__version__}", brand_box)
+        brand_ver.setObjectName("SettingsSidebarVersion")
+
+        brand_layout.addWidget(brand_name)
+        brand_layout.addWidget(brand_ver)
+        layout.addWidget(brand_box)
         self._set_active_nav("settings")
         return sidebar
 
@@ -340,6 +364,29 @@ class SettingsWindow(QDialog):
         layout.addWidget(row)
         return row
 
+    def _wire_exclusive_translate_toggles(self) -> None:
+        """DE- und EN-Übersetzung schließen sich gegenseitig aus."""
+
+        def _on_de(checked: bool) -> None:
+            if checked and self.translate_en_check.isChecked():
+                self.translate_en_check.setChecked(False)
+                config.set("translate_to_english", False)
+
+        def _on_en(checked: bool) -> None:
+            if checked and self.translate_de_check.isChecked():
+                self.translate_de_check.setChecked(False)
+                config.set("translate_to_german", False)
+
+        self.translate_de_check.toggled.connect(_on_de)
+        self.translate_en_check.toggled.connect(_on_en)
+
+    def _on_ollama_action_finished(self, ok: bool, message: str) -> None:
+        island = cast(Any, self.parent())
+        toast = getattr(island, "show_settings_toast", None)
+        if callable(toast):
+            toast(message, ok)
+        self.setting_changed.emit("ollama_polishing")
+
     def _add_dropdown(self, layout: QVBoxLayout, label: str, key: str, options: list) -> QComboBox:
         row = QHBoxLayout()
         row.setContentsMargins(0, 0, 0, 0)
@@ -356,6 +403,32 @@ class SettingsWindow(QDialog):
         layout.addLayout(row)
         return cb
 
+    def _populate_sound_combo(self, combo: QComboBox, config_key: str) -> None:
+        """Lädt verfügbare Sounds in die ComboBox (beim Öffnen erneut aufrufbar)."""
+        current = config.get_str(config_key)
+        combo.blockSignals(True)
+        combo.clear()
+
+        sounds = RecordingSoundService.list_sounds()
+        if not sounds:
+            combo.addItem("— keine Sounds gefunden —", "")
+            combo.setEnabled(False)
+            combo.blockSignals(False)
+            return
+
+        combo.setEnabled(True)
+        for filename, display in sounds:
+            combo.addItem(display, filename)
+
+        index = combo.findData(current, Qt.ItemDataRole.UserRole)
+        if index >= 0:
+            combo.setCurrentIndex(index)
+        else:
+            combo.setCurrentIndex(0)
+            config.set(config_key, combo.currentData(Qt.ItemDataRole.UserRole))
+
+        combo.blockSignals(False)
+
     def _add_sound_picker(self, layout: QVBoxLayout, label: str, key: str) -> QComboBox:
         row = QHBoxLayout()
         row.setContentsMargins(0, 0, 0, 0)
@@ -363,20 +436,10 @@ class SettingsWindow(QDialog):
         lbl.setObjectName("FieldLabel")
 
         cb = QComboBox()
-        sounds = RecordingSoundService.list_sounds()
-        for filename, display in sounds:
-            cb.addItem(display, filename)
-
-        current = config.get_str(key)
-        index = cb.findData(current)
-        if index >= 0:
-            cb.setCurrentIndex(index)
-        elif cb.count() > 0:
-            cb.setCurrentIndex(0)
-            config.set(key, cb.currentData())
+        self._populate_sound_combo(cb, key)
 
         cb.currentIndexChanged.connect(
-            lambda _idx, combo=cb, config_key=key: config.set(config_key, combo.currentData())
+            lambda _idx, combo=cb, config_key=key: self._on_sound_selected(combo, config_key)
         )
 
         preview_btn = QPushButton("▶")
@@ -385,7 +448,9 @@ class SettingsWindow(QDialog):
         preview_btn.setToolTip("Sound testen")
         preview_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         preview_btn.clicked.connect(
-            lambda _checked=False, combo=cb: self._preview_sound(combo.currentData())
+            lambda _checked=False, combo=cb: self._preview_sound(
+                combo.currentData(Qt.ItemDataRole.UserRole)
+            )
         )
 
         cb.setFixedWidth(200)
@@ -396,6 +461,17 @@ class SettingsWindow(QDialog):
         layout.addLayout(row)
         return cb
 
+    def _on_sound_selected(self, combo: QComboBox, config_key: str) -> None:
+        filename = combo.currentData(Qt.ItemDataRole.UserRole)
+        if filename:
+            config.set(config_key, filename)
+
+    def _refresh_sound_pickers(self) -> None:
+        if hasattr(self, "start_sound_combo"):
+            self._populate_sound_combo(self.start_sound_combo, "recording_start_sound")
+        if hasattr(self, "stop_sound_combo"):
+            self._populate_sound_combo(self.stop_sound_combo, "recording_stop_sound")
+
     def _preview_sound(self, filename: str | None) -> None:
         if not filename:
             return
@@ -404,7 +480,7 @@ class SettingsWindow(QDialog):
         if callable(preview):
             preview(filename)
             return
-        RecordingSoundService().preview(filename)
+        self._preview_sounds.preview(filename)
 
     def _add_text_field(self, layout: QVBoxLayout, label: str, key: str) -> QLineEdit:
         row = QHBoxLayout()
@@ -444,6 +520,9 @@ class SettingsWindow(QDialog):
 
     def showEvent(self, event):
         super().showEvent(event)
+        self._refresh_sound_pickers()
+        if hasattr(self, "_ollama_row"):
+            self._ollama_row.refresh_status()
         self._hide_island_presence()
         self._apply_rounded_mask()
 

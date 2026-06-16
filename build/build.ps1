@@ -45,6 +45,9 @@ if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
 $dist = Join-Path $Root "dist\SurepriseAi"
 Copy-Item -Force "config.example.json" $dist
+if (Test-Path "sounds") {
+    Copy-Item -Recurse -Force "sounds" (Join-Path $dist "sounds")
+}
 New-Item -ItemType Directory -Force -Path (Join-Path $dist "models") | Out-Null
 Write-Host "==> Bundle fertig: $dist" -ForegroundColor Green
 

@@ -21,6 +21,34 @@ def install_root() -> Path:
     return Path(__file__).resolve().parents[2]
 
 
+def bundle_path(*parts: str) -> Path:
+    """
+    Sucht eine gebündelte Ressource (Dev, PyInstaller onedir/_internal, onefile).
+    Gibt den ersten existierenden Pfad zurück, sonst den wahrscheinlichsten Kandidaten.
+    """
+    rel = Path(*parts)
+    candidates: list[Path] = []
+
+    if is_frozen():
+        meipass = getattr(sys, "_MEIPASS", None)
+        if meipass:
+            candidates.append(Path(meipass) / rel)
+        root = install_root()
+        candidates.extend([root / rel, root / "_internal" / rel])
+    else:
+        candidates.append(install_root() / rel)
+
+    for path in candidates:
+        if path.exists():
+            return path
+    return candidates[0] if candidates else install_root() / rel
+
+
+def sounds_dir() -> Path:
+    """Ordner mit UI-Sounds (start/end, Kenney-Paket, …)."""
+    return bundle_path("sounds")
+
+
 def user_data_dir() -> Path:
     """Persistente Nutzerdaten (Config, Historie, Stats)."""
     if is_frozen():
