@@ -347,8 +347,8 @@ class SettingsWindow(QDialog):
         self._history_view._refresh_list()
         self._content_stack.setCurrentWidget(self._history_view)
         self._set_active_nav("history")
-        self.setMinimumSize(1180, 720)
-        self.resize(1280, 760)
+        self.setMinimumSize(900, 650)
+        self.resize(900, 650)
         self._center_on_screen()
         self._apply_rounded_mask()
 

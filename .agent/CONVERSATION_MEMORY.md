@@ -791,3 +791,29 @@ Erstellung eines automatisierten Demo-Aufnahme-Skripts zur Demonstration aller A
 - **CI-Build-Fix:** Ein Fehler im GitHub Actions Workflow (Fehlendes `App_icon.png` führte zu einem winzigen, PNG-komprimierten synthetischen ICO, welches den Größen-Check von `< 10_000` verletzte und den Build abbrach) wurde behoben. Der Schwellenwert wurde in `generate_installer_assets.py` auf `< 1000` Bytes gesenkt. Das Tag `v0.1.33` wurde nach dem Commit auf `main` mit Force neu gepusht.
 - **NSIS-Kompilier-Fix:** Ein NSIS-Compiler-Fehler im CI-Build (`File: "..\App_icon.png" -> no files found`) wurde durch das Hinzufügen des Flags `/nonfatal` beim `File`-Befehl in `installer.nsi` gelöst. Das Tag `v0.1.33` wurde nach dem Commit erneut mit Force gepusht.
 - **App-Icon-Korrektur:** Das richtige App-Icon `App_icon.png` wurde aus dem `image/` Ordner in das Root-Verzeichnis kopiert, getrackt, committet und gepusht. Dadurch wird nun im CI-Build das echte Icon generiert und in Installer sowie Programm eingebunden. Das Tag `v0.1.33` wurde erneut per Force-Push aktualisiert.
+
+## Eintrag 45: 2026-06-16 – Diktat-Verlauf Fenstergröße und Accordion-Layout
+
+### Aufgabe
+- Anpassung des "Diktat-Verlauf" Fensters, sodass es die gleiche Fenstergröße behält wie das primäre "Einstellungen" Fenster (900x650), um Layout-Sprünge zu vermeiden.
+- Umbau des Verlaufs-UIs: Die Detailansicht (Audio-Player, Transkript-Vergleich, Live-Text) soll nicht mehr als persistentes rechtes Panel dargestellt werden. Stattdessen soll sie als "Accordion" (Dropdown/Menü) unter dem jeweils angewählten Listeneintrag aufklappen, um den Platz optimal zu nutzen und das horizontale Layout aufzulösen.
+
+### Implementiertes
+- **`settings_panel.py`**:
+  - `show_history` passt das Fenster nun auf `900x650` an (identisch zu den Einstellungen) anstatt auf `1280x760`.
+- **`history_dialog.py`**:
+  - **Layout-Umbau**: Das horizontale Layout (`QHBoxLayout` mit Liste links, Detail rechts) wurde durch ein reines `QVBoxLayout` mit einer durchgängigen Scroll-Area ersetzt.
+  - **Accordion-Liste**: Diktat-Einträge werden nun als anklickbare Buttons (`QPushButton`) untereinander gerendert. 
+  - **Reparenting Detail Frame**: Der `self.detail` QFrame (mit Waveform, Compare-Slider etc.) ist nun standardmäßig versteckt und wird bei Klick auf einen Eintrag dynamisch direkt unter dem Eintrag (im entsprechenden `QVBoxLayout`) eingefügt (Reparenting) und sichtbar gemacht. Dadurch klappt der Bereich elegant unter dem Element auf.
+  - **Styles**: Buttons haben moderne, eckig-abgerundete Styles erhalten, Textausrichtung ist links, um klassische Listen-Items zu imitieren.
+
+### QS-Ergebnisse
+- Syntax- und Import-Prüfung (`py_compile`): ✅ PASS
+- Das Accordion-Layout löst Platzprobleme und hält die App visuell im vorgesehenen Raster.
+- **Nachbesserung**: Der Detailbereich wurde weiter komprimiert. Redundante Titel wurden entfernt, Abstände verkleinert und der Audio-Player/Waveform wird nun komplett ausgeblendet, falls kein Audio vorhanden ist, um Platz zu sparen.
+- **Nachbesserung 2**: Transparenz-Fehler im Einstellungsfenster behoben. Der "Diktat-Verlauf" zwingt als eingebettetes Widget nun keinen opaken Hintergrund mehr auf, sodass der Glassmorphism-Effekt erhalten bleibt.
+- **Nachbesserung 3**: Abgeschnittenes Layout auf der rechten Seite repariert. Ein zu langes "Preview"-Textlimit (84 Zeichen) zwang die Buttons bisher in eine zu große Breite, was die ScrollArea horizontal aufbrach. Das Textlimit wurde auf 45 Zeichen halbiert, sodass alles bequem in die 900px Breite passt.
+
+### Version Bump & Release
+- `src/version.py` auf `"0.1.34"` erhöht.
+- Änderungen getrackt, committet und Tag `v0.1.34` per Force-Push auf GitHub gepusht, um den CI-Release-Build zu starten.

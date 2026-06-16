@@ -59,10 +59,7 @@ class HistoryDialog(QDialog):
         self._player.playbackStateChanged.connect(self._on_playback_state)
         
         if embedded:
-            self.setMinimumSize(760, 560)
             self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
-        else:
-            self.setMinimumSize(980, 620)
             
         self._build_ui()
         self._apply_style()
@@ -109,41 +106,38 @@ class HistoryDialog(QDialog):
         self.style_row.addStretch()
         layout.addLayout(self.style_row)
 
-        body = QHBoxLayout()
+        body = QVBoxLayout()
         body.setSpacing(12)
 
-        self.list_widget = QListWidget()
-        self.list_widget.setMinimumWidth(300)
-        self.list_widget.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
-        self.list_widget.setTextElideMode(Qt.TextElideMode.ElideRight)
-        self.list_widget.currentItemChanged.connect(self._on_selection_changed)
-        self.list_widget.itemDoubleClicked.connect(self._copy_selected)
-        body.addWidget(self.list_widget, stretch=2)
+        self.list_scroll = QScrollArea()
+        self.list_scroll.setWidgetResizable(True)
+        self.list_scroll.setFrameShape(QFrame.Shape.NoFrame)
+        self.list_scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.list_scroll.setObjectName("HistoryListScroll")
+        
+        self.list_content = QWidget()
+        self.list_content.setObjectName("HistoryListContent")
+        self.list_layout = QVBoxLayout(self.list_content)
+        self.list_layout.setContentsMargins(0, 0, 0, 0)
+        self.list_layout.setSpacing(6)
+        self.list_layout.addStretch()
+        
+        self.list_scroll.setWidget(self.list_content)
+        body.addWidget(self.list_scroll, stretch=1)
 
-        detail = QFrame()
-        detail.setObjectName("HistoryDetail")
-        detail.setMinimumWidth(460)
-        detail.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+        self.detail = QFrame()
+        self.detail.setObjectName("HistoryDetail")
+        self.detail.setVisible(False)
+        self.detail.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
 
-        detail_outer_layout = QVBoxLayout(detail)
-        detail_outer_layout.setContentsMargins(0, 0, 0, 0)
-        detail_outer_layout.setSpacing(0)
+        detail_layout = QVBoxLayout(self.detail)
+        detail_layout.setContentsMargins(10, 8, 10, 8)
+        detail_layout.setSpacing(8)
 
-        detail_scroll = QScrollArea(detail)
-        detail_scroll.setWidgetResizable(True)
-        detail_scroll.setFrameShape(QFrame.Shape.NoFrame)
-        detail_scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
-        detail_scroll.setObjectName("HistoryDetailScroll")
-
-        detail_content = QWidget(detail_scroll)
-        detail_content.setObjectName("HistoryDetailContent")
-        detail_layout = QVBoxLayout(detail_content)
-        detail_layout.setContentsMargins(14, 12, 14, 12)
-        detail_layout.setSpacing(10)
-
-        self.detail_title = QLabel()
-        self.detail_title.setFont(Typography.get_font(Typography.SMALL, bold=True))
-        detail_layout.addWidget(self.detail_title)
+        self.audio_container = QWidget()
+        audio_layout = QVBoxLayout(self.audio_container)
+        audio_layout.setContentsMargins(0, 0, 0, 0)
+        audio_layout.setSpacing(6)
 
         player_row = QHBoxLayout()
         self.play_btn = QToolButton()
@@ -157,24 +151,18 @@ class HistoryDialog(QDialog):
         player_row.addWidget(self.play_btn)
         player_row.addWidget(self.audio_slider, stretch=1)
         player_row.addWidget(self.time_label)
-        detail_layout.addLayout(player_row)
+        audio_layout.addLayout(player_row)
 
         self.waveform = PlaybackWaveform(self)
         self.waveform.seek_requested.connect(self._seek_audio)
-        detail_layout.addWidget(self.waveform)
+        audio_layout.addWidget(self.waveform)
 
-        compare_header = QHBoxLayout()
-        compare_header.setSpacing(8)
-        self.compare_title = QLabel()
-        self.compare_title.setFont(Typography.get_font(Typography.TINY, bold=True))
-        compare_header.addWidget(self.compare_title)
-        compare_header.addStretch()
-        detail_layout.addLayout(compare_header)
+        detail_layout.addWidget(self.audio_container)
 
         # Text-Vergleichs-Slider (Rohtext vs. Polished)
         self.compare_slider = TextCompareSlider(self)
-        self.compare_slider.setMinimumHeight(180)
-        detail_layout.addWidget(self.compare_slider, stretch=2)
+        self.compare_slider.setMinimumHeight(120)
+        detail_layout.addWidget(self.compare_slider)
 
         self.live_label = QLabel()
         self.live_label.setFont(Typography.get_font(Typography.TINY, bold=True))
@@ -205,10 +193,6 @@ class HistoryDialog(QDialog):
         detail_layout.addLayout(action_row)
         detail_layout.addStretch(1)
 
-        detail_scroll.setWidget(detail_content)
-        detail_outer_layout.addWidget(detail_scroll)
-
-        body.addWidget(detail, stretch=3)
         layout.addLayout(body, stretch=1)
 
         btn_row = QHBoxLayout()
@@ -236,9 +220,10 @@ class HistoryDialog(QDialog):
         return btn
 
     def _apply_style(self) -> None:
+        bg_color = "transparent" if getattr(self, "_embedded", False) else Colors.SURFACE_HEX
         self.setStyleSheet(f"""
             QDialog {{
-                background-color: {Colors.SURFACE_HEX};
+                background-color: {bg_color};
                 color: {Colors.TEXT_PRIMARY_HEX};
             }}
             QLineEdit {{
@@ -269,21 +254,38 @@ class HistoryDialog(QDialog):
                 border: 1px solid {Colors.BORDER_HEX};
                 border-radius: 14px;
             }}
-            QScrollArea#HistoryDetailScroll {{
+            QScrollArea#HistoryListScroll {{
                 background: transparent;
                 border: none;
             }}
-            QWidget#HistoryDetailContent {{
+            QWidget#HistoryListContent {{
                 background: transparent;
             }}
-            QScrollArea#HistoryDetailScroll QScrollBar:vertical {{
+            QScrollArea#HistoryListScroll QScrollBar:vertical {{
                 border: none;
                 background: transparent;
                 width: 6px;
             }}
-            QScrollArea#HistoryDetailScroll QScrollBar::handle:vertical {{
+            QScrollArea#HistoryListScroll QScrollBar::handle:vertical {{
                 background: {Colors.CONTROL_HOVER_HEX};
                 border-radius: 3px;
+            }}
+            QPushButton#HistoryListButton {{
+                text-align: left;
+                padding: 12px;
+                background: {Colors.SURFACE_ELEVATED};
+                border: 1px solid {Colors.BORDER_HEX};
+                border-radius: 8px;
+                color: {Colors.TEXT_PRIMARY_HEX};
+                font-family: "{Typography.FONT_FAMILY}";
+                font-size: 13px;
+            }}
+            QPushButton#HistoryListButton:hover {{
+                background: {Colors.CONTROL_HOVER_HEX};
+            }}
+            QPushButton#HistoryListButton:checked {{
+                border: 1px solid {Colors.ACCENT_HEX};
+                background: {Colors.CONTROL_HOVER_HEX};
             }}
             QTextEdit {{
                 background: {Colors.SURFACE_ELEVATED};
@@ -369,7 +371,6 @@ class HistoryDialog(QDialog):
         self.header_title.setText(tr("history_title"))
         self.header_subtitle.setText(tr("history_subtitle"))
         self.search_input.setPlaceholderText(tr("history_search"))
-        self.compare_title.setText(tr("history_transcript"))
         self.live_label.setText(tr("history_live"))
         self.export_btn.setText(tr("history_export"))
         self.copy_btn.setText(tr("history_copy"))
@@ -383,26 +384,45 @@ class HistoryDialog(QDialog):
         self.delete_icon_btn.setToolTip(tr("history_delete"))
 
         if not self._current_entry:
-            self.detail_title.setText(tr("history_no_selection"))
             self.audio_hint.setText(tr("history_no_audio"))
         else:
             self._update_detail(self._current_entry)
 
     def _refresh_list(self, query: str = "") -> None:
-        self.list_widget.clear()
+        # Clear existing list items
+        while self.list_layout.count() > 1:
+            item = self.list_layout.takeAt(0)
+            if item.widget():
+                if item.widget() == self.detail:
+                    self.detail.setParent(None)
+                else:
+                    item.widget().deleteLater()
+                    
+        self._current_entry = None
+        self.detail.setVisible(False)
+        self.detail.setParent(None)
+
         entries = self.history.search(query) if query else self.history.list_all()
         for entry in entries:
             ts = entry.get("timestamp", "")[:16].replace("T", " ")
             style = style_label(entry.get("style", ""))
             preview = entry.get("polished", "").replace("\n", " ")
-            if len(preview) > 84:
-                preview = preview[:81] + "…"
+            if len(preview) > 45:
+                preview = preview[:42] + "…"
             label = f"{ts}  ·  {style}  ·  {preview}"
-            item = QListWidgetItem(label)
-            item.setData(Qt.ItemDataRole.UserRole, entry)
-            self.list_widget.addItem(item)
-        if self.list_widget.count() and self.list_widget.currentRow() < 0:
-            self.list_widget.setCurrentRow(0)
+            
+            entry_widget = QWidget()
+            entry_layout = QVBoxLayout(entry_widget)
+            entry_layout.setContentsMargins(0, 0, 0, 0)
+            entry_layout.setSpacing(0)
+            
+            btn = QPushButton(label)
+            btn.setObjectName("HistoryListButton")
+            btn.setCheckable(True)
+            btn.clicked.connect(lambda checked, e=entry, ew=entry_widget, b=btn: self._on_entry_clicked(e, ew, b))
+            
+            entry_layout.addWidget(btn)
+            self.list_layout.insertWidget(self.list_layout.count() - 1, entry_widget)
 
     def _set_active_style(self, style: str) -> None:
         for key, btn in self._style_buttons.items():
@@ -452,19 +472,40 @@ class HistoryDialog(QDialog):
             self._refresh_list(self.search_input.text())
             self._update_detail({})
 
-    def _on_selection_changed(self, current: QListWidgetItem | None, _previous=None) -> None:
+    def _on_entry_clicked(self, entry: dict, entry_widget: QWidget, button: QPushButton) -> None:
+        # Uncheck all other buttons
+        for i in range(self.list_layout.count() - 1):
+            item = self.list_layout.itemAt(i)
+            if item and item.widget():
+                ew = item.widget()
+                if ew != entry_widget:
+                    btn = ew.findChild(QPushButton, "HistoryListButton")
+                    if btn:
+                        btn.setChecked(False)
+
+        if not button.isChecked():
+            # It was unchecked by clicking it again
+            self._player.stop()
+            self._current_entry = None
+            self.detail.setVisible(False)
+            self.detail.setParent(None)
+            self._update_detail({})
+            return
+
         self._player.stop()
-        self._current_entry = current.data(Qt.ItemDataRole.UserRole) if current else None
-        self._update_detail(self._current())
+        self._current_entry = entry
+        
+        # Reparent detail inside this entry widget
+        self.detail.setParent(None)
+        ew_layout = entry_widget.layout()
+        ew_layout.addWidget(self.detail)
+        
+        self._update_detail(entry)
+        self.detail.setVisible(True)
 
     def _update_detail(self, entry: dict) -> None:
-        ts = entry.get("timestamp", "")[:19].replace("T", " ")
         style = style_label(entry.get("style", ""))
         self._set_active_style(entry.get("style", ""))
-        duration = entry.get("duration_s")
-        dur_str = f"{duration:.1f}s" if duration else ""
-        title_parts = [p for p in (ts, style, dur_str) if p]
-        self.detail_title.setText(" · ".join(title_parts) or tr("history_no_selection"))
 
         self.live_text.setPlainText(entry.get("live_transcript") or "")
         self.live_text.setVisible(bool(entry.get("live_transcript")))
@@ -472,6 +513,7 @@ class HistoryDialog(QDialog):
 
         audio_path = entry.get("audio_path") or ""
         has_audio = bool(audio_path and Path(audio_path).exists())
+        self.audio_container.setVisible(has_audio)
         self.play_btn.setEnabled(has_audio)
         self.audio_slider.setEnabled(has_audio)
         self.open_audio_btn.setEnabled(has_audio)
