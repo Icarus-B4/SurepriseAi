@@ -747,4 +747,25 @@ Lesbarkeit im hellen Theme (Light Modus) der Dynamic Island und des Einstellungs
 - Syntax- und Kompilierungs-Prüfung aller modifizierten Module: ✅ PASS
 - **Dokumentationserweiterung**: Die [README.md](file:///c:/Users/ed/Webdesign/webstark.org/SurepriseAi/README.md) wurde um eine ausführliche, nutzerfreundliche Erläuterung der kontextbasierten Diktierfunktionen (Bildschirmkontext / OCR und markierter Text als Kontext) inkl. Anwendungsbeispielen und Datenschutzhinweisen ergänzt.
 
+## Eintrag 41: 2026-06-16 – Automatisiertes Demo-Aufnahme-Skript
 
+### Aufgabe
+Erstellung eines automatisierten Demo-Aufnahme-Skripts zur Demonstration aller App-Funktionen für Endkunden. Das Skript soll die Benutzeroberfläche programmgesteuert steuern, Screenshots erfassen und diese zu einer animierten GIF-Präsentationsdatei kompilieren.
+
+### Implementiertes
+- **Branch-Erstellung:** Entwicklung im Branch `feature/automated-demo`.
+- **Demo-Automatisierung (`scripts/create_demo.py`):**
+  - Eigene Ablaufsteuerung, die zeitgesteuert (10 FPS) Hover-Zustände, Aufnahme, Audiopegel, Live-Transkription im Toast, Expanded-Modus, Stil-Chips und Einstellungen simuliert.
+  - Unabhängig von realer Hardware/Modellen durch Mocking von `AudioService`, `HotkeyService` und `PolishingService` (schnelles Offline-Polishing).
+  - Umgehen von asynchronen Fehlern durch Überschreiben von `stop_recording` in `TranscriptionPipeline`.
+- **Modulares Widget-Positionieren:**
+  - UI-Elemente wie die Island, Toasts und das Einstellungsfenster werden mittels dynamischer Methoden-Bindungen (`types.MethodType`) relativ zu einem neutralen, dunklen Präsentationshintergrund (`DemoBackgroundWindow`) positioniert.
+- **Screenshot & Stitching:**
+  - Erfassung der Frames alle 100 ms über den Bildschirmbereich des Präsentationsfensters.
+  - Kompilierung und Skalierung der Frames auf **900x562 px** zu einem hochoptimierten animierten GIF (`screenshots/demo.gif`).
+- **Bugfixes:**
+  - Behebung eines `AttributeError` beim Verlassen des Expanded-Modus (Aufruf von `_close_expanded()` von `self.app.window` auf `self.app.controller` korrigiert).
+
+### QS-Ergebnisse
+- **Automatischer Ablauf:** Skript läuft in ca. 18 Sekunden vollständig und fehlerfrei durch und schließt sich selbst.
+- **GIF-Erstellung:** `screenshots/demo.gif` wurde erfolgreich und mit hoher Darstellungsqualität generiert.
