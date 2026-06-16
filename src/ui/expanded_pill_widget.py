@@ -10,7 +10,8 @@ from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QTextEdit, QPushButton,
     QLabel, QFrame, QSizePolicy,
 )
-from PyQt6.QtCore import pyqtSignal, Qt
+from PyQt6.QtCore import pyqtSignal, Qt, QPoint
+from PyQt6.QtGui import QCursor
 from src.ui.design_tokens import Colors, Typography, FluentIcons, Radius
 from src.ui.drag_handle import DragHandleButton
 from src.ui.text_compare_slider import TextCompareSlider
@@ -24,6 +25,7 @@ class ExpandedPillWidget(QWidget):
     style_clicked = pyqtSignal(str)  # Emittiert den Stil-Key bei Klick
     undo_clicked = pyqtSignal()
     url_import_clicked = pyqtSignal()
+    resize_requested = pyqtSignal(int)  # delta_y für Höhenänderung
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -255,6 +257,11 @@ class ExpandedPillWidget(QWidget):
         """)
         chips_row.addWidget(self.exp_close_btn, alignment=Qt.AlignmentFlag.AlignTop)
         main_layout.addLayout(chips_row)
+
+        # ── 4. RESIZE-HANDLE (unten rechts) ──
+        self._resize_handle = _ResizeHandle(self)
+        self._resize_handle.delta_y.connect(self.resize_requested.emit)
+
         self.set_active_style(config.selected_style)
 
     def set_stats(self, words: int, wpm: int):
@@ -316,3 +323,57 @@ class ExpandedPillWidget(QWidget):
         new_text = " ".join(parts[:-1]).strip()
         self.compare_slider.set_polished_text(new_text)
         return True
+
+    def resizeEvent(self, event) -> None:
+        """Resize-Handle immer unten rechts positionieren."""
+        super().resizeEvent(event)
+        handle = self._resize_handle
+        handle.move(self.width() - handle.width() - 2, self.height() - handle.height() - 2)
+
+
+class _ResizeHandle(QWidget):
+    """Kleiner Griff unten rechts zum Vergrößern der Expanded-Pill per Maus-Drag."""
+
+    delta_y = pyqtSignal(int)
+
+    def __init__(self, parent: QWidget):
+        super().__init__(parent)
+        self.setFixedSize(18, 18)
+        self.setCursor(Qt.CursorShape.SizeFDiagCursor)
+        self._dragging = False
+        self._drag_start = QPoint()
+        self.setStyleSheet(f"""
+            background: transparent;
+        """)
+
+    def paintEvent(self, event) -> None:
+        """Zeichnet drei diagonale Linien als Resize-Indikator."""
+        from PyQt6.QtGui import QPainter, QPen, QColor
+        p = QPainter(self)
+        p.setRenderHint(QPainter.RenderHint.Antialiasing)
+        pen = QPen(QColor(255, 255, 255, 60), 1.5)
+        p.setPen(pen)
+        w, h = self.width(), self.height()
+        # Drei parallele Linien von rechts unten
+        for offset in (4, 9, 14):
+            p.drawLine(w - 2, offset, offset, h - 2)
+        p.end()
+
+    def mousePressEvent(self, event) -> None:
+        if event.button() == Qt.MouseButton.LeftButton:
+            self._dragging = True
+            self._drag_start = event.globalPosition().toPoint()
+            event.accept()
+
+    def mouseMoveEvent(self, event) -> None:
+        if self._dragging:
+            current = event.globalPosition().toPoint()
+            dy = current.y() - self._drag_start.y()
+            if dy != 0:
+                self.delta_y.emit(dy)
+                self._drag_start = current
+            event.accept()
+
+    def mouseReleaseEvent(self, event) -> None:
+        self._dragging = False
+        super().mouseReleaseEvent(event)

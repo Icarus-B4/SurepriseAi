@@ -220,26 +220,15 @@ class AppController(QObject):
         self._refresh_tray_tooltip()
         self._update_privacy_badge()
 
-        # Stacked-Widget auf Expanded-Ansicht umschalten (Index 4) …
-        self.app.window.pill.set_expanded(display_text)
-        # … und beide Texte für die Diff-Ansicht setzen
+        # Daten ins Expanded-Widget vorbereiten (für manuellen Zugriff)
         expanded.set_texts(raw_for_diff, display_text)
-        self.app.state_machine.transition_by_name("expanded")
+        # Nicht automatisch expandieren – SUCCESS-Pill zeigen, User kann manuell öffnen
+        self.app.window.pill.show_success(display_text)
+        self.app.state_machine.transition_by_name("success")
 
-        def _after_polish_animation() -> None:
-            expanded.set_polish_status(None)
-            # Nach Animation: Diff-Ansicht zeigen
-            expanded.show_diff_view()
-            if config.auto_copy:
-                QApplication.clipboard().setText(polished)
+        if config.auto_copy:
+            QApplication.clipboard().setText(polished)
             self.app.toast.show_success("Text bereinigt und in Zwischenablage kopiert!")
-
-        def _on_polish_progress(step: int, total: int, mode: str) -> None:
-            label = "Vergleich" if mode == "html" else "Finale"
-            expanded.set_polish_status(f"Polishing {step}/{total} · {label}")
-
-        expanded.set_polish_status("Polishing startet…")
-        self._polish_animator.play(raw_for_diff, polished, on_finished=_after_polish_animation, on_progress=_on_polish_progress)
 
     def _on_pipeline_error(self, message: str):
         self.app.toast.show_error(message)

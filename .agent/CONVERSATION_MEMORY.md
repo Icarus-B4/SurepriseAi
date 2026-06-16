@@ -636,3 +636,31 @@ Toast-`fade_out` kollidierte mit schnellen Update-Toast-Wechseln (`QPropertyAnim
 ### Version
 `0.1.7` – Smoke-Test OK.
 
+## Eintrag 35: 2026-06-10 – CI NSIS-Fix v0.1.7
+
+### Problem
+Release-Workflow: `choco install nsis` – Download von community.chocolatey.org fehlgeschlagen.
+
+### Fix
+`release.yml`: NSIS 3.11 per SourceForge + silent `/S /D=.tools\NSIS` (wie `build.ps1`), 3 Retries. Tag `v0.1.7` neu gesetzt.
+
+## Eintrag 36: 2026-06-16 – Expanded Pill UX-Verbesserungen
+
+### Aufgabe
+Drei UX-Probleme der Expanded-Pill beheben:
+1. Pill soll sich schließen, wenn der User außerhalb klickt.
+2. Text wird abgeschnitten – Resize-Handle zum Vergrößern per Maus-Drag.
+3. Pill soll nach Aufnahme NICHT automatisch expandieren.
+
+### Implementiertes
+- **Kein Auto-Expand nach Aufnahme:**
+  - `island_states.py`: SUCCESS auto-dismiss geht jetzt zu IDLE statt EXPANDED.
+  - `app_controller.py`: `_on_pipeline_result` zeigt SUCCESS-Pill statt direkt zu expandieren. Text wird trotzdem im Expanded-Widget vorbereitet für manuellen Zugriff.
+- **Outside-Click schließt Expanded:** War bereits implementiert via `OutsideClickOverlay` + `outside_dismiss_callback`. Funktioniert korrekt.
+- **Resize-Handle für Expanded-Pill:**
+  - `expanded_pill_widget.py`: `_ResizeHandle`-Widget unten rechts mit drei diagonalen Linien als Indikator. Emittiert `resize_requested(delta_y)` bei Maus-Drag.
+  - `dynamic_island.py`: `_on_expanded_resize()` ändert Pill- und Fenster-Höhe dynamisch (Clamp auf 348–600px). Höhe wird beim Verlassen des EXPANDED-States zurückgesetzt.
+  - `design_tokens.py`: `EXPANDED_MAX_HEIGHT` auf 600px erhöht, `WINDOW_HEIGHT` basiert auf MAX_HEIGHT.
+
+### QS-Ergebnisse
+- Syntax-Check aller 5 geänderten Module: ✅ PASS

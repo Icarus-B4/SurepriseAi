@@ -36,6 +36,11 @@ Desktop.ini
 output.txt
 start_log.txt
 import_test.log
+.agent/recordings/
+.agent/recordings/*.mp3
+.agent/recordings/*.wav
+.agent/transcriptions/*.txt
+
 
 # ── Lokale Konfiguration (Vorlage: config.example.json) ─────────────────────────
 config.json

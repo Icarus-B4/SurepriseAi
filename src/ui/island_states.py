@@ -95,7 +95,7 @@ class IslandStateMachine:
 
         # Auto-Dismiss nach Timeout
         if auto_dismiss_ms is not None:
-            target = IslandState.EXPANDED if new_state == IslandState.SUCCESS else IslandState.IDLE
+            target = IslandState.IDLE
             self._dismiss_timer = threading.Timer(
                 auto_dismiss_ms / 1000.0,
                 lambda: self.transition_to(target),

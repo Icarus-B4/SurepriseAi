@@ -260,11 +260,11 @@ class IslandSize:
     EXPANDED_HEIGHT = 348
     EXPANDED_RADIUS = 16
     EXPANDED_MIN_HEIGHT = 348
-    EXPANDED_MAX_HEIGHT = 348
+    EXPANDED_MAX_HEIGHT = 600
 
-    # Trägerfenster – muss größer als EXPANDED sein, sonst werden Ecken abgeschnitten
+    # Trägerfenster – muss größer als EXPANDED_MAX sein, sonst werden Ecken abgeschnitten
     WINDOW_WIDTH  = EXPANDED_WIDTH + 32
-    WINDOW_HEIGHT = EXPANDED_HEIGHT + 48
+    WINDOW_HEIGHT = EXPANDED_MAX_HEIGHT + 48
 
     # Rundung (Pill-Form)
     BORDER_RADIUS = 19 # (Für standardmäßig 38px Höhe = 19px Radius)

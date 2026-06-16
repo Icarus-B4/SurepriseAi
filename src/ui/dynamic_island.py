@@ -32,7 +32,9 @@ class DynamicIslandWindow(QWidget):
             Qt.WindowType.WindowDoesNotAcceptFocus
         )
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
-        self.setFixedSize(IslandSize.WINDOW_WIDTH, IslandSize.WINDOW_HEIGHT)
+        # Fenster-Größe: min = Standard, max = für Expanded-Resize
+        self.setFixedWidth(IslandSize.WINDOW_WIDTH)
+        self.setFixedHeight(IslandSize.WINDOW_HEIGHT)
         self.setAcceptDrops(True)
         self.file_dropped_callback = None
         self.url_dropped_callback = None
@@ -54,6 +56,10 @@ class DynamicIslandWindow(QWidget):
         self._outside_overlay = OutsideClickOverlay()
         self._outside_overlay.clicked.connect(self._on_outside_overlay_clicked)
         self.outside_dismiss_callback = None
+        self._expanded_height = IslandSize.EXPANDED_HEIGHT  # Aktuelle Expanded-Höhe (resizeable)
+
+        # Resize-Signal der Expanded-Pill verbinden
+        self.pill.expanded_widget.resize_requested.connect(self._on_expanded_resize)
 
         # Hover-Timer und Opacity Animation Setup
         self.hover_timer = QTimer(self)
@@ -278,6 +284,10 @@ class DynamicIslandWindow(QWidget):
     def _on_state_changed(self, prev_state: IslandState, new_state: IslandState):
         self._outside_overlay.hide_overlay()
 
+        # Fenster-Höhe zurücksetzen wenn wir den Expanded-Modus verlassen
+        if prev_state == IslandState.EXPANDED and new_state != IslandState.EXPANDED:
+            self.setFixedHeight(IslandSize.WINDOW_HEIGHT)
+
         if new_state == IslandState.IDLE:
             self.pill.set_idle()
             self.pill.set_corner_radius(IslandSize.IDLE_HEIGHT // 2)
@@ -318,7 +328,7 @@ class DynamicIslandWindow(QWidget):
             self._exit_presence_mode()
             self.pill.set_corner_radius(IslandSize.EXPANDED_RADIUS)
             self._set_focus_accepting(True)
-            self.animate_to(IslandSize.EXPANDED_WIDTH, IslandSize.EXPANDED_HEIGHT)
+            self.animate_to(IslandSize.EXPANDED_WIDTH, self._expanded_height)
             self._hide_basics_buttons()
             self.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents, False)
             self._outside_overlay.show_below(self)
@@ -466,6 +476,18 @@ class DynamicIslandWindow(QWidget):
             return
         if self.outside_dismiss_callback:
             self.outside_dismiss_callback()
+
+    def _on_expanded_resize(self, delta_y: int) -> None:
+        """Ändert die Expanded-Pill-Höhe dynamisch per Drag-Handle."""
+        new_h = self._expanded_height + delta_y
+        new_h = max(IslandSize.EXPANDED_MIN_HEIGHT, min(new_h, IslandSize.EXPANDED_MAX_HEIGHT))
+        if new_h == self._expanded_height:
+            return
+        self._expanded_height = new_h
+        self.pill.setFixedHeight(new_h)
+        # Fenster-Höhe anpassen (Pill-Höhe + Padding)
+        win_h = new_h + 48
+        self.setFixedHeight(win_h)
 
     def collapse_from_outside_click(self) -> None:
         """Blendet Idle/Basics/Success-UI aus."""
