@@ -769,3 +769,4 @@ Erstellung eines automatisierten Demo-Aufnahme-Skripts zur Demonstration aller A
 ### QS-Ergebnisse
 - **Automatischer Ablauf:** Skript läuft in ca. 18 Sekunden vollständig und fehlerfrei durch und schließt sich selbst.
 - **GIF-Erstellung:** `screenshots/demo.gif` wurde erfolgreich und mit hoher Darstellungsqualität generiert.
+- **README-Integration:** Der Merge in den `main`-Branch wurde vollzogen und das animierte `demo.gif` prominent unter der neuen Sektion `## Screenshots & Demo` der `README.md` eingebettet und nach origin gepusht.
