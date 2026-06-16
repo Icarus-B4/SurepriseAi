@@ -6,16 +6,42 @@ Typografie ausschließlich über Design-Tokens – keine gemischten px/pt-Werte.
 
 from src.ui.design_tokens import Colors, Typography
 
-# Undurchsichtigerer Glas-Hintergrund – kein Durchscheinen der Island
-GLASS_BG = "rgba(22, 22, 28, 0.96)"
-GLASS_BORDER = "rgba(255, 255, 255, 0.12)"
-GLASS_ELEVATED = "rgba(36, 36, 44, 0.92)"
-
 _FONT = Typography.FONT_FAMILY
 
 
 def settings_stylesheet() -> str:
     """Gesamtes QSS für das Settings-Fenster."""
+    if Colors.ISLAND_BG_HEX == "#F3F3F7":  # Helles Theme
+        glass_bg = "rgba(240, 240, 245, 0.96)"
+        glass_border = "rgba(0, 0, 0, 0.12)"
+        glass_elevated = "rgba(255, 255, 255, 0.92)"
+        sidebar_bg = "rgba(0, 0, 0, 0.035)"
+        sidebar_border = "rgba(0, 0, 0, 0.08)"
+        nav_hover = "rgba(0, 0, 0, 0.06)"
+        brand_bg = "rgba(0, 0, 0, 0.04)"
+        card_bg = "rgba(0, 0, 0, 0.025)"
+        card_border = "rgba(0, 0, 0, 0.06)"
+        scrollbar_handle = "rgba(0, 0, 0, 0.16)"
+        scrollbar_hover = "rgba(0, 0, 0, 0.28)"
+        input_focus_bg = "rgba(255, 255, 255, 0.98)"
+        dropdown_view_bg = "rgba(255, 255, 255, 0.98)"
+        hero_stop = "rgba(255, 255, 255, 0.00)"
+    else:  # Dunkles Theme
+        glass_bg = "rgba(22, 22, 28, 0.96)"
+        glass_border = "rgba(255, 255, 255, 0.12)"
+        glass_elevated = "rgba(36, 36, 44, 0.92)"
+        sidebar_bg = "rgba(255, 255, 255, 0.035)"
+        sidebar_border = "rgba(255, 255, 255, 0.08)"
+        nav_hover = "rgba(255, 255, 255, 0.06)"
+        brand_bg = "rgba(255, 255, 255, 0.04)"
+        card_bg = "rgba(255, 255, 255, 0.03)"
+        card_border = "rgba(255, 255, 255, 0.05)"
+        scrollbar_handle = "rgba(255, 255, 255, 0.16)"
+        scrollbar_hover = "rgba(255, 255, 255, 0.28)"
+        input_focus_bg = "rgba(40, 40, 48, 0.98)"
+        dropdown_view_bg = "rgba(28, 28, 32, 0.98)"
+        hero_stop = "rgba(13, 13, 15, 0.00)"
+
     return """
         QWidget#SettingsContainer {{
             background-color: {glass_bg};
@@ -27,8 +53,8 @@ def settings_stylesheet() -> str:
         }}
 
         QWidget#SettingsSidebar {{
-            background-color: rgba(255, 255, 255, 0.035);
-            border-right: 1px solid rgba(255, 255, 255, 0.08);
+            background-color: {sidebar_bg};
+            border-right: 1px solid {sidebar_border};
             border-top-left-radius: 18px;
             border-bottom-left-radius: 18px;
         }}
@@ -50,14 +76,28 @@ def settings_stylesheet() -> str:
             font-weight: 650;
         }}
         QPushButton#SidebarNavButton:hover {{
-            background-color: rgba(255, 255, 255, 0.06);
+            background-color: {nav_hover};
             color: {text_primary};
-            border-color: rgba(255, 255, 255, 0.08);
+            border-color: {sidebar_border};
         }}
         QPushButton#SidebarNavButton:checked {{
             background-color: rgba(99, 102, 241, 0.22);
             color: {text_primary};
             border-color: rgba(129, 140, 248, 0.36);
+        }}
+
+        QPushButton#SidebarActionButton {{
+            text-align: left;
+            padding-left: 12px;
+            color: {text_secondary};
+            background: transparent;
+            border: none;
+            font-family: "{font}";
+            font-size: {small}pt;
+            font-weight: 650;
+        }}
+        QPushButton#SidebarActionButton:hover {{
+            color: {text_primary};
         }}
 
         QLabel#SettingsSidebarBrand {{
@@ -70,13 +110,13 @@ def settings_stylesheet() -> str:
         }}
 
         QWidget#SettingsSidebarBrandBox {{
-            background-color: rgba(255, 255, 255, 0.04);
-            border: 1px solid rgba(255, 255, 255, 0.08);
+            background-color: {brand_bg};
+            border: 1px solid {sidebar_border};
             border-radius: 10px;
         }}
 
         QLabel#SettingsSidebarVersion {{
-            color: {text_tertiary};
+            color: {text_secondary};
             background: transparent;
             border: none;
             padding: 0;
@@ -96,7 +136,7 @@ def settings_stylesheet() -> str:
         QFrame#OllamaStatusDot {{
             border-radius: 14px;
             border: 1px solid {border};
-            background-color: rgba(255, 255, 255, 0.04);
+            background-color: {brand_bg};
         }}
         QFrame#OllamaStatusDot[ollamaStatus="offline"] {{
             border: 1px solid rgba(255, 69, 58, 0.55);
@@ -120,7 +160,7 @@ def settings_stylesheet() -> str:
             background: qlineargradient(
                 x1: 0, y1: 0, x2: 1, y2: 1,
                 stop: 0 rgba(99, 102, 241, 0.10),
-                stop: 1 rgba(255, 255, 255, 0.02)
+                stop: 1 {brand_bg}
             );
             border: 1px solid rgba(129, 140, 248, 0.18);
             border-radius: 14px;
@@ -180,7 +220,7 @@ def settings_stylesheet() -> str:
             background: qlineargradient(
                 x1: 0, y1: 0, x2: 1, y2: 1,
                 stop: 0 rgba(99, 102, 241, 0.18),
-                stop: 1 rgba(13, 13, 15, 0.00)
+                stop: 1 {hero_stop}
             );
             border: 1px solid rgba(129, 140, 248, 0.16);
             border-radius: 16px;
@@ -208,8 +248,8 @@ def settings_stylesheet() -> str:
         }}
 
         QFrame#SettingsSectionCard {{
-            background-color: rgba(255, 255, 255, 0.03);
-            border: 1px solid rgba(255, 255, 255, 0.05);
+            background-color: {card_bg};
+            border: 1px solid {card_border};
             border-radius: 14px;
         }}
 
@@ -272,12 +312,12 @@ def settings_stylesheet() -> str:
             margin: 4px 0 4px 0;
         }}
         QScrollBar::handle:vertical {{
-            background: rgba(255, 255, 255, 0.16);
+            background: {scrollbar_handle};
             min-height: 28px;
             border-radius: 4px;
         }}
         QScrollBar::handle:vertical:hover {{
-            background: rgba(255, 255, 255, 0.28);
+            background: {scrollbar_hover};
         }}
         QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical,
         QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {{
@@ -306,7 +346,7 @@ def settings_stylesheet() -> str:
         }}
         QComboBox:focus, QLineEdit:focus {{
             border: 1px solid {accent};
-            background-color: rgba(40, 40, 48, 0.98);
+            background-color: {input_focus_bg};
         }}
         QComboBox::drop-down {{
             subcontrol-origin: padding;
@@ -326,7 +366,7 @@ def settings_stylesheet() -> str:
             margin-right: 8px;
         }}
         QComboBox QAbstractItemView {{
-            background-color: rgba(28, 28, 32, 0.98);
+            background-color: {dropdown_view_bg};
             color: {text_primary};
             border: 1px solid {border};
             border-radius: 8px;
@@ -397,10 +437,49 @@ def settings_stylesheet() -> str:
                 stop: 1 {accent}
             );
         }}
+
+        /* Embedded URL Transcribe Panel Styles */
+        QWidget#UrlTranscribePanel {{
+            background: transparent;
+        }}
+        QFrame#UrlCard {{
+            background-color: {brand_bg};
+            border: 2px dashed {border};
+            border-radius: 16px;
+        }}
+        QLabel#UrlTitle {{
+            color: {text_primary};
+            font-size: {title}pt;
+            font-weight: 700;
+        }}
+        QLabel#UrlSubtitle {{
+            color: {text_secondary};
+            font-size: {small}pt;
+        }}
+        QLabel#UrlModelLabel {{
+            color: {text_tertiary};
+            font-size: {tiny}pt;
+            font-weight: 600;
+        }}
+        QLabel#UrlIcon {{
+            font-size: 28pt;
+            color: {accent_bright};
+        }}
     """.format(
-        glass_bg=GLASS_BG,
-        glass_border=GLASS_BORDER,
-        elevated=GLASS_ELEVATED,
+        glass_bg=glass_bg,
+        glass_border=glass_border,
+        elevated=glass_elevated,
+        sidebar_bg=sidebar_bg,
+        sidebar_border=sidebar_border,
+        nav_hover=nav_hover,
+        brand_bg=brand_bg,
+        card_bg=card_bg,
+        card_border=card_border,
+        scrollbar_handle=scrollbar_handle,
+        scrollbar_hover=scrollbar_hover,
+        input_focus_bg=input_focus_bg,
+        dropdown_view_bg=dropdown_view_bg,
+        hero_stop=hero_stop,
         font=_FONT,
         tiny=Typography.TINY,
         small=Typography.SMALL,

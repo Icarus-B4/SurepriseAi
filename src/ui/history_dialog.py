@@ -1,6 +1,7 @@
 """
 history_dialog.py
 Dialog zur Durchsicht der Diktat-Historie mit Suche, Waveform und Aktionen.
+Unterstützt dynamische Übersetzung und Design-Themenwechsel.
 """
 
 from pathlib import Path
@@ -34,6 +35,7 @@ from src.ui.design_tokens import Colors, FluentIcons, Typography
 from src.ui.history_export_dialog import export_history_entry
 from src.ui.playback_waveform import PlaybackWaveform
 from src.ui.text_compare_slider import TextCompareSlider
+from src.utils.translation import tr
 
 _STRUCTURED_STYLES = {"bullet_points", "key_points"}
 
@@ -55,14 +57,16 @@ class HistoryDialog(QDialog):
         self._player.positionChanged.connect(self._on_position_changed)
         self._player.durationChanged.connect(self._on_duration_changed)
         self._player.playbackStateChanged.connect(self._on_playback_state)
-        self.setWindowTitle("Diktat-Verlauf")
+        
         if embedded:
             self.setMinimumSize(760, 560)
             self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
         else:
             self.setMinimumSize(980, 620)
+            
         self._build_ui()
         self._apply_style()
+        self.retranslate_ui()
         self._refresh_list()
 
     def _build_ui(self) -> None:
@@ -72,23 +76,23 @@ class HistoryDialog(QDialog):
 
         header = QHBoxLayout()
         title_box = QVBoxLayout()
-        title = QLabel("Diktat-Verlauf")
-        title.setFont(Typography.get_font(Typography.MEDIUM, bold=True))
-        subtitle = QLabel("Letzte Diktate durchsuchen, anhören und exportieren")
-        subtitle.setFont(Typography.get_font(Typography.TINY))
-        title_box.addWidget(title)
-        title_box.addWidget(subtitle)
+        self.header_title = QLabel()
+        self.header_title.setFont(Typography.get_font(Typography.MEDIUM, bold=True))
+        self.header_subtitle = QLabel()
+        self.header_subtitle.setFont(Typography.get_font(Typography.TINY))
+        title_box.addWidget(self.header_title)
+        title_box.addWidget(self.header_subtitle)
         header.addLayout(title_box)
         header.addStretch()
-        close_btn = QPushButton(FluentIcons.CLOSE)
-        close_btn.setObjectName("CloseButton")
-        close_btn.setFixedSize(34, 34)
-        close_btn.clicked.connect(self.accept)
-        header.addWidget(close_btn)
+        
+        self.header_close_btn = QPushButton(FluentIcons.CLOSE)
+        self.header_close_btn.setObjectName("CloseButton")
+        self.header_close_btn.setFixedSize(34, 34)
+        self.header_close_btn.clicked.connect(self.accept)
+        header.addWidget(self.header_close_btn)
         layout.addLayout(header)
 
         self.search_input = QLineEdit()
-        self.search_input.setPlaceholderText("Suche im Diktat…")
         self.search_input.setMaximumHeight(42)
         self.search_input.textChanged.connect(self._on_search)
         layout.addWidget(self.search_input)
@@ -137,7 +141,7 @@ class HistoryDialog(QDialog):
         detail_layout.setContentsMargins(14, 12, 14, 12)
         detail_layout.setSpacing(10)
 
-        self.detail_title = QLabel("Kein Diktat gewählt")
+        self.detail_title = QLabel()
         self.detail_title.setFont(Typography.get_font(Typography.SMALL, bold=True))
         detail_layout.addWidget(self.detail_title)
 
@@ -161,9 +165,9 @@ class HistoryDialog(QDialog):
 
         compare_header = QHBoxLayout()
         compare_header.setSpacing(8)
-        compare_title = QLabel("Transkript")
-        compare_title.setFont(Typography.get_font(Typography.TINY, bold=True))
-        compare_header.addWidget(compare_title)
+        self.compare_title = QLabel()
+        self.compare_title.setFont(Typography.get_font(Typography.TINY, bold=True))
+        compare_header.addWidget(self.compare_title)
         compare_header.addStretch()
         detail_layout.addLayout(compare_header)
 
@@ -172,7 +176,7 @@ class HistoryDialog(QDialog):
         self.compare_slider.setMinimumHeight(180)
         detail_layout.addWidget(self.compare_slider, stretch=2)
 
-        self.live_label = QLabel("Live-Transkription")
+        self.live_label = QLabel()
         self.live_label.setFont(Typography.get_font(Typography.TINY, bold=True))
         detail_layout.addWidget(self.live_label)
         self.live_text = QTextEdit()
@@ -180,18 +184,18 @@ class HistoryDialog(QDialog):
         self.live_text.setMaximumHeight(110)
         detail_layout.addWidget(self.live_text)
 
-        self.audio_hint = QLabel("Keine Audio-Datei für diesen Eintrag")
+        self.audio_hint = QLabel()
         self.audio_hint.setFont(Typography.get_font(Typography.TINY))
         detail_layout.addWidget(self.audio_hint)
 
         action_row = QHBoxLayout()
-        self.copy_icon_btn = self._make_action_button("📋", "Kopieren")
+        self.copy_icon_btn = self._make_action_button("📋", "")
         self.copy_icon_btn.clicked.connect(self._copy_selected)
-        self.refresh_icon_btn = self._make_action_button("↺", "Neu laden")
+        self.refresh_icon_btn = self._make_action_button("↺", "")
         self.refresh_icon_btn.clicked.connect(self._reload_current)
-        self.info_icon_btn = self._make_action_button("ℹ", "Info")
+        self.info_icon_btn = self._make_action_button("ℹ", "")
         self.info_icon_btn.clicked.connect(self._show_info)
-        self.delete_icon_btn = self._make_action_button("🗑", "Löschen")
+        self.delete_icon_btn = self._make_action_button("🗑", "")
         self.delete_icon_btn.clicked.connect(self._delete_selected)
         action_row.addStretch()
         action_row.addWidget(self.copy_icon_btn)
@@ -208,19 +212,19 @@ class HistoryDialog(QDialog):
         layout.addLayout(body, stretch=1)
 
         btn_row = QHBoxLayout()
-        self.export_btn = QPushButton("Exportieren…")
+        self.export_btn = QPushButton()
         self.export_btn.clicked.connect(self._export_selected)
-        self.copy_btn = QPushButton("In Zwischenablage kopieren")
+        self.copy_btn = QPushButton()
         self.copy_btn.clicked.connect(self._copy_selected)
-        self.open_audio_btn = QPushButton("Audio öffnen")
+        self.open_audio_btn = QPushButton()
         self.open_audio_btn.clicked.connect(self._open_audio_file)
-        close_btn = QPushButton("Schließen")
-        close_btn.clicked.connect(self.accept)
+        self.footer_close_btn = QPushButton()
+        self.footer_close_btn.clicked.connect(self.accept)
         btn_row.addWidget(self.export_btn)
         btn_row.addWidget(self.copy_btn)
         btn_row.addWidget(self.open_audio_btn)
         btn_row.addStretch()
-        btn_row.addWidget(close_btn)
+        btn_row.addWidget(self.footer_close_btn)
         layout.addLayout(btn_row)
 
     def _make_action_button(self, text: str, tooltip: str) -> QToolButton:
@@ -359,6 +363,31 @@ class HistoryDialog(QDialog):
             }}
         """)
 
+    def retranslate_ui(self) -> None:
+        """Übersetzt alle Texte und Platzhalter live."""
+        self.setWindowTitle(tr("history_title"))
+        self.header_title.setText(tr("history_title"))
+        self.header_subtitle.setText(tr("history_subtitle"))
+        self.search_input.setPlaceholderText(tr("history_search"))
+        self.compare_title.setText(tr("history_transcript"))
+        self.live_label.setText(tr("history_live"))
+        self.export_btn.setText(tr("history_export"))
+        self.copy_btn.setText(tr("history_copy"))
+        self.open_audio_btn.setText(tr("history_open_audio"))
+        self.footer_close_btn.setText(tr("history_close"))
+
+        # Icon Tooltips
+        self.copy_icon_btn.setToolTip(tr("history_copy"))
+        self.refresh_icon_btn.setToolTip(tr("history_reload"))
+        self.info_icon_btn.setToolTip(tr("history_info"))
+        self.delete_icon_btn.setToolTip(tr("history_delete"))
+
+        if not self._current_entry:
+            self.detail_title.setText(tr("history_no_selection"))
+            self.audio_hint.setText(tr("history_no_audio"))
+        else:
+            self._update_detail(self._current_entry)
+
     def _refresh_list(self, query: str = "") -> None:
         self.list_widget.clear()
         entries = self.history.search(query) if query else self.history.list_all()
@@ -403,11 +432,11 @@ class HistoryDialog(QDialog):
         entry = self._current()
         if not entry:
             return
-        audio = "ja" if entry.get("audio_path") else "nein"
-        live = "ja" if entry.get("live_transcript") else "nein"
+        audio = tr("yes") if entry.get("audio_path") else tr("no")
+        live = tr("yes") if entry.get("live_transcript") else tr("no")
         QMessageBox.information(
             self,
-            "Info",
+            tr("history_info"),
             f"Audio: {audio}\nLive-Transkript: {live}\nWörter: {entry.get('words', 0)}\nWPM: {entry.get('wpm', 0)}",
         )
 
@@ -416,7 +445,7 @@ class HistoryDialog(QDialog):
         entry_id = entry.get("id")
         if not entry_id:
             return
-        if QMessageBox.question(self, "Löschen", "Diesen Eintrag wirklich löschen?") != QMessageBox.StandardButton.Yes:
+        if QMessageBox.question(self, tr("history_delete"), tr("history_delete_confirm")) != QMessageBox.StandardButton.Yes:
             return
         if self.history.delete(entry_id):
             self._current_entry = None
@@ -435,7 +464,7 @@ class HistoryDialog(QDialog):
         duration = entry.get("duration_s")
         dur_str = f"{duration:.1f}s" if duration else ""
         title_parts = [p for p in (ts, style, dur_str) if p]
-        self.detail_title.setText(" · ".join(title_parts) or "Kein Diktat gewählt")
+        self.detail_title.setText(" · ".join(title_parts) or tr("history_no_selection"))
 
         self.live_text.setPlainText(entry.get("live_transcript") or "")
         self.live_text.setVisible(bool(entry.get("live_transcript")))
@@ -446,19 +475,17 @@ class HistoryDialog(QDialog):
         self.play_btn.setEnabled(has_audio)
         self.audio_slider.setEnabled(has_audio)
         self.open_audio_btn.setEnabled(has_audio)
-        self.audio_hint.setText(audio_path if has_audio else "Keine Audio-Datei für diesen Eintrag")
+        self.audio_hint.setText(audio_path if has_audio else tr("history_no_audio"))
+        self.audio_hint.setToolTip(audio_path if has_audio else "")
         self.audio_slider.setValue(0)
         self.time_label.setText("0:00")
         self.waveform.load_audio_file(audio_path if has_audio else None)
         if has_audio:
             self._player.setSource(QUrl.fromLocalFile(audio_path))
 
-        # Setze beide Texte für die Diff-Ansicht
         raw = entry.get("raw") or ""
         polished = entry.get("polished") or raw
         self.compare_slider.set_texts(raw, polished)
-        # Strukturierte Stile müssen als fertiger Text sichtbar bleiben
-        # (Zeilenumbrüche/Bullets gehen in der Word-Diff-Ansicht sonst verloren).
         if entry.get("style") in _STRUCTURED_STYLES:
             self.compare_slider.show_polished_view()
         elif raw and polished and raw != polished:
@@ -536,7 +563,7 @@ class HistoryDialog(QDialog):
     def _export_selected(self) -> None:
         entry = self._current()
         if isinstance(entry, dict) and export_history_entry(entry, self):
-            QMessageBox.information(self, "Export", "Datei wurde gespeichert.")
+            QMessageBox.information(self, tr("history_export"), tr("File has been saved."))
 
     def closeEvent(self, event) -> None:
         self._player.stop()

@@ -183,6 +183,30 @@ Der aktive Stil wird **indigo** hervorgehoben. Die Änderung erfolgt **sofort** 
 | Island ein-/ausblenden | Doppelklick auf Tray-Icon |
 | Basics-Modus (Power/Restart/Sleep) | Mausrad auf der Idle-Pill |
 
+### Kontextbasiertes Diktieren (OCR & Markierter Text)
+
+Mit diesen Funktionen „liest“ die lokale KI (Ollama) im Hintergrund auf deinem Bildschirm mit, um dein Diktat besser zu verstehen und Fehler bei Eigennamen, Produktnamen oder Fachbegriffen zu vermeiden.
+
+#### 1. Bildschirmkontext (OCR)
+* **Was macht es?** Wenn du das Diktieren startest, erfasst die App im Hintergrund den sichtbaren Text des aktuell aktiven Fensters (z. B. eine E-Mail, auf die du antworten willst).
+* **Wie nutzt man es?**
+  1. Schalte in den **Einstellungen** unter **Bildschirmkontext (OCR)** die Option **„Bildschirmkontext für Polishing (lokal, Windows-OCR)“** ein.
+  2. Arbeite ganz normal: Öffne z. B. Outlook, Teams oder Word.
+  3. Drücke **F8** und diktiere. Wenn auf dem Bildschirm bereits Namen, Adressen oder Fachbegriffe stehen, die du im Diktat nennst, erkennt die KI diese automatisch und schreibt sie fehlerfrei.
+* **Beispiel:** Du liest eine E-Mail von „Dr. Schmidt-Lüdersen“ über das Projekt „AeroSpaceX“. Du drückst F8 und sagst: *„Hallo Herr Schmidt-Lüdersen, ich habe das Projekt AeroSpaceX geprüft.“* Die KI liest die komplizierten Namen vom Bildschirm und schreibt sie exakt richtig.
+
+#### 2. Markierten Text als Kontext
+* **Was macht es?** Die App kopiert vor dem Diktieren markierten Text in eine temporäre Variable, um der KI den exakten Arbeitskontext mitzugeben.
+* **Wie nutzt man es?**
+  1. Aktiviere in den **Einstellungen** unter **Bildschirmkontext (OCR)** die Option **„Markierten Text als Kontext (Ctrl+C beim Diktatstart)“**.
+  2. Markiere mit der Maus oder Tastatur einen Textabschnitt in deiner Anwendung (z. B. einen Absatz in einem Entwurf).
+  3. Drücke **F8** und diktiere eine Änderungsanweisung (z. B. *„Formuliere das höflicher“* oder *„Füge hinzu, dass wir uns am Donnerstag treffen“*).
+  4. Die KI kombiniert den markierten Text mit deinem Diktat und umschreibt den Abschnitt passgenau.
+
+> [!IMPORTANT]
+> **Datenschutz & Lokale Verarbeitung:**  
+> Alle Kontexterfassungen (OCR und Zwischenablage) sowie die anschließende KI-Verarbeitung (Ollama) finden **zu 100 % lokal auf deinem Computer** statt. Es werden zu keinem Zeitpunkt Daten, Screenshots oder Texte an externe Cloud-Server gesendet.
+
 ### System-Tray
 
 Rechtsklick auf das Tray-Icon:

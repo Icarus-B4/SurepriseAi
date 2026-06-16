@@ -50,6 +50,24 @@ def read_accent_hex() -> Optional[str]:
     return None
 
 
+def is_windows_light_theme() -> bool:
+    """Prüft, ob in den Windows-Systemeinstellungen das helle Design aktiv ist."""
+    if not _WINREG_AVAILABLE:
+        return False
+    try:
+        key = winreg.OpenKey(
+            winreg.HKEY_CURRENT_USER,
+            r"Software\Microsoft\Windows\CurrentVersion\Themes\Personalize",
+        )
+        value, _ = winreg.QueryValueEx(key, "AppsUseLightTheme")
+        winreg.CloseKey(key)
+        return value == 1
+    except OSError:
+        pass
+    return False
+
+
 def accent_variants(hex_color: str) -> tuple[str, str, str]:
     """Liefert (primary, bright, dark) Varianten."""
     return hex_color, _adjust_brightness(hex_color, 1.15), _adjust_brightness(hex_color, 0.82)
+

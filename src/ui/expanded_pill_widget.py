@@ -2,6 +2,7 @@
 expanded_pill_widget.py
 Widget für die Großansicht (Expanded Mode) der Dynamic Island.
 Enthält Wort/WPM-Statistiken, eine Textbox mit Direktaktionen und Stil-Chips.
+Unterstützt dynamische Übersetzung und Design-Themenwechsel.
 """
 
 import re
@@ -17,6 +18,7 @@ from src.ui.drag_handle import DragHandleButton
 from src.ui.text_compare_slider import TextCompareSlider
 from src.services.config_service import config
 from src.services.style_definitions import STYLE_DEFINITIONS
+from src.utils.translation import tr
 
 
 class ExpandedPillWidget(QWidget):
@@ -32,9 +34,9 @@ class ExpandedPillWidget(QWidget):
         self.chips: dict[str, QPushButton] = {}
         self._init_ui()
 
-    def _icon_button_style(self, hover_color: str) -> str:
+    def _icon_button_style(self, hover_color: str, object_name: str) -> str:
         return f"""
-            QPushButton {{
+            QPushButton#{object_name} {{
                 background: transparent;
                 border: none;
                 border-radius: 11px;
@@ -42,7 +44,7 @@ class ExpandedPillWidget(QWidget):
                 font-family: "{FluentIcons.FONT_FAMILY}";
                 font-size: 11px;
             }}
-            QPushButton:hover {{
+            QPushButton#{object_name}:hover {{
                 background: {Colors.CONTROL_FILL_HEX};
                 color: {hover_color};
             }}
@@ -99,20 +101,20 @@ class ExpandedPillWidget(QWidget):
         cols_lay.setAlignment(Qt.AlignmentFlag.AlignCenter)
         
         self.words_val = QLabel("0", self)
+        self.words_val.setObjectName("ExpandedStatsVal")
         self.words_val.setFont(Typography.get_font(Typography.TITLE, bold=True))
-        self.words_val.setStyleSheet(f"color: {Colors.TEXT_PRIMARY_HEX};")
         
-        self.words_lbl = QLabel("Wörter", self)
+        self.words_lbl = QLabel()
+        self.words_lbl.setObjectName("ExpandedStatsLbl")
         self.words_lbl.setFont(Typography.get_font(Typography.TINY))
-        self.words_lbl.setStyleSheet(f"color: {Colors.TEXT_SECONDARY_HEX};")
         
         self.wpm_val = QLabel("0", self)
+        self.wpm_val.setObjectName("ExpandedStatsValWpm")
         self.wpm_val.setFont(Typography.get_font(Typography.TITLE, bold=True))
-        self.wpm_val.setStyleSheet(f"color: {Colors.ACCENT_BRIGHT_HEX};")
         
         self.wpm_lbl = QLabel("WPM", self)
+        self.wpm_lbl.setObjectName("ExpandedStatsLblWpm")
         self.wpm_lbl.setFont(Typography.get_font(Typography.TINY))
-        self.wpm_lbl.setStyleSheet(f"color: {Colors.TEXT_SECONDARY_HEX};")
         
         # Spalten zusammenbauen
         w_box = QVBoxLayout()
@@ -129,70 +131,58 @@ class ExpandedPillWidget(QWidget):
         stats_layout.addLayout(cols_lay)
         
         # Untertitel
-        stats_desc = QLabel("Statistiken deines letzten Diktats", self)
-        stats_desc.setFont(Typography.get_font(Typography.TINY))
-        stats_desc.setStyleSheet(f"color: {Colors.TEXT_SECONDARY_HEX};")
-        stats_layout.addWidget(stats_desc, alignment=Qt.AlignmentFlag.AlignCenter)
+        self.stats_desc = QLabel()
+        self.stats_desc.setObjectName("ExpandedStatsDesc")
+        self.stats_desc.setFont(Typography.get_font(Typography.TINY))
+        stats_layout.addWidget(self.stats_desc, alignment=Qt.AlignmentFlag.AlignCenter)
         
         # Carousel-Dots (Deko zur Visualisierung)
-        dots_lay = QHBoxLayout()
-        dots_lay.setSpacing(4)
-        dots_lay.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.dots_lay = QHBoxLayout()
+        self.dots_lay.setSpacing(4)
+        self.dots_lay.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.dots: list[QLabel] = []
         for i in range(4):
             dot = QLabel("●", self)
+            dot.setObjectName(f"CarouselDot_{i}")
             dot.setFont(Typography.get_font(Typography.TINY))
-            color = Colors.ACCENT_HEX if i == 0 else Colors.TEXT_TERTIARY_HEX
-            dot.setStyleSheet(f"color: {color};")
-            dots_lay.addWidget(dot)
-        stats_layout.addLayout(dots_lay)
+            self.dots.append(dot)
+            self.dots_lay.addWidget(dot)
+        stats_layout.addLayout(self.dots_lay)
         
         main_layout.addLayout(stats_layout)
 
         # ── 2. TEXT-BOX IN DER MITTE ──
-        text_frame = QFrame(self)
-        text_frame.setObjectName("ExpandedTextFrame")
-        text_frame.setStyleSheet(f"""
-            QFrame#ExpandedTextFrame {{
-                background: qlineargradient(
-                    x1:0, y1:0, x2:0, y2:1,
-                    stop:0 rgba(255, 255, 255, 0.055),
-                    stop:1 rgba(255, 255, 255, 0.025)
-                );
-                border: 1px solid {Colors.BORDER_HIGHLIGHT};
-                border-radius: {Radius.MD}px;
-            }}
-        """)
-        frame_layout = QVBoxLayout(text_frame)
+        self.text_frame = QFrame(self)
+        self.text_frame.setObjectName("ExpandedTextFrame")
+        frame_layout = QVBoxLayout(self.text_frame)
         frame_layout.setContentsMargins(8, 6, 8, 6)
         frame_layout.setSpacing(4)
         
         # Box Header mit Aktionen
         header_lay = QHBoxLayout()
-        box_title = QLabel("Bereinigter Text", self)
-        box_title.setFont(Typography.get_font(Typography.TINY, bold=True))
-        box_title.setStyleSheet(f"color: {Colors.TEXT_SECONDARY_HEX}; border: none; background: transparent;")
+        self.box_title = QLabel()
+        self.box_title.setObjectName("ExpandedBoxTitle")
+        self.box_title.setFont(Typography.get_font(Typography.TINY, bold=True))
         
         # Mini Kopieren und Edit Buttons
         self.box_copy_btn = QPushButton(FluentIcons.COPY, self)
+        self.box_copy_btn.setObjectName("ExpandedCopyBtn")
         self.box_copy_btn.setFixedSize(22, 22)
-        self.box_copy_btn.setStyleSheet(self._icon_button_style(Colors.SUCCESS_GREEN_HEX))
 
         self.box_undo_btn = QPushButton(FluentIcons.RETRY, self)
+        self.box_undo_btn.setObjectName("ExpandedUndoBtn")
         self.box_undo_btn.setFixedSize(22, 22)
-        self.box_undo_btn.setToolTip("Letzten Satz entfernen")
-        self.box_undo_btn.setStyleSheet(self._icon_button_style(Colors.ACCENT_BRIGHT_HEX))
         self.box_undo_btn.clicked.connect(self.undo_clicked.emit)
 
         self.url_btn = QPushButton("🔗", self)
+        self.url_btn.setObjectName("ExpandedUrlBtn")
         self.url_btn.setFixedSize(22, 22)
-        self.url_btn.setToolTip("YouTube/URL transkribieren")
-        self.url_btn.setStyleSheet(self._icon_button_style(Colors.ACCENT_BRIGHT_HEX))
         self.url_btn.clicked.connect(self.url_import_clicked.emit)
         
         # Wir belegen den Box Copy-Button direkt mit der Kopierfunktion
         self.exp_copy_btn = self.box_copy_btn  # Kompatibilität für AppController
         
-        header_lay.addWidget(box_title)
+        header_lay.addWidget(self.box_title)
         header_lay.addStretch()
         header_lay.addWidget(self.url_btn)
         header_lay.addWidget(self.box_undo_btn)
@@ -202,7 +192,6 @@ class ExpandedPillWidget(QWidget):
         self.polish_status = QLabel("Bereit für Polishing", self)
         self.polish_status.setObjectName("PolishStatusLabel")
         self.polish_status.setFont(Typography.get_font(Typography.TINY))
-        self.polish_status.setStyleSheet(f"color: {Colors.TEXT_SECONDARY_HEX};")
         self.polish_status.setVisible(False)
         frame_layout.addWidget(self.polish_status)
 
@@ -213,7 +202,7 @@ class ExpandedPillWidget(QWidget):
         # Alias für Kompatibilität mit bestehendem Code
         self.transcript_edit = self.compare_slider.text_view
         
-        main_layout.addWidget(text_frame, stretch=1)
+        main_layout.addWidget(self.text_frame, stretch=1)
 
         # ── 3. STIL-CHIPS (zwei Zeilen, ohne Scrollbar) ──
         chips_row = QHBoxLayout()
@@ -246,15 +235,8 @@ class ExpandedPillWidget(QWidget):
         chips_row.addLayout(chips_col, stretch=1)
 
         self.exp_close_btn = QPushButton("✕", self)
+        self.exp_close_btn.setObjectName("ExpandedCloseBtn")
         self.exp_close_btn.setFixedSize(28, 28)
-        self.exp_close_btn.setStyleSheet(f"""
-            QPushButton {{
-                background: transparent; color: {Colors.TEXT_SECONDARY_HEX};
-                border: 1px solid {Colors.BORDER_HEX}; border-radius: 14px;
-                font-family: "{Typography.FONT_FAMILY}"; font-weight: bold; font-size: 11px;
-            }}
-            QPushButton:hover {{ color: {Colors.RECORDING_RED_HEX}; border-color: {Colors.RECORDING_RED_HEX}; }}
-        """)
         chips_row.addWidget(self.exp_close_btn, alignment=Qt.AlignmentFlag.AlignTop)
         main_layout.addLayout(chips_row)
 
@@ -262,7 +244,63 @@ class ExpandedPillWidget(QWidget):
         self._resize_handle = _ResizeHandle(self)
         self._resize_handle.delta_y.connect(self.resize_requested.emit)
 
+        self.refresh_theme()
+        self.retranslate_ui()
+
+    def retranslate_ui(self) -> None:
+        """Übersetzt alle Labels und Tooltips live."""
+        self.words_lbl.setText(tr("history_words"))
+        self.stats_desc.setText(tr("stats_desc"))
+        self.box_title.setText(tr("polished_text"))
+        self.box_undo_btn.setToolTip(tr("remove_last_sentence"))
+        self.url_btn.setToolTip(tr("transcribe_url_tooltip"))
+
+    def refresh_theme(self) -> None:
+        """Aktualisiert die QSS-Stile basierend auf den aktuellen Color-Tokens."""
+        self.compare_slider.refresh_theme()
+        
+        # ID-spezifische Label-Styles zur Umgehung von Vererbungskonflikten
+        self.words_val.setStyleSheet(f"QLabel#ExpandedStatsVal {{ color: {Colors.TEXT_PRIMARY_HEX}; background: transparent; }}")
+        self.words_lbl.setStyleSheet(f"QLabel#ExpandedStatsLbl {{ color: {Colors.TEXT_SECONDARY_HEX}; background: transparent; }}")
+        self.wpm_val.setStyleSheet(f"QLabel#ExpandedStatsValWpm {{ color: {Colors.ACCENT_BRIGHT_HEX}; background: transparent; }}")
+        self.wpm_lbl.setStyleSheet(f"QLabel#ExpandedStatsLblWpm {{ color: {Colors.TEXT_SECONDARY_HEX}; background: transparent; }}")
+        self.stats_desc.setStyleSheet(f"QLabel#ExpandedStatsDesc {{ color: {Colors.TEXT_SECONDARY_HEX}; background: transparent; }}")
+
+        # Carousel-Dots
+        for i, dot in enumerate(self.dots):
+            color = Colors.ACCENT_HEX if i == 0 else Colors.TEXT_TERTIARY_HEX
+            dot.setStyleSheet(f"QLabel#CarouselDot_{i} {{ color: {color}; background: transparent; }}")
+
+        color_rgba = "0, 0, 0" if Colors.ISLAND_BG_HEX == "#F3F3F7" else "255, 255, 255"
+        self.text_frame.setStyleSheet(f"""
+            QFrame#ExpandedTextFrame {{
+                background: qlineargradient(
+                    x1:0, y1:0, x2:0, y2:1,
+                    stop:0 rgba({color_rgba}, 0.055),
+                    stop:1 rgba({color_rgba}, 0.025)
+                );
+                border: 1px solid {Colors.BORDER_HIGHLIGHT};
+                border-radius: {Radius.MD}px;
+            }}
+        """)
+
+        self.box_title.setStyleSheet(f"QLabel#ExpandedBoxTitle {{ color: {Colors.TEXT_SECONDARY_HEX}; border: none; background: transparent; }}")
+        self.box_copy_btn.setStyleSheet(self._icon_button_style(Colors.SUCCESS_GREEN_HEX, "ExpandedCopyBtn"))
+        self.box_undo_btn.setStyleSheet(self._icon_button_style(Colors.ACCENT_BRIGHT_HEX, "ExpandedUndoBtn"))
+        self.url_btn.setStyleSheet(self._icon_button_style(Colors.ACCENT_BRIGHT_HEX, "ExpandedUrlBtn"))
+        self.polish_status.setStyleSheet(f"QLabel#PolishStatusLabel {{ color: {Colors.TEXT_SECONDARY_HEX}; background: transparent; }}")
+
+        self.exp_close_btn.setStyleSheet(f"""
+            QPushButton#ExpandedCloseBtn {{
+                background: transparent; color: {Colors.TEXT_SECONDARY_HEX};
+                border: 1px solid {Colors.BORDER_HEX}; border-radius: 14px;
+                font-family: "{Typography.FONT_FAMILY}"; font-weight: bold; font-size: 11px;
+            }}
+            QPushButton#ExpandedCloseBtn:hover {{ color: {Colors.RECORDING_RED_HEX}; border-color: {Colors.RECORDING_RED_HEX}; }}
+        """)
+
         self.set_active_style(config.selected_style)
+        self._resize_handle.update()
 
     def set_stats(self, words: int, wpm: int):
         """Aktualisiert die Statistikanzeigen."""
@@ -345,9 +383,7 @@ class _ResizeHandle(QWidget):
         self.setCursor(Qt.CursorShape.SizeFDiagCursor)
         self._dragging = False
         self._drag_start = QPoint()
-        self.setStyleSheet(f"""
-            background: transparent;
-        """)
+        self.setStyleSheet(f"background: transparent;")
 
     def paintEvent(self, event) -> None:
         """Zeichnet drei diagonale Linien als Resize-Indikator."""

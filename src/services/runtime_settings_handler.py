@@ -1,10 +1,10 @@
 """
 runtime_settings_handler.py
-Wendet geänderte Einstellungen ohne Neustart an (FAB, Akzent, Privacy).
+Wendet geänderte Einstellungen ohne Neustart an (FAB, Akzent, Privacy, Theme, Sprache).
 """
 
 from src.services.config_service import config
-from src.ui.accent_theme import apply_accent_from_config, reset_accent_cache
+from src.ui.accent_theme import apply_accent_from_config, reset_accent_cache, apply_theme_from_config
 
 
 class RuntimeSettingsHandler:
@@ -21,6 +21,11 @@ class RuntimeSettingsHandler:
             reset_accent_cache()
             if apply_accent_from_config():
                 self.refresh_ui_accent()
+        if key in ("theme_mode", ""):
+            if apply_theme_from_config():
+                self.refresh_ui_theme()
+        if key in ("app_language", ""):
+            self.refresh_ui_language()
         if key in ("enable_mini_fab", ""):
             self.sync_mini_fab()
         if key in ("enable_presence_bar", ""):
@@ -55,6 +60,55 @@ class RuntimeSettingsHandler:
         self.app.tray.setIcon(self.app.tray._create_tray_icon())
         if self.app.mini_fab:
             self.app.mini_fab.set_recording(self.app.state_machine.is_recording)
+
+    def refresh_ui_theme(self) -> None:
+        """Aktualisiert alle Fenster-Stylesheets basierend auf dem geänderten Theme."""
+        window = self.app.window
+        
+        # 1. Haupt-Island und deren Pill aktualisieren
+        window.pill._apply_pill_style()
+        window.pill.expanded_widget.refresh_theme()
+        style_key = self.app.pipeline.session_style
+        window.pill.expanded_widget.set_active_style(style_key)
+        
+        # 2. Settings-Dialog aktualisieren falls vorhanden
+        dlg = getattr(window, "_settings_dialog", None)
+        if dlg:
+            dlg.refresh_theme()
+            
+        # 3. History-Dialog aktualisieren falls vorhanden
+        hist = getattr(self.app.controller, "_history_dialog", None)
+        if hist:
+            hist._apply_style()
+            
+        # 4. Toast-Notification aktualisieren
+        if hasattr(self.app, "toast"):
+            self.app.toast.refresh_theme()
+            
+        # 5. System-Tray aktualisieren
+        if hasattr(self.app, "tray"):
+            self.app.tray.refresh_theme()
+
+    def refresh_ui_language(self) -> None:
+        """Löst eine Live-Übersetzung auf allen UI-Komponenten aus."""
+        window = self.app.window
+        
+        # 1. Settings-Dialog aktualisieren
+        dlg = getattr(window, "_settings_dialog", None)
+        if dlg:
+            dlg.retranslate_ui()
+            
+        # 2. History-Dialog aktualisieren
+        hist = getattr(self.app.controller, "_history_dialog", None)
+        if hist:
+            hist.retranslate_ui()
+            
+        # 3. Expanded Pill aktualisieren
+        window.pill.expanded_widget.retranslate_ui()
+        
+        # 4. Toast-Notification aktualisieren
+        if hasattr(self.app, "toast"):
+            self.app.toast.retranslate_ui()
 
     def sync_mini_fab(self) -> None:
         enabled = config.get_bool("enable_mini_fab", False)

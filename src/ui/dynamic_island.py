@@ -352,10 +352,14 @@ class DynamicIslandWindow(QWidget):
         has_focus_block = bool(flags & Qt.WindowType.WindowDoesNotAcceptFocus)
         
         if accept and has_focus_block:
+            old_pos = self.pos()
             self.setWindowFlags(flags & ~Qt.WindowType.WindowDoesNotAcceptFocus)
+            self.move(old_pos)
             self.show()
         elif not accept and not has_focus_block:
+            old_pos = self.pos()
             self.setWindowFlags(flags | Qt.WindowType.WindowDoesNotAcceptFocus)
+            self.move(old_pos)
             self.show()
 
     # ── Quick Controls Handler ──
@@ -576,8 +580,8 @@ class DynamicIslandWindow(QWidget):
             self._settings_dialog.request_toggle_recording.connect(
                 lambda: getattr(self, "request_toggle_recording_callback", lambda: None)()
             )
-            self._settings_dialog.request_transcribe_url.connect(
-                lambda: getattr(self, "request_transcribe_url_callback", lambda: None)()
+            self._settings_dialog.request_transcribe_media_url.connect(
+                lambda url: getattr(self, "request_transcribe_media_url_callback", lambda x: None)(url)
             )
             self._settings_dialog.request_style_change.connect(
                 lambda k: getattr(self, "request_style_change_callback", lambda x: None)(k)

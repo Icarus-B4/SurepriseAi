@@ -78,31 +78,33 @@ class Colors:
 
     @classmethod
     def island_bg(cls) -> QColor:
-        return QColor(13, 13, 15, 230) # ~90% Alpha
+        c = QColor(cls.ISLAND_BG_HEX)
+        c.setAlpha(230)
+        return c
 
     @classmethod
     def text_primary(cls) -> QColor:
-        return QColor("#F5F5F7")
+        return QColor(cls.TEXT_PRIMARY_HEX)
 
     @classmethod
     def text_secondary(cls) -> QColor:
-        return QColor("#8E8E93")
+        return QColor(cls.TEXT_SECONDARY_HEX)
 
     @classmethod
     def accent(cls) -> QColor:
-        return QColor("#6366F1")
+        return QColor(cls.ACCENT_HEX)
 
     @classmethod
     def recording_red(cls) -> QColor:
-        return QColor("#FF453A")
+        return QColor(cls.RECORDING_RED_HEX)
 
     @classmethod
     def success_green(cls) -> QColor:
-        return QColor("#30D158")
+        return QColor(cls.SUCCESS_GREEN_HEX)
 
     @classmethod
     def processing_blue(cls) -> QColor:
-        return QColor("#64D2FF")
+        return QColor(cls.PROCESSING_BLUE_HEX)
 
 # ── Abstände (8px Grid) ───────────────────────────────────────────────────────
 

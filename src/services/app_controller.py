@@ -93,6 +93,7 @@ class AppController(QObject):
         self.app.window.open_history_callback = self._open_history
         self.app.window.request_toggle_recording_callback = self.app.pipeline.toggle
         self.app.window.request_transcribe_url_callback = self._open_url_dialog
+        self.app.window.request_transcribe_media_url_callback = self._transcribe_media_url
         self.app.window.request_style_change_callback = self._on_style_changed
         self.app.window.history_service = self.history
         self.app.window.recording_sound_preview_callback = self.recording_sounds.preview
@@ -226,6 +227,10 @@ class AppController(QObject):
             QTimer.singleShot(320, self.app.toast.end_live_mode)
 
     def _on_pipeline_result(self, raw: str, polished: str):
+        dlg = self.app.window._settings_dialog
+        if dlg and hasattr(dlg, "_url_panel"):
+            dlg._url_panel.set_transcribing(False)
+
         self.current_raw = raw
         self.current_corrected = self.app.pipeline.replacer.apply(raw)
         self.current_polished = polished
@@ -265,6 +270,10 @@ class AppController(QObject):
             self.app.toast.show_success("Text bereinigt und in Zwischenablage kopiert!")
 
     def _on_pipeline_error(self, message: str):
+        dlg = self.app.window._settings_dialog
+        if dlg and hasattr(dlg, "_url_panel"):
+            dlg._url_panel.set_transcribing(False)
+
         self.app.toast.show_error(message)
         self.app.state_machine.transition_to(IslandState.IDLE)
 
@@ -316,9 +325,11 @@ class AppController(QObject):
         self._history_dialog.activateWindow()
 
     def _open_url_dialog(self) -> None:
-        url = UrlTranscribeDialog.paste_from_clipboard(self.app.window)
-        if url:
-            self._transcribe_media_url(url)
+        self.app.window._on_open_settings()
+        dlg = self.app.window._settings_dialog
+        if dlg:
+            dlg.show_url_transcribe()
+            dlg._url_panel.prefill_from_clipboard()
 
     def _transcribe_media_url(self, url: str) -> None:
         if self.app.pipeline.is_recording:

@@ -10,6 +10,7 @@ import re
 from PyQt6.QtWidgets import QWidget, QLabel, QVBoxLayout
 from PyQt6.QtCore import Qt, QTimer, QPropertyAnimation
 from src.ui.design_tokens import Colors, Typography, Radius
+from src.utils.translation import tr
 
 _SENTENCE_SPLIT = re.compile(r"(?<=[.!?…])\s+")
 
@@ -128,7 +129,7 @@ class ToastNotification(QWidget):
         self._is_live = True
         self._live_plain = text.strip()
 
-        self.title_label.setText("LIVE-TRANSKRIPTION")
+        self.title_label.setText(tr("toast_live_transcription"))
         self.title_label.setStyleSheet(
             f"color: {Colors.ACCENT_BRIGHT_HEX}; letter-spacing: 1px;"
         )
@@ -146,7 +147,7 @@ class ToastNotification(QWidget):
             return
         final = (text or self._live_plain).strip()
         self._live_plain = final
-        self.title_label.setText("TRANSKRIPT")
+        self.title_label.setText(tr("toast_transcript"))
         self.title_label.setStyleSheet(
             f"color: {Colors.SUCCESS_GREEN_HEX}; letter-spacing: 1px;"
         )
@@ -154,10 +155,10 @@ class ToastNotification(QWidget):
         self._position_and_show()
 
     def _render_live_html(self, text: str, settled: bool) -> None:
-        if not text or text == "Höre zu…":
+        if not text or text == tr("listening"):
             self.label.setText(
                 f'<span style="color:{Colors.TEXT_SECONDARY_HEX};'
-                f'font-style:italic;">{html.escape(text or "Höre zu…")}</span>'
+                f'font-style:italic;">{html.escape(text or tr("listening"))}</span>'
             )
             return
 
@@ -230,3 +231,15 @@ class ToastNotification(QWidget):
             self.move(x, y)
         self.show()
         self.raise_()
+
+    def retranslate_ui(self) -> None:
+        """Übersetzt die Titel im laufenden Betrieb."""
+        txt = self.title_label.text()
+        if txt in ("LIVE-TRANSKRIPTION", "LIVE TRANSCRIPTION"):
+            self.title_label.setText(tr("toast_live_transcription"))
+        elif txt in ("TRANSKRIPT", "TRANSCRIPT"):
+            self.title_label.setText(tr("toast_transcript"))
+
+    def refresh_theme(self) -> None:
+        """Aktualisiert das Stylesheet bei Theme-Wechseln."""
+        self._apply_style(is_live=self._is_live)

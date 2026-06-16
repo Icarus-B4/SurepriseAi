@@ -106,11 +106,11 @@ class ToggleRow(QWidget):
         row.setContentsMargins(0, 5, 0, 5)
         row.setSpacing(12)
 
-        lbl = QLabel(label)
-        lbl.setObjectName("ToggleLabel")
-        lbl.setWordWrap(True)
+        self.label_widget = QLabel(label)
+        self.label_widget.setObjectName("ToggleLabel")
+        self.label_widget.setWordWrap(True)
 
-        row.addWidget(lbl, stretch=1)
+        row.addWidget(self.label_widget, stretch=1)
         row.addWidget(self._switch, alignment=Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
 
     def isChecked(self) -> bool:

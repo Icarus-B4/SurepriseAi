@@ -16,7 +16,7 @@ from src.services.hotkey_service import HotkeyService
 from src.services.config_service import config
 from src.services.app_controller import AppController
 from src.ui.tray_icon import SurepriseTrayIcon
-from src.ui.accent_theme import apply_accent_from_config
+from src.ui.accent_theme import apply_accent_from_config, apply_theme_from_config
 from src.utils.app_icon import load_app_icon
 
 
@@ -41,6 +41,10 @@ class SurepriseApp:
         self.app.setQuitOnLastWindowClosed(False)
         self.app.setWindowIcon(load_app_icon())
 
+        # Zuerst Theme und Akzentfarbe laden, damit alle UI-Widgets direkt korrekt gestylt werden
+        apply_theme_from_config()
+        apply_accent_from_config()
+
         self.signals = PipelineSignals()
         self.pipeline = TranscriptionPipeline()
         self.hotkey = HotkeyService()
@@ -61,7 +65,6 @@ class SurepriseApp:
         from src.services import dictation_logger as dlog
 
         dlog.write_session_header("SurepriseAi gestartet")
-        apply_accent_from_config()
 
         self.pipeline.initialize_async(on_ready=self._on_pipeline_initialized)
         self._sync_mini_fab_at_start()

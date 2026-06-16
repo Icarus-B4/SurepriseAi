@@ -123,3 +123,26 @@ class SurepriseTrayIcon(QSystemTrayIcon):
         """Ein- und Ausblenden der Dynamic Island bei Doppelklick."""
         if reason == QSystemTrayIcon.ActivationReason.DoubleClick:
             self.toggle_island.emit()
+
+    def refresh_theme(self) -> None:
+        """Aktualisiert die Symbole und Stylesheets des Kontextmenüs bei Theme-Wechseln."""
+        self.setIcon(self._create_tray_icon())
+        if hasattr(self, "menu"):
+            self.menu.setStyleSheet(f"""
+                QMenu {{
+                    background-color: {Colors.SURFACE_HEX};
+                    border: 1px solid {Colors.BORDER_HEX};
+                    border-radius: 6px;
+                    padding: 4px;
+                }}
+                QMenu::item {{
+                    padding: 6px 24px 6px 24px;
+                    color: {Colors.TEXT_PRIMARY_HEX};
+                    font-family: "Segoe UI";
+                    font-size: 12px;
+                }}
+                QMenu::item:selected {{
+                    background-color: {Colors.SURFACE_ELEVATED};
+                    border-radius: 4px;
+                }}
+            """)

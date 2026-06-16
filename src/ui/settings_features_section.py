@@ -122,13 +122,6 @@ def add_features_section(
         lambda checked: (_save_bool("enable_app_modes", checked), on_change("enable_app_modes"))
     )
 
-    if on_open_history:
-        add_section(card_layout, "Verlauf", "📜")
-        history_btn = QPushButton("Diktat-Verlauf öffnen")
-        history_btn.clicked.connect(on_open_history)
-        history_btn.setObjectName("HistoryButton")
-        card_layout.addWidget(history_btn)
-
     layout.addWidget(card)
 
 

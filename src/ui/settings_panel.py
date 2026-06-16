@@ -2,6 +2,7 @@
 settings_panel.py
 Einstellungs-Panel für SurepriseAi in PyQt6.
 Glas-Optik mit abgerundeten Ecken und sauberem Scroll-Layout.
+Unterstützt dynamische Sprach- und Theme-Umschaltung sowie eingebettete URL-Transkription.
 """
 
 from PyQt6 import sip
@@ -15,15 +16,17 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import Qt, QPoint, QRectF, pyqtSignal, QTimer
 from PyQt6.QtGui import QColor, QPainterPath, QRegion
 
-from src.ui.design_tokens import FluentIcons
+from src.ui.design_tokens import FluentIcons, Typography
 from src.ui.history_dialog import HistoryDialog
 from src.ui.settings_styles import settings_stylesheet
 from src.ui.settings_features_section import add_features_section
 from src.ui.toggle_switch import ToggleRow
+from src.ui.url_transcribe_panel import UrlTranscribePanel
 from src.services.config_service import config
 from src.services.dictation_history import DictationHistoryService
 from src.services.recording_sound_service import RecordingSoundService
 from src.ui.ollama_settings_row import OllamaSettingsRow
+from src.utils.translation import tr
 
 _CORNER_RADIUS = 16
 
@@ -33,8 +36,8 @@ class SettingsWindow(QDialog):
 
     setting_changed = pyqtSignal(str)
     request_toggle_recording = pyqtSignal()
-    request_transcribe_url = pyqtSignal()
     request_style_change = pyqtSignal(str)
+    request_transcribe_media_url = pyqtSignal(str)
 
     def __init__(
         self,
@@ -52,7 +55,10 @@ class SettingsWindow(QDialog):
         self._settings_page: QWidget | None = None
         self._history_nav_btn: QPushButton | None = None
         self._settings_nav_btn: QPushButton | None = None
+        self._url_nav_btn: QPushButton | None = None
         self._settings_widgets: list[QWidget] = []
+        self._translatable_widgets: list[tuple[Any, str, bool, bool]] = []
+        self._translatable_combos: list[QComboBox] = []
         self._preview_sounds = RecordingSoundService(self)
         self.setWindowFlags(
             Qt.WindowType.FramelessWindowHint |
@@ -65,12 +71,18 @@ class SettingsWindow(QDialog):
         self.drag_position = QPoint()
         self._init_ui()
 
+    def _register_translation(self, widget: Any, key: str, is_upper: bool = False, is_placeholder: bool = False) -> None:
+        self._translatable_widgets.append((widget, key, is_upper, is_placeholder))
+
+    def _register_combo_translation(self, combo: QComboBox) -> None:
+        self._translatable_combos.append(combo)
+
     def _init_ui(self):
         container = QWidget(self)
         container.setObjectName("SettingsContainer")
         container.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
-        container.setStyleSheet(settings_stylesheet())
         self._container = container
+        self.setStyleSheet(settings_stylesheet())
 
         shadow = QGraphicsDropShadowEffect(container)
         shadow.setBlurRadius(28)
@@ -88,6 +100,8 @@ class SettingsWindow(QDialog):
 
         self._content_stack = QStackedWidget(container)
         self._content_stack.setObjectName("SettingsContentStack")
+        
+        # ── SETTINGS PAGE ──
         self._settings_page = QWidget(container)
         settings_layout = QVBoxLayout(self._settings_page)
         settings_layout.setContentsMargins(22, 18, 22, 22)
@@ -100,21 +114,22 @@ class SettingsWindow(QDialog):
         hero_layout.setSpacing(4)
 
         header = QHBoxLayout()
-        title = QLabel("Einstellungen")
-        title.setObjectName("SettingsHeroTitle")
+        self.title = QLabel()
+        self.title.setObjectName("SettingsHeroTitle")
 
         close_btn = QPushButton(FluentIcons.CLOSE)
         close_btn.setObjectName("CloseButton")
         close_btn.setFixedSize(32, 32)
         close_btn.clicked.connect(self.close)
 
-        header.addWidget(title)
+        header.addWidget(self.title)
         header.addStretch()
         header.addWidget(close_btn)
         hero_layout.addLayout(header)
-        subtitle = QLabel("Design, Aufnahme, Kontext und Diktat-Verlauf an einem Ort")
-        subtitle.setObjectName("SettingsHeroSubtitle")
-        hero_layout.addWidget(subtitle)
+        
+        self.subtitle = QLabel()
+        self.subtitle.setObjectName("SettingsHeroSubtitle")
+        hero_layout.addWidget(self.subtitle)
         settings_layout.addWidget(hero)
         self._settings_widgets.append(hero)
 
@@ -128,45 +143,59 @@ class SettingsWindow(QDialog):
         scroll_layout.setContentsMargins(0, 2, 10, 8)
         scroll_layout.setSpacing(14)
 
-        self._add_section(scroll_layout, "Aufnahme", FluentIcons.MICROPHONE)
-        self.engine_combo = self._add_dropdown(scroll_layout, "Transkriptions-Engine", "transcription_engine", ["parakeet", "whisper"])
-        self.whisper_combo = self._add_dropdown(scroll_layout, "Whisper-Modell (Fallback)", "whisper_model_size", ["tiny", "base", "small"])
-        self.lang_combo = self._add_dropdown(scroll_layout, "Diktier-Sprache", "transcription_language", ["auto", "de", "en", "fr", "es", "it"])
-        self.translate_de_check = self._add_checkbox(scroll_layout, "Auf Deutsch übersetzen", "translate_to_german")
-        self.translate_en_check = self._add_checkbox(scroll_layout, "Auf Englisch übersetzen (Whisper)", "translate_to_english")
+        self._add_section(scroll_layout, "section_recording", FluentIcons.MICROPHONE)
+        self.engine_combo = self._add_dropdown(scroll_layout, "engine", "transcription_engine", ["parakeet", "whisper"])
+        self.whisper_combo = self._add_dropdown(scroll_layout, "whisper_model", "whisper_model_size", ["tiny", "base", "small"])
+        self.lang_combo = self._add_dropdown(scroll_layout, "dictation_lang", "transcription_language", ["auto", "de", "en", "fr", "es", "it"])
+        self.translate_de_check = self._add_checkbox(scroll_layout, "translate_de", "translate_to_german")
+        self.translate_en_check = self._add_checkbox(scroll_layout, "translate_en", "translate_to_english")
         self._wire_exclusive_translate_toggles()
-        self.translate_hotkeys_check = self._add_checkbox(scroll_layout, "Übersetzungs-Hotkeys aktiv", "enable_translate_hotkeys")
-        self.translate_de_hotkey_edit = self._add_text_field(scroll_layout, "Hotkey Deutsch (z. B. f6)", "translate_german_hotkey")
-        self.translate_en_hotkey_edit = self._add_text_field(scroll_layout, "Hotkey Englisch (z. B. f7)", "translate_english_hotkey")
+        self.translate_hotkeys_check = self._add_checkbox(scroll_layout, "translate_hotkeys", "enable_translate_hotkeys")
+        self.translate_de_hotkey_edit = self._add_text_field(scroll_layout, "hotkey_de", "translate_german_hotkey")
+        self.translate_en_hotkey_edit = self._add_text_field(scroll_layout, "hotkey_en", "translate_english_hotkey")
 
-        self._add_section(scroll_layout, "Aufnahme-Sounds", "🔊")
-        self.sounds_check = self._add_checkbox(scroll_layout, "Sounds bei Start/Stopp", "enable_recording_sounds")
-        self.start_sound_combo = self._add_sound_picker(scroll_layout, "Sound beim Start", "recording_start_sound")
-        self.stop_sound_combo = self._add_sound_picker(scroll_layout, "Sound beim Stopp", "recording_stop_sound")
+        self._add_section(scroll_layout, "section_sounds", "🔊")
+        self.sounds_check = self._add_checkbox(scroll_layout, "sounds_enable", "enable_recording_sounds")
+        self.start_sound_combo = self._add_sound_picker(scroll_layout, "sound_start", "recording_start_sound")
+        self.stop_sound_combo = self._add_sound_picker(scroll_layout, "sound_stop", "recording_stop_sound")
 
-        self._add_section(scroll_layout, "KI-Polishing", "🤖")
-        self.polish_check = self._add_checkbox(scroll_layout, "Ollama Polishing aktivieren", "ollama_polishing")
-        self.url_edit = self._add_text_field(scroll_layout, "Ollama URL", "ollama_url")
-        self.model_edit = self._add_text_field(scroll_layout, "Ollama Modell", "ollama_model")
+        self._add_section(scroll_layout, "section_polishing", "🤖")
+        self.polish_check = self._add_checkbox(scroll_layout, "ollama_enable", "ollama_polishing")
+        self.url_edit = self._add_text_field(scroll_layout, "ollama_url", "ollama_url")
+        self.model_edit = self._add_text_field(scroll_layout, "ollama_model", "ollama_model")
         self._ollama_row = OllamaSettingsRow()
         self._ollama_row.action_finished.connect(self._on_ollama_action_finished)
         scroll_layout.addWidget(self._ollama_row)
 
-        self._add_section(scroll_layout, "Verhalten", FluentIcons.SETTINGS)
-        self.hotkey_check = self._add_checkbox(scroll_layout, "Globaler Hotkey aktiviert", "enable_global_hotkey")
-        self.hotkey_edit = self._add_text_field(scroll_layout, "Hotkey (z. B. f8)", "global_hotkey")
-        self.ptt_check = self._add_checkbox(scroll_layout, "Push-to-Talk Modus (F8 halten)", "push_to_talk")
-        self.copy_check = self._add_checkbox(scroll_layout, "Automatisch in Zwischenablage", "auto_copy_to_clipboard")
-        self.inject_check = self._add_checkbox(scroll_layout, "Automatisch einfügen (Auto-Typing)", "auto_inject_text")
+        self._add_section(scroll_layout, "section_behavior", FluentIcons.SETTINGS)
+        self.hotkey_check = self._add_checkbox(scroll_layout, "hotkey_enable", "enable_global_hotkey")
+        self.hotkey_edit = self._add_text_field(scroll_layout, "hotkey", "global_hotkey")
+        self.ptt_check = self._add_checkbox(scroll_layout, "ptt", "push_to_talk")
+        self.copy_check = self._add_checkbox(scroll_layout, "auto_copy", "auto_copy_to_clipboard")
+        self.inject_check = self._add_checkbox(scroll_layout, "auto_inject", "auto_inject_text")
 
-        self._add_section(scroll_layout, "Personal Vocabulary", "📖")
-        self.vocab_edit = self._add_list_field(scroll_layout, "Eigennamen (Komma-getrennt)", "personal_vocabulary")
+        self._add_section(scroll_layout, "section_vocab", "📖")
+        self.vocab_edit = self._add_list_field(scroll_layout, "vocab_label", "personal_vocabulary")
+
+        self._add_section(scroll_layout, "section_interface", "🖥")
+        self.theme_combo = self._add_mapped_dropdown(
+            scroll_layout,
+            "appearance",
+            "theme_mode",
+            {"system": "system", "dark": "dark", "light": "light"}
+        )
+        self.app_lang_combo = self._add_mapped_dropdown(
+            scroll_layout,
+            "language",
+            "app_language",
+            {"system": "system", "de": "de", "en": "en"}
+        )
 
         add_features_section(
             scroll_layout,
             self._add_section,
             lambda key: self.setting_changed.emit(key),
-            on_open_history=self._open_history_inside_settings,
+            on_open_history=None, # Button entfernt
         )
 
         scroll_layout.addStretch(1)
@@ -174,38 +203,51 @@ class SettingsWindow(QDialog):
         settings_layout.addWidget(scroll, stretch=1)
         self._settings_widgets.append(scroll)
         self._content_stack.addWidget(self._settings_page)
+        
+        # ── URL TRANSCRIBE PANEL ──
+        self._url_panel = UrlTranscribePanel(container)
+        self._url_panel.transcribe_requested.connect(self.request_transcribe_media_url.emit)
+        self._content_stack.addWidget(self._url_panel)
+
         layout.addWidget(self._content_stack, stretch=1)
 
         main_layout = QVBoxLayout(self)
         main_layout.setContentsMargins(16, 16, 16, 16)
         main_layout.addWidget(container)
 
+        self.retranslate_ui()
+
     def _build_sidebar(self) -> QWidget:
         sidebar = QWidget(self)
         sidebar.setObjectName("SettingsSidebar")
+        sidebar.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
         sidebar.setFixedWidth(190)
         layout = QVBoxLayout(sidebar)
         layout.setContentsMargins(14, 18, 14, 16)
         layout.setSpacing(8)
 
-        self._settings_nav_btn = self._make_nav_button("⚙  Einstellungen")
-        self._history_nav_btn = self._make_nav_button("📜  Diktat-Verlauf")
+        self._settings_nav_btn = self._make_nav_button("")
+        self._history_nav_btn = self._make_nav_button("")
+        self._url_nav_btn = self._make_nav_button("")
+
         self._settings_nav_btn.clicked.connect(self.show_settings)
         self._history_nav_btn.clicked.connect(self._open_history_inside_settings)
+        self._url_nav_btn.clicked.connect(self.show_url_transcribe)
 
         layout.addWidget(self._settings_nav_btn)
         layout.addWidget(self._history_nav_btn)
+        layout.addWidget(self._url_nav_btn)
         
         layout.addSpacing(16)
         
         from PyQt6.QtWidgets import QMenu
         from src.services.style_definitions import STYLE_DEFINITIONS
 
-        self._record_btn = self._make_action_button("🎙  Diktat starten")
+        self._record_btn = self._make_action_button("")
         self._record_btn.clicked.connect(self.request_toggle_recording.emit)
         layout.addWidget(self._record_btn)
 
-        self._style_btn = self._make_action_button("🎨  Polishing-Stil ▾")
+        self._style_btn = self._make_action_button("")
         style_menu = QMenu(self._style_btn)
         style_menu.setStyleSheet("QMenu { background-color: #1A1A1F; border: 1px solid #333; border-radius: 6px; padding: 4px; } QMenu::item { padding: 6px 24px; color: #E0E0E0; font-size: 12px; } QMenu::item:selected { background-color: #2D2D36; border-radius: 4px; }")
         for key, name in STYLE_DEFINITIONS:
@@ -213,10 +255,6 @@ class SettingsWindow(QDialog):
             action.triggered.connect(lambda checked, k=key: self.request_style_change.emit(k))
         self._style_btn.setMenu(style_menu)
         layout.addWidget(self._style_btn)
-
-        self._url_btn = self._make_action_button("🔗  URL transkribieren…")
-        self._url_btn.clicked.connect(self.request_transcribe_url.emit)
-        layout.addWidget(self._url_btn)
 
         layout.addStretch(1)
 
@@ -252,7 +290,6 @@ class SettingsWindow(QDialog):
         btn.setObjectName("SidebarActionButton")
         btn.setMinimumHeight(38)
         btn.setCursor(Qt.CursorShape.PointingHandCursor)
-        btn.setStyleSheet("text-align: left; padding-left: 12px; color: #A0A0A0; background: transparent; border: none; font-size: 14px;")
         return btn
 
     def _set_active_nav(self, view: str) -> None:
@@ -260,6 +297,8 @@ class SettingsWindow(QDialog):
             self._settings_nav_btn.setChecked(view == "settings")
         if self._history_nav_btn is not None:
             self._history_nav_btn.setChecked(view == "history")
+        if self._url_nav_btn is not None:
+            self._url_nav_btn.setChecked(view == "url")
 
     def _apply_rounded_mask(self) -> None:
         """Schneidet Container und Fenster auf abgerundetes Rechteck zu."""
@@ -304,11 +343,13 @@ class SettingsWindow(QDialog):
             self._history_view.finished.connect(lambda _result: self.show_settings())
             self._content_stack.addWidget(self._history_view)
 
+        self._history_view.retranslate_ui()
         self._history_view._refresh_list()
         self._content_stack.setCurrentWidget(self._history_view)
         self._set_active_nav("history")
         self.setMinimumSize(1180, 720)
-        self.resize(max(self.width(), 1280), max(self.height(), 760))
+        self.resize(1280, 760)
+        self._center_on_screen()
         self._apply_rounded_mask()
 
     def show_settings(self) -> None:
@@ -319,7 +360,32 @@ class SettingsWindow(QDialog):
             self._content_stack.setCurrentWidget(self._settings_page)
         self._set_active_nav("settings")
         self.setMinimumSize(900, 650)
+        self.resize(900, 650)
+        self._center_on_screen()
         self._apply_rounded_mask()
+
+    def show_url_transcribe(self) -> None:
+        """Wechselt rechts in das eingebettete URL-Transkriptionspanel."""
+        if not self._content_stack or not self._container:
+            return
+        if self._history_view is not None:
+            self._history_view._player.stop()
+        self._content_stack.setCurrentWidget(self._url_panel)
+        self._set_active_nav("url")
+        self.setMinimumSize(900, 650)
+        self.resize(900, 650)
+        self._center_on_screen()
+        self._apply_rounded_mask()
+
+    def _center_on_screen(self) -> None:
+        """Zentriert das Einstellungsfenster auf dem aktuellen Bildschirm."""
+        from PyQt6.QtWidgets import QApplication
+        screen = QApplication.primaryScreen()
+        if screen:
+            geom = screen.geometry()
+            x = int(geom.left() + (geom.width() - self.width()) / 2.0)
+            y = int(geom.top() + (geom.height() - self.height()) / 2.0)
+            self.move(x, y)
 
     def _hide_island_presence(self) -> None:
         island = cast(Any, self.parent())
@@ -340,7 +406,7 @@ class SettingsWindow(QDialog):
                 island._position_presence_bar()
                 island.presence_bar.start()
 
-    def _add_section(self, layout: QVBoxLayout, title: str, icon: str) -> None:
+    def _add_section(self, layout: QVBoxLayout, key: str, icon: str) -> None:
         divider = QFrame()
         divider.setObjectName("SectionDivider")
         divider.setFrameShape(QFrame.Shape.HLine)
@@ -351,16 +417,18 @@ class SettingsWindow(QDialog):
         row.setSpacing(6)
         icon_lbl = QLabel(icon)
         icon_lbl.setObjectName("SectionIcon")
-        title_lbl = QLabel(title.upper())
+        title_lbl = QLabel()
         title_lbl.setObjectName("SectionTitle")
+        self._register_translation(title_lbl, key, is_upper=True)
         row.addWidget(icon_lbl)
         row.addWidget(title_lbl)
         row.addStretch()
         layout.addLayout(row)
 
-    def _add_checkbox(self, layout: QVBoxLayout, label: str, key: str) -> ToggleRow:
-        row = ToggleRow(label, checked=config.get_bool(key))
-        row.toggled.connect(lambda checked: config.set(key, checked))
+    def _add_checkbox(self, layout: QVBoxLayout, label_key: str, key: str) -> ToggleRow:
+        row = ToggleRow("", checked=config.get_bool(key))
+        self._register_translation(row.label_widget, label_key)
+        row.toggled.connect(lambda checked: (config.set(key, checked), self.setting_changed.emit(key)))
         layout.addWidget(row)
         return row
 
@@ -387,15 +455,42 @@ class SettingsWindow(QDialog):
             toast(message, ok)
         self.setting_changed.emit("ollama_polishing")
 
-    def _add_dropdown(self, layout: QVBoxLayout, label: str, key: str, options: list) -> QComboBox:
+    def _add_dropdown(self, layout: QVBoxLayout, label_key: str, key: str, options: list) -> QComboBox:
         row = QHBoxLayout()
         row.setContentsMargins(0, 0, 0, 0)
-        lbl = QLabel(label)
+        lbl = QLabel()
         lbl.setObjectName("FieldLabel")
+        self._register_translation(lbl, label_key)
         cb = QComboBox()
         cb.addItems(options)
         cb.setCurrentText(config.get_str(key))
-        cb.currentTextChanged.connect(lambda val: config.set(key, val))
+        cb.currentTextChanged.connect(lambda val: (config.set(key, val), self.setting_changed.emit(key)))
+        cb.setFixedWidth(200)
+        row.addWidget(lbl)
+        row.addStretch()
+        row.addWidget(cb)
+        layout.addLayout(row)
+        return cb
+
+    def _add_mapped_dropdown(self, layout: QVBoxLayout, label_key: str, key: str, display_map: dict[str, str]) -> QComboBox:
+        row = QHBoxLayout()
+        row.setContentsMargins(0, 0, 0, 0)
+        lbl = QLabel()
+        lbl.setObjectName("FieldLabel")
+        self._register_translation(lbl, label_key)
+        
+        cb = QComboBox()
+        cb.setProperty("display_map", display_map)
+        cb.setProperty("config_key", key)
+        self._register_combo_translation(cb)
+
+        # Signal verbinden
+        def _on_change(idx):
+            val = cb.itemData(idx)
+            config.set(key, val)
+            self.setting_changed.emit(key)
+            
+        cb.currentIndexChanged.connect(_on_change)
         cb.setFixedWidth(200)
         row.addWidget(lbl)
         row.addStretch()
@@ -429,11 +524,12 @@ class SettingsWindow(QDialog):
 
         combo.blockSignals(False)
 
-    def _add_sound_picker(self, layout: QVBoxLayout, label: str, key: str) -> QComboBox:
+    def _add_sound_picker(self, layout: QVBoxLayout, label_key: str, key: str) -> QComboBox:
         row = QHBoxLayout()
         row.setContentsMargins(0, 0, 0, 0)
-        lbl = QLabel(label)
+        lbl = QLabel()
         lbl.setObjectName("FieldLabel")
+        self._register_translation(lbl, label_key)
 
         cb = QComboBox()
         self._populate_sound_combo(cb, key)
@@ -482,14 +578,15 @@ class SettingsWindow(QDialog):
             return
         self._preview_sounds.preview(filename)
 
-    def _add_text_field(self, layout: QVBoxLayout, label: str, key: str) -> QLineEdit:
+    def _add_text_field(self, layout: QVBoxLayout, label_key: str, key: str) -> QLineEdit:
         row = QHBoxLayout()
         row.setContentsMargins(0, 0, 0, 0)
-        lbl = QLabel(label)
+        lbl = QLabel()
         lbl.setObjectName("FieldLabel")
+        self._register_translation(lbl, label_key)
         le = QLineEdit()
         le.setText(config.get_str(key))
-        le.textChanged.connect(lambda val: config.set(key, val))
+        le.textChanged.connect(lambda val: (config.set(key, val), self.setting_changed.emit(key)))
         le.setFixedWidth(240)
         row.addWidget(lbl)
         row.addStretch()
@@ -497,17 +594,19 @@ class SettingsWindow(QDialog):
         layout.addLayout(row)
         return le
 
-    def _add_list_field(self, layout: QVBoxLayout, label: str, key: str) -> QLineEdit:
+    def _add_list_field(self, layout: QVBoxLayout, label_key: str, key: str) -> QLineEdit:
         row = QHBoxLayout()
         row.setContentsMargins(0, 0, 0, 0)
-        lbl = QLabel(label)
+        lbl = QLabel()
         lbl.setObjectName("FieldLabel")
+        self._register_translation(lbl, label_key)
         le = QLineEdit()
         le.setText(", ".join(config.get_list(key)))
 
         def _on_change(text: str):
             items = [item.strip() for item in text.split(",") if item.strip()]
             config.set(key, items)
+            self.setting_changed.emit(key)
 
         le.textChanged.connect(_on_change)
         le.home(False)
@@ -517,6 +616,56 @@ class SettingsWindow(QDialog):
         row.addWidget(le)
         layout.addLayout(row)
         return le
+
+    def retranslate_ui(self) -> None:
+        """Führt eine Live-Übersetzung aller UI-Elemente durch."""
+        self.title.setText(tr("settings_title"))
+        self.subtitle.setText(tr("settings_subtitle"))
+
+        for widget, key, is_upper, is_placeholder in self._translatable_widgets:
+            txt = tr(key)
+            if is_upper:
+                txt = txt.upper()
+            if is_placeholder:
+                widget.setPlaceholderText(txt)
+            else:
+                widget.setText(txt)
+
+        for cb in self._translatable_combos:
+            cb.blockSignals(True)
+            current_val = config.get_str(cb.property("config_key"))
+            cb.clear()
+            display_map = cb.property("display_map")
+            for display_key, val in display_map.items():
+                cb.addItem(tr(display_key), val)
+            
+            # Auswahl wiederherstellen
+            index = 0
+            for i in range(cb.count()):
+                if cb.itemData(i) == current_val:
+                    index = i
+                    break
+            cb.setCurrentIndex(index)
+            cb.blockSignals(False)
+
+        # Sidebar Buttons übersetzen
+        self._settings_nav_btn.setText(tr("nav_settings"))
+        self._history_nav_btn.setText(tr("nav_history"))
+        self._url_nav_btn.setText(tr("nav_url_transcribe"))
+        self._record_btn.setText(tr("nav_start_dictation"))
+        self._style_btn.setText(tr("nav_polishing_style"))
+
+        # Untergeordnete Panels übersetzen
+        self._url_panel.retranslate_ui()
+        if self._history_view is not None:
+            self._history_view.retranslate_ui()
+
+    def refresh_theme(self) -> None:
+        """Aktualisiert das Stylesheet bei Theme-Wechseln."""
+        self.setStyleSheet(settings_stylesheet())
+        if self._history_view is not None:
+            self._history_view._apply_style()
+        self._apply_rounded_mask()
 
     def showEvent(self, event):
         super().showEvent(event)

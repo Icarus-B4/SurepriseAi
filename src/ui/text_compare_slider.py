@@ -48,12 +48,12 @@ class TextCompareSlider(QWidget):
         header.setContentsMargins(8, 0, 8, 0)
 
         self.raw_label = QLabel("ROHTEXT", self)
+        self.raw_label.setObjectName("SliderRawLabel")
         self.raw_label.setFont(Typography.get_font(Typography.TINY, bold=True))
-        self.raw_label.setStyleSheet(f"color: {Colors.TEXT_SECONDARY_HEX};")
 
         self.polished_label = QLabel("BEREINIGT", self)
+        self.polished_label.setObjectName("SliderPolishedLabel")
         self.polished_label.setFont(Typography.get_font(Typography.TINY, bold=True))
-        self.polished_label.setStyleSheet(f"color: {Colors.ACCENT_BRIGHT_HEX};")
 
         header.addWidget(self.raw_label)
         header.addStretch()
@@ -65,38 +65,15 @@ class TextCompareSlider(QWidget):
         self.slider.setRange(0, 100)
         self.slider.setValue(100)  # Standard: Polished anzeigen
         self.slider.valueChanged.connect(self._on_slider_changed)
-        self.slider.setStyleSheet(self._slider_style())
         layout.addWidget(self.slider)
 
         # Text-Anzeige
         self.text_view = QTextEdit(self)
         self.text_view.setReadOnly(True)
         self.text_view.setFont(Typography.get_font(Typography.SMALL))
-        self.text_view.setStyleSheet(f"""
-            QTextEdit {{
-                background: transparent;
-                color: {Colors.TEXT_PRIMARY_HEX};
-                border: none;
-                border-top: 1px solid {Colors.BORDER_SUBTLE_HEX};
-                padding: 16px 10px 10px 10px;
-                font-family: "{Typography.FONT_FAMILY}";
-                font-size: 13px;
-                line-height: 1.6;
-            }}
-            QScrollBar:vertical {{
-                border: none;
-                background: transparent;
-                width: 6px;
-            }}
-            QScrollBar::handle:vertical {{
-                background: {Colors.CONTROL_HOVER_HEX};
-                border-radius: 3px;
-            }}
-            QScrollBar::handle:vertical:hover {{
-                background: {Colors.BORDER_HIGHLIGHT};
-            }}
-        """)
         layout.addWidget(self.text_view, stretch=1)
+        
+        self.refresh_theme()
 
     def _slider_style(self) -> str:
         return f"""
@@ -123,6 +100,50 @@ class TextCompareSlider(QWidget):
                 border-color: {Colors.ACCENT_BRIGHT_HEX};
             }}
         """
+
+    def refresh_theme(self) -> None:
+        """Aktualisiert alle Stylesheets bei Theme- oder Akzentfarb-Wechseln."""
+        self.COLOR_EQUAL = Colors.TEXT_PRIMARY_HEX
+        
+        # Theme-spezifische Kontraste für Diff-Hervorhebungen
+        if Colors.ISLAND_BG_HEX == "#F3F3F7":  # Helles Theme
+            self.COLOR_DELETED = Colors.RECORDING_RED_HEX  # Rot für Löschungen
+            self.COLOR_DELETED_BG = "rgba(255, 69, 58, 0.12)"
+            self.COLOR_INSERTED = Colors.ACCENT_HEX  # Akzent (Indigo/Blau) für Hinzufügungen
+            self.COLOR_INSERTED_BG = Colors.ACCENT_TINT_HEX
+        else:  # Dunkles Theme
+            self.COLOR_DELETED = "#FFEB3B"  # Gelb
+            self.COLOR_DELETED_BG = "rgba(255, 235, 59, 0.25)"
+            self.COLOR_INSERTED = "#64B5F6"  # Blau
+            self.COLOR_INSERTED_BG = "rgba(100, 181, 246, 0.2)"
+
+        self.slider.setStyleSheet(self._slider_style())
+        self.text_view.setStyleSheet(f"""
+            QTextEdit {{
+                background: transparent;
+                color: {Colors.TEXT_PRIMARY_HEX};
+                border: none;
+                border-top: 1px solid {Colors.BORDER_SUBTLE_HEX};
+                padding: 16px 10px 10px 10px;
+                font-family: "{Typography.FONT_FAMILY}";
+                font-size: 13px;
+                line-height: 1.6;
+            }}
+            QScrollBar:vertical {{
+                border: none;
+                background: transparent;
+                width: 6px;
+            }}
+            QScrollBar::handle:vertical {{
+                background: {Colors.CONTROL_HOVER_HEX};
+                border-radius: 3px;
+            }}
+            QScrollBar::handle:vertical:hover {{
+                background: {Colors.BORDER_HIGHLIGHT};
+            }}
+        """)
+        # Labels neu einfärben basierend auf aktuellem Wert
+        self._on_slider_changed(self.slider.value())
 
     def set_texts(self, raw: str, polished: str) -> None:
         """Setzt beide Texte und aktualisiert die Anzeige."""
@@ -153,16 +174,16 @@ class TextCompareSlider(QWidget):
         self.position_changed.emit(ratio)
         self._update_display()
 
-        # Label-Hervorhebung basierend auf Slider-Position
+        # Label-Hervorhebung basierend auf Slider-Position (mit ID-Selektoren für hohe QSS-Priorität)
         if value < 33:
-            self.raw_label.setStyleSheet(f"color: {Colors.TEXT_PRIMARY_HEX}; font-weight: bold;")
-            self.polished_label.setStyleSheet(f"color: {Colors.TEXT_SECONDARY_HEX};")
+            self.raw_label.setStyleSheet(f"QLabel#SliderRawLabel {{ color: {Colors.TEXT_PRIMARY_HEX}; font-weight: bold; background: transparent; }}")
+            self.polished_label.setStyleSheet(f"QLabel#SliderPolishedLabel {{ color: {Colors.TEXT_SECONDARY_HEX}; background: transparent; }}")
         elif value > 66:
-            self.raw_label.setStyleSheet(f"color: {Colors.TEXT_SECONDARY_HEX};")
-            self.polished_label.setStyleSheet(f"color: {Colors.ACCENT_BRIGHT_HEX}; font-weight: bold;")
+            self.raw_label.setStyleSheet(f"QLabel#SliderRawLabel {{ color: {Colors.TEXT_SECONDARY_HEX}; background: transparent; }}")
+            self.polished_label.setStyleSheet(f"QLabel#SliderPolishedLabel {{ color: {Colors.ACCENT_BRIGHT_HEX}; font-weight: bold; background: transparent; }}")
         else:
-            self.raw_label.setStyleSheet(f"color: {Colors.TEXT_SECONDARY_HEX};")
-            self.polished_label.setStyleSheet(f"color: {Colors.TEXT_SECONDARY_HEX};")
+            self.raw_label.setStyleSheet(f"QLabel#SliderRawLabel {{ color: {Colors.TEXT_SECONDARY_HEX}; background: transparent; }}")
+            self.polished_label.setStyleSheet(f"QLabel#SliderPolishedLabel {{ color: {Colors.TEXT_SECONDARY_HEX}; background: transparent; }}")
 
     def _update_display(self) -> None:
         """Aktualisiert die Textanzeige basierend auf Slider-Position."""

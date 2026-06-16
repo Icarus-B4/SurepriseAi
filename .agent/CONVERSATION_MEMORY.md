@@ -682,3 +682,69 @@ Drei UX-Probleme der Expanded-Pill beheben:
   - `settings_panel.py` um Signale (`request_toggle_recording`, `request_transcribe_url`, `request_style_change`) und Buttons in der Sidebar ergänzt (inklusive Dropdown-Menü für Polishing-Stile).
   - `app_controller.py` leitet die neuen Signale der `SettingsWindow`-Klasse an die zugehörigen Methoden weiter.
 - **Release**: Version `0.1.26` in `version.py` hochgezählt, git commit und git tag v0.1.26 erstellt und nach `main` gepusht.
+
+## Eintrag 38: 2026-06-16 – Neues Release v0.1.27
+
+### Aufgabe
+- Erstellung eines neuen Releases auf Version `0.1.27` für den Fix des Outside-Clicks (pynput-Implementierung).
+
+### Implementiertes
+- **Version Bump**: `version.py` von `0.1.26` auf `0.1.27` erhöht.
+- **Release**: `git commit`, `git tag v0.1.27` und `git push origin main --tags` ausgeführt.
+
+
+## 2026-06-16 - UI Layout und App Icon Fix
+- Das Einstellungsfenster (settings_panel.py) wurde auf kompaktere Dimensionen (900x650) gesetzt, um das riesige Layout aus dem fehlerhaften Design-State zu korrigieren.
+- Die Dropdowns und Textfelder in den Einstellungen verwenden nun ein horizontales Layout (QHBoxLayout), damit Labels links und Inputs rechts bündig erscheinen, anstatt vertikal den gesamten Platz einzunehmen.
+- App Icon Einbindung in  pp.py hinzugefügt (self.app.setWindowIcon(QIcon(" App_icon.png\))).
+
+## Eintrag 39: 2026-06-16 – Verlauf-Button entfernt & Einstellungen-Kopplung finalisiert
+
+### Aufgabe
+- Redundanten Button "Diktat-Verlauf öffnen" aus dem Scroll-Bereich der Einstellungen entfernen (Request: "bitte diesen button entfernen").
+- Kopplung und Event-Signale der eingebetteten URL-Transkription im Einstellungs-Panel finalisieren.
+- Live-Aktualisierung von Theme- und Sprachwechseln ohne Neustart über `RuntimeSettingsHandler` anbinden.
+
+### Implementiertes
+- **Button-Entfernung**: Die Sektion "Verlauf" und der Button "Diktat-Verlauf öffnen" wurden restlos aus `settings_features_section.py` entfernt, da der Diktat-Verlauf bereits vollständig über die Sidebar-Navigation auf der linken Seite im Einstellungsfenster integriert ist.
+- **URL-Kopplung**:
+  1. `settings_panel.py`: Das Signal `transcribe_requested` von `UrlTranscribePanel` wurde mit `SettingsWindow.request_transcribe_media_url` verbunden.
+  2. `url_transcribe_panel.py`: Die Methode `prefill_from_clipboard()` wurde hinzugefügt, um die Zwischenablage auszulesen und das URL-Eingabefeld bei Bedarf vorauszufüllen.
+  3. `app_controller.py`: `_open_url_dialog(self)` öffnet jetzt direkt das eingebettete URL-Panel und befüllt es aus der Zwischenablage, anstatt den separaten Dialog zu zeichnen. Zudem wird das Signal `request_transcribe_media_url_callback` verbunden und das Panel bei Beendigung/Fehlern der Transkription über `set_transcribing(False)` zurückgesetzt.
+- **Settings Live-Refresh**:
+  1. `runtime_settings_handler.py`: Aufrufe von `apply_theme_from_config()` bei Theme-Wechsel und Live-Umschaltung über `refresh_ui_theme()` and `refresh_ui_language()` implementiert.
+  2. `tray_icon.py`: `refresh_theme()` zur Anpassung des Kontextmenüs und der Tray-Icons bei Theme-Wechseln hinzugefügt.
+  3. `toast_notification.py` und `history_dialog.py`: Unterstützen den nahtlosen Live-Theme-Refresh.
+
+### QS-Ergebnisse
+- Syntax- und Import-Prüfung: ✅ PASS
+- App-Smoke-Test (Start & Hintergrund-Execution): ✅ PASS
+- Absturz-Fix: Absturz beim Öffnen der Einstellungen durch Doppelklick auf die Island behoben (AttributeError durch veraltetes Signal `request_transcribe_url` in `dynamic_island.py` gelöst, da Klicks nun intern abgewickelt werden).
+- Light-Theme-Fixes: Harte dunkle Farbwerte (z.B. Fokus bei Eingabefeldern, Dropdown-Listen, Sidebar-Rahmen, Cards) in `settings_styles.py` durch dynamische, theme-abhängige Variablen ersetzt. Das helle Theme wird nun restlos fehlerfrei gezeichnet.
+- Positions-Sprung-Fixes:
+  1. `dynamic_island.py`: Beim Ändern der Fensterflags mittels `setWindowFlags()` wird die Position (`pos()`) vorab gesichert und danach mit `move()` wiederhergestellt. Das verhindert, dass die Island beim Übergang in den Expanded-Modus springt.
+  2. `settings_panel.py`: Das Einstellungsfenster wird beim Größenwechsel (z.B. Rückkehr von History auf 900x650) explizit verkleinert und über `_center_on_screen()` sauber neu zentriert.
+
+## Eintrag 40: 2026-06-16 – Lesbarkeit im hellen Modus & Dynamic Island
+
+### Aufgabe
+Lesbarkeit im hellen Theme (Light Modus) der Dynamic Island und des Einstellungsfensters verbessern, QSS-Vererbungskonflikte beheben und die korrekte Theme-Initialisierung beim App-Start sicherstellen.
+
+### Implementiertes
+- **Start-Theme-Initialisierung**: In [app.py](file:///c:/Users/ed/Webdesign/webstark.org/SurepriseAi/src/app.py) werden `apply_theme_from_config()` und `apply_accent_from_config()` nun direkt zu Beginn von `SurepriseApp.__init__` ausgeführt (vor der Instanziierung von `DynamicIslandWindow`). Dadurch wird die gesamte Benutzeroberfläche direkt mit dem in der Konfiguration eingestellten Theme aufgebaut.
+- **QSS-Vererbung & Kontrast im Settings-Panel**:
+  1. Das störende Inline-Stylesheet in `_make_action_button` in [settings_panel.py](file:///c:/Users/ed/Webdesign/webstark.org/SurepriseAi/src/ui/settings_panel.py), welches den globalen QSS-Stil der Action-Buttons überschrieben und unleserlich gemacht hatte, wurde entfernt.
+  2. Das QSS-Stylesheet wird nun auf das Top-Level-Widget (`self` / `SettingsWindow`) angewendet, damit alle Kinder (z. B. Sidebar und Buttons) das Stylesheet verlässlich erben.
+  3. `sidebar.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)` in `_build_sidebar()` sorgt für sauberes Zeichnen des Sidebar-Hintergrunds unter Windows.
+  4. Versionslabel `SettingsSidebarVersion` in [settings_styles.py](file:///c:/Users/ed/Webdesign/webstark.org/SurepriseAi/src/ui/settings_styles.py) von `text_tertiary` (schlechter Kontrast) auf `text_secondary` (deutlich dunkler auf hellem Grund) angehoben.
+- **Behebung von QSS-Vererbungskonflikten in der Dynamic Island**:
+  1. Allen Steuerelementen (Labels und Buttons) in [expanded_pill_widget.py](file:///c:/Users/ed/Webdesign/webstark.org/SurepriseAi/src/ui/expanded_pill_widget.py) wurden eindeutige ObjectNames zugewiesen.
+  2. In `refresh_theme()` werden nun spezifische ID-Selektoren (z. B. `QLabel#ExpandedStatsVal`) verwendet. Dadurch überschreibt das spezifische Stylesheet auf den Child-Widgets die vererbte `QLabel`-Farbe aus [island_pill.py](file:///c:/Users/ed/Webdesign/webstark.org/SurepriseAi/src/ui/island_pill.py) (`PillContainer`), was die weiße Schriftfarbe auf weißem Hintergrund im hellen Modus restlos behebt.
+  3. Analog wurden ID-Selektoren in [text_compare_slider.py](file:///c:/Users/ed/Webdesign/webstark.org/SurepriseAi/src/ui/text_compare_slider.py) für `raw_label` und `polished_label` in `_on_slider_changed` integriert.
+  4. Die Diff-Hervorhebung für gelöschten Text in `TextCompareSlider` verwendet im hellen Modus nun kontrastreiches Rot (`Colors.RECORDING_RED_HEX` / hellroter Hintergrund) statt Gelb (was Gelb auf hellem Grund fast unsichtbar machte), während im dunklen Modus der Superwhisper-Gelb-Stil beibehalten wird.
+
+### QS-Ergebnisse
+- Syntax- und Kompilierungs-Prüfung aller modifizierten Module: ✅ PASS
+- **Dokumentationserweiterung**: Die [README.md](file:///c:/Users/ed/Webdesign/webstark.org/SurepriseAi/README.md) wurde um eine ausführliche, nutzerfreundliche Erläuterung der kontextbasierten Diktierfunktionen (Bildschirmkontext / OCR und markierter Text als Kontext) inkl. Anwendungsbeispielen und Datenschutzhinweisen ergänzt.
+
+
