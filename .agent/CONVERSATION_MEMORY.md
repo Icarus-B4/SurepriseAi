@@ -770,3 +770,22 @@ Erstellung eines automatisierten Demo-Aufnahme-Skripts zur Demonstration aller A
 - **Automatischer Ablauf:** Skript läuft in ca. 18 Sekunden vollständig und fehlerfrei durch und schließt sich selbst.
 - **GIF-Erstellung:** `screenshots/demo.gif` wurde erfolgreich und mit hoher Darstellungsqualität generiert.
 - **README-Integration:** Der Merge in den `main`-Branch wurde vollzogen und das animierte `demo.gif` prominent unter der neuen Sektion `## Screenshots & Demo` der `README.md` eingebettet und nach origin gepusht.
+
+## Eintrag 42: 2026-06-16 – README-Optimierung & Release v0.1.33
+
+### Aufgabe
+- Verbesserung der Lesbarkeit der `README.md` durch strukturelle Komprimierung (Einführung von Dropdown-Details).
+- Erstellung eines neuen GitHub-Releases mit der Version `v0.1.33`.
+
+### Implementiertes
+- **README-Strukturierung:**
+  - Lange Feature-Tabellen, Screenshots, erweiterte Tastenkombinationen, OCR-Details und das gesamte Entwickler-Handbuch wurden mit HTML `<details>`-Tags einklappbar gestaltet.
+  - Wichtige Abschnitte (Demo-GIF, Nutzer-Schnellstart) bleiben direkt sichtbar.
+- **Version Bump & Release:**
+  - `src/version.py` auf `"0.1.33"` erhöht.
+  - Version git-committed und Git-Tag `v0.1.33` gepusht, um den GitHub Actions Release-Workflow auszulösen.
+
+### QS-Ergebnisse
+- README ist nun kompakt und liest sich wesentlich flüssiger.
+- Release-Tag `v0.1.33` erfolgreich auf dem Remote-Server erstellt.
+
