@@ -13,20 +13,30 @@
 
 ---
 
-## Installation (für Nutzer)
+## 📽️ Demo (Animierter Ablauf)
 
-1. **`SurepriseAi-Setup.exe`** von [GitHub Releases](https://github.com/Icarus-B4/SurepriseAi/releases/latest) herunterladen
-2. Doppelklick → Setup-Assistent (Deutsch) durchlaufen
-3. Optional: Desktop-Verknüpfung, Autostart mit Windows
-4. Nach der Installation: **Tray-Icon** unten rechts → **F8** zum Diktieren
+Hier ist ein automatisierter Durchlauf aller wichtigen Funktionen (Aufnahme, Live-Transkription im Toast, Expanded-Ansicht mit Stil-Chips und Einstellungen):
 
-Autostart lässt sich auch jederzeit in **Einstellungen → Mit Windows starten** umschalten.
-
-Kein Python nötig – der Installer enthält alles. Einstellungen liegen unter `%APPDATA%\SurepriseAi\`.
+![SurepriseAi Präsentations-Demo](screenshots/demo.gif)
 
 ---
 
-## Features
+## 🚀 Schnellstart & Installation (für Nutzer)
+
+1. **`SurepriseAi-Setup.exe`** von [GitHub Releases](https://github.com/Icarus-B4/SurepriseAi/releases/latest) herunterladen.
+2. Doppelklick → Setup-Assistent (Deutsch) durchlaufen.
+3. Nach der Installation: Über das **Tray-Icon** unten rechts steuern oder **F8** zum Diktieren drücken.
+   - *Tipp: Autostart lässt sich in **Einstellungen → Mit Windows starten** umschalten.*
+
+> [!NOTE]
+> Kein Python nötig – der Installer enthält alles. Einstellungen und Diktatverlauf liegen unter `%APPDATA%\SurepriseAi\`.
+
+---
+
+## ✨ Features & Funktionsübersicht
+
+<details>
+<summary><b>Vollständige Feature-Tabelle anzeigen (Einklappen/Ausklappen)</b></summary>
 
 | Feature | Beschreibung |
 |---------|--------------|
@@ -44,19 +54,16 @@ Kein Python nötig – der Installer enthält alles. Einstellungen liegen unter 
 | **2-Panel-Einstellungen** | Einstellungen und Diktat-Verlauf in einem professionellen Zwei-Spalten-Fenster |
 | **Diktat-Verlauf** | Suche, Audio-Playback, Diff-Slider, Stil-Switch und Export als TXT, Markdown oder SRT |
 
+</details>
+
 ---
 
-## Screenshots & Demo
+## 📱 Screenshots
 
-> Die App erscheint als dunkle, halbtransparente **Pill** oben zentriert und reagiert dynamisch auf deine Aktionen.
+<details>
+<summary><b>Screenshots der Benutzeroberfläche anzeigen (Einklappen/Ausklappen)</b></summary>
 
-### Demo (Animierter Ablauf)
-
-Hier ist ein automatisierter Durchlauf aller wichtigen Funktionen (Aufnahme, Live-Transkription im Toast, Expanded-Ansicht mit Stil-Chips und Einstellungen):
-
-![SurepriseAi Präsentations-Demo](screenshots/demo.gif)
-
-### Screenshots der Dynamic Island
+### Dynamic Island
 
 | Presence Bar | Idle Pill | Expanded View |
 |---|---|---|
@@ -74,86 +81,20 @@ Hier ist ein automatisierter Durchlauf aller wichtigen Funktionen (Aufnahme, Liv
 |---|---|---|
 | <img src="screenshots/Screenshot%202026-06-13%20103251.png" alt="SurepriseAi Diff-Ansicht" width="260"> | <img src="screenshots/Screenshot%202026-06-13%20103340.png" alt="SurepriseAi Stil-Switch im Verlauf" width="260"> | <img src="screenshots/Screenshot%202026-06-13%20103621.png" alt="SurepriseAi History Detailansicht" width="260"> |
 
----
-
-## Voraussetzungen
-
-- **Windows 10/11**
-- **Python 3.11+**
-- Mikrofon
-- *(Optional)* [Ollama](https://ollama.com/) für erweitertes KI-Polishing
-- *(Optional)* Parakeet-Modell unter `models/` (siehe unten)
+</details>
 
 ---
 
-## Installation
+## 📖 Bedienungsanleitung
 
-### 1. Repository klonen
+### 1. Schnellstart – Diktat
+1. **F8** drücken und halten *(Push-to-Talk)* oder kurz drücken *(Toggle – je nach Einstellung)*.
+2. Sprechen – der Text erscheint live im Toast-Fenster.
+3. **F8** loslassen / erneut drücken → Verarbeitung startet.
+4. Die **Expanded-Ansicht** öffnet sich mit dem bereinigten Text, Wörtern & WPM.
 
-```bash
-git clone https://github.com/Icarus-B4/SurepriseAi.git
-cd SurepriseAi
-```
-
-### 2. Virtuelle Umgebung erstellen
-
-```powershell
-python -m venv venv
-.\venv\Scripts\activate
-pip install -r requirements.txt
-```
-
-### 3. Konfiguration anlegen
-
-```powershell
-copy config.example.json config.json
-```
-
-Passe `config.json` nach Bedarf an (Hotkey, Sprache, Whisper-Modell, Ollama-URL).
-
-### 4. *(Optional)* Whisper-Modell
-
-Beim ersten Start lädt `faster-whisper` automatisch das konfigurierte Modell (Standard: `tiny`).
-
-### 5. *(Optional)* Parakeet-Modell
-
-Für `transcription_engine: "parakeet"` das Modell in `models/` ablegen:
-
-```
-models/sherpa-onnx-nemo-parakeet-tdt-0.6b-v3-int8/
-```
-
-### 6. *(Optional)* Ollama
-
-```bash
-ollama pull gemma2:2b
-ollama serve
-```
-
----
-
-## App starten
-
-```powershell
-.\venv\Scripts\python.exe run.py
-```
-
-Die **Dynamic Island** erscheint oben mittig (beim Hover sichtbar). Ein Tray-Icon bleibt im Hintergrund aktiv.
-
----
-
-## Bedienungsanleitung
-
-### Schnellstart – Diktat
-
-1. **F8** drücken und halten *(Push-to-Talk)* oder kurz drücken *(Toggle – je nach Einstellung)*
-2. Sprechen – der Text erscheint live im Toast-Fenster
-3. **F8** loslassen / erneut drücken → Verarbeitung startet
-4. Die **Expanded-Ansicht** öffnet sich mit bereinigtem Text, Wörtern & WPM
-
-### Stil wechseln
-
-Nach dem Diktat (oder vor dem nächsten) einen **Stil-Chip** anklicken:
+### 2. Stil wechseln
+Nach dem Diktat (oder vor dem nächsten) einen **Stil-Chip** in der Expanded Island anklicken, um den Text anzupassen:
 
 | Chip | Wirkung |
 |------|---------|
@@ -165,14 +106,10 @@ Nach dem Diktat (oder vor dem nächsten) einen **Stil-Chip** anklicken:
 | **Lang** | Inhalt ausführen und erweitern |
 | **Formell** | Höfliche, formelle Sprache |
 
-Der aktive Stil wird **indigo** hervorgehoben. Die Änderung erfolgt **sofort** (Offline-Fallback).
+*Der aktive Stil wird **indigo** hervorgehoben. Die Änderung erfolgt **sofort** (mit schnellem Offline-Fallback).*
 
-### Island verschieben & zurücksetzen
-
-- **⠿ Griff** (rechts in der Pill / oben rechts in Expanded): Fenster per Drag verschieben
-- **✕ Schließen**: Expanded schließen und Island zurück an die **Startposition oben zentriert**
-
-### Weitere Bedienung
+<details>
+<summary><b>⌨️ Weitere Bedienung & Steuerungstabelle (Einklappen/Ausklappen)</b></summary>
 
 | Aktion | Steuerung |
 |--------|-----------|
@@ -189,23 +126,28 @@ Der aktive Stil wird **indigo** hervorgehoben. Die Änderung erfolgt **sofort** 
 | Island ein-/ausblenden | Doppelklick auf Tray-Icon |
 | Basics-Modus (Power/Restart/Sleep) | Mausrad auf der Idle-Pill |
 
-### Kontextbasiertes Diktieren (OCR & Markierter Text)
+* **⠿ Griff** (rechts in der Pill / oben rechts in Expanded): Fenster per Drag verschieben.
+* **✕ Schließen**: Expanded schließen und Island zurück an die **Startposition oben zentriert** bringen.
+
+</details>
+
+<details>
+<summary><b>🧠 Kontextbasiertes Diktieren (OCR & Markierter Text) (Einklappen/Ausklappen)</b></summary>
 
 Mit diesen Funktionen „liest“ die lokale KI (Ollama) im Hintergrund auf deinem Bildschirm mit, um dein Diktat besser zu verstehen und Fehler bei Eigennamen, Produktnamen oder Fachbegriffen zu vermeiden.
 
-#### 1. Bildschirmkontext (OCR)
+#### A. Bildschirmkontext (OCR)
 * **Was macht es?** Wenn du das Diktieren startest, erfasst die App im Hintergrund den sichtbaren Text des aktuell aktiven Fensters (z. B. eine E-Mail, auf die du antworten willst).
 * **Wie nutzt man es?**
   1. Schalte in den **Einstellungen** unter **Bildschirmkontext (OCR)** die Option **„Bildschirmkontext für Polishing (lokal, Windows-OCR)“** ein.
-  2. Arbeite ganz normal: Öffne z. B. Outlook, Teams oder Word.
-  3. Drücke **F8** und diktiere. Wenn auf dem Bildschirm bereits Namen, Adressen oder Fachbegriffe stehen, die du im Diktat nennst, erkennt die KI diese automatisch und schreibt sie fehlerfrei.
-* **Beispiel:** Du liest eine E-Mail von „Dr. Schmidt-Lüdersen“ über das Projekt „AeroSpaceX“. Du drückst F8 und sagst: *„Hallo Herr Schmidt-Lüdersen, ich habe das Projekt AeroSpaceX geprüft.“* Die KI liest die komplizierten Namen vom Bildschirm und schreibt sie exakt richtig.
+  2. Drücke **F8** und diktiere. Wenn auf dem Bildschirm bereits Namen oder Fachbegriffe stehen, die du im Diktat nennst, erkennt die KI diese automatisch und schreibt sie fehlerfrei.
+* **Beispiel:** Du liest eine E-Mail von „Dr. Schmidt-Lüdersen“ über das Projekt „AeroSpaceX“. Du drückst F8 und sagst: *„Hallo Herr Schmidt-Lüdersen...“* – Die KI liest die komplizierten Namen vom Bildschirm und schreibt sie exakt richtig.
 
-#### 2. Markierten Text als Kontext
+#### B. Markierten Text als Kontext
 * **Was macht es?** Die App kopiert vor dem Diktieren markierten Text in eine temporäre Variable, um der KI den exakten Arbeitskontext mitzugeben.
 * **Wie nutzt man es?**
   1. Aktiviere in den **Einstellungen** unter **Bildschirmkontext (OCR)** die Option **„Markierten Text als Kontext (Ctrl+C beim Diktatstart)“**.
-  2. Markiere mit der Maus oder Tastatur einen Textabschnitt in deiner Anwendung (z. B. einen Absatz in einem Entwurf).
+  2. Markiere mit der Maus oder Tastatur einen Textabschnitt in deiner Anwendung.
   3. Drücke **F8** und diktiere eine Änderungsanweisung (z. B. *„Formuliere das höflicher“* oder *„Füge hinzu, dass wir uns am Donnerstag treffen“*).
   4. Die KI kombiniert den markierten Text mit deinem Diktat und umschreibt den Abschnitt passgenau.
 
@@ -213,75 +155,105 @@ Mit diesen Funktionen „liest“ die lokale KI (Ollama) im Hintergrund auf dein
 > **Datenschutz & Lokale Verarbeitung:**  
 > Alle Kontexterfassungen (OCR und Zwischenablage) sowie die anschließende KI-Verarbeitung (Ollama) finden **zu 100 % lokal auf deinem Computer** statt. Es werden zu keinem Zeitpunkt Daten, Screenshots oder Texte an externe Cloud-Server gesendet.
 
-### System-Tray
+</details>
 
-Rechtsklick auf das Tray-Icon:
+<details>
+<summary><b>⚙️ System-Tray Optionen (Einklappen/Ausklappen)</b></summary>
 
+Rechtsklick auf das Tray-Icon in der Windows-Taskleiste bietet schnellen Zugriff auf:
 - Diktat starten / stoppen
 - Polishing-Stil wählen
 - **URL transkribieren…** (YouTube, Vimeo, …)
-- Einstellungen
+- Einstellungen & Diktat-Verlauf
 - **Nach Updates suchen…** (GitHub Releases)
-- Beenden
+- App Beenden
+
+</details>
 
 ---
 
-### Installer lokal bauen (Entwickler)
+## 🛠️ Entwickler-Dokumentation
 
-**Engine:** [NSIS 3](https://nsis.sourceforge.io/) – dieselbe Technologie wie [Hermes Desktop](https://github.com/NousResearch/hermes-agent/tree/main/apps/desktop) (`electron-builder` → NSIS auf Windows).
+<details>
+<summary><b>💻 1. Lokale Installation & App-Start</b></summary>
 
+### Voraussetzungen
+- **Windows 10/11**
+- **Python 3.11+**
+- Mikrofon
+- *(Optional)* [Ollama](https://ollama.com/) für erweitertes KI-Polishing (z. B. `ollama pull gemma2:2b`)
+
+### Installationsschritte
+
+1. **Repository klonen:**
+   ```bash
+   git clone https://github.com/Icarus-B4/SurepriseAi.git
+   cd SurepriseAi
+   ```
+
+2. **Virtuelle Umgebung einrichten:**
+   ```powershell
+   python -m venv venv
+   .\venv\Scripts\activate
+   pip install -r requirements.txt
+   ```
+
+3. **Konfiguration anlegen:**
+   ```powershell
+   copy config.example.json config.json
+   ```
+   *Passe `config.json` nach Bedarf an (Hotkey, Sprache, Whisper-Modell, Ollama-URL).*
+
+4. **Modell-Setup:**
+   - **Whisper:** Beim ersten Start lädt `faster-whisper` automatisch das konfigurierte Modell (Standard: `tiny`).
+   - **Parakeet:** Für `transcription_engine: "parakeet"` das Modell unter `models/sherpa-onnx-nemo-parakeet-tdt-0.6b-v3-int8/` ablegen.
+
+### App starten
 ```powershell
-# Doppelklick oder:
+.\venv\Scripts\python.exe run.py
+```
+
+### Syntax- & Smoke-Tests
+```powershell
+# CI-Smoke-Test
+python build/ci_smoke_test.py
+
+# Syntax prüfen
+.\venv\Scripts\python.exe -m py_compile src/app.py
+```
+
+</details>
+
+<details>
+<summary><b>📦 2. Installer lokal bauen & CI/CD</b></summary>
+
+Die App nutzt **NSIS 3** für Hermes-Style Setup-Wizards (Benutzer-Installation, Desktop-Verknüpfung, Autostart).
+
+### Installer lokal bauen
+```powershell
+# Ein-Klick-Build
 .\Erstelle-Installer.bat
 
 # Oder manuell (lädt NSIS bei Bedarf nach .tools/):
 powershell -ExecutionPolicy Bypass -File .\build\build.ps1 -Installer
 ```
+Das Ergebnis liegt als **`dist\SurepriseAi-Setup.exe`** (~140 MB) vor.
 
-Ergebnis: **`dist\SurepriseAi-Setup.exe`** (~140 MB) – an Endnutzer weitergeben.
-
-Der Wizard entspricht Hermes (`oneClick: false`, Installationsordner wählbar, Benutzer-Installation):
-- Willkommen → Lizenz → Zielordner → Optionen → Installation → Fertig
-- Optional: Desktop-Verknüpfung, Autostart mit Windows
-- Deinstallation über „Apps & Features“
-
----
-
-- Beim Start wird optional nach GitHub-Releases gesucht (`check_updates_on_startup`)
-- Tray → **Nach Updates suchen…**
-- Bei neuem Release wird der Installer nach `Downloads\` geladen
-
-Release auf GitHub anlegen mit Tag `vX.Y.Z` und Asset `SurepriseAi-Setup.exe`.
-
----
-
-## CI/CD (GitHub Actions)
+### CI/CD Pipeline (GitHub Actions)
 
 | Workflow | Trigger | Aufgabe |
 |----------|---------|---------|
 | **CI** | Push/PR auf `main` | Smoke-Test + `py_compile` aller Module |
 | **Release** | Git-Tag `v*` (z. B. `v0.1.11`) | PyInstaller + NSIS → `SurepriseAi-Setup.exe` als Release-Asset |
 
-### Ersten Release veröffentlichen
+Releases werden automatisch über GitHub-Tags gebaut und hochgeladen. Die Auto-Update-Funktion in der App sucht und installiert diese Releases im Hintergrund.
 
-```bash
-# Version in src/version.py prüfen (z. B. 0.1.0)
-git tag v0.1.0
-git push origin v0.1.0
-```
+</details>
 
-GitHub Actions baut automatisch den Installer und lädt `dist/SurepriseAi-Setup.exe` als Release-Asset hoch. Die Auto-Update-Funktion in der App erkennt neuere Tags über die GitHub-API.
+<details>
+<summary><b>⚙️ 3. Konfiguration (config.json) & Projektstruktur</b></summary>
 
-Lokal testen:
-
-```powershell
-python build/ci_smoke_test.py
-powershell -ExecutionPolicy Bypass -File .\build\build.ps1 -Installer
-```
-
----
-
-## Konfiguration (`config.json`)
+### Konfigurations-Parameter (`config.json`)
 
 | Schlüssel | Beschreibung | Standard |
 |-----------|--------------|----------|
@@ -296,11 +268,7 @@ powershell -ExecutionPolicy Bypass -File .\build\build.ps1 -Installer
 | `auto_copy_to_clipboard` | Text automatisch kopieren | `true` |
 | `auto_inject_text` | Text per Ctrl+V einfügen | `true` |
 
-Vorlage: [`config.example.json`](config.example.json)
-
----
-
-## Projektstruktur
+### Projektstruktur
 
 ```
 SurepriseAi/
@@ -317,39 +285,20 @@ SurepriseAi/
 └── AGENTS.md              # Hinweise für KI-Entwickler
 ```
 
----
-
-## Entwicklung
-
-```powershell
-# CI-Smoke-Test (wie GitHub Actions)
-python build/ci_smoke_test.py
-
-# Syntax prüfen
-.\venv\Scripts\python.exe -m py_compile src/app.py
-
-# Abhängigkeiten aktualisieren
-pip install -r requirements.txt
-```
-
-Code-Kommentare und Agent-Dokumentation sind auf **Deutsch**.
+</details>
 
 ---
 
-## Bekannte Einschränkungen
+## ⚠️ Bekannte Einschränkungen
 
-- Nur **Windows** (Win32-Overlay, Auto-Typing via SendInput)
-- Ollama-Polishing nach dem Diktat kann einige Sekunden dauern; **Chip-Umschaltung** nutzt bewusst den schnellen Offline-Pfad
-- Whisper-Modell `small`/`medium` ist genauer, aber langsamer als `tiny`
-
----
-
-## Lizenz
-
-MIT – siehe [LICENSE](LICENSE).
+- **Plattform:** Nur für **Windows** verfügbar (nutzt Win32-Overlays, Windows-OCR und SendInput).
+- **Latenz:** Ollama-Polishing nach dem Diktat kann je nach lokaler GPU einige Sekunden dauern. Die Stil-Chips nutzen deshalb einen schnellen, regelbasierten Offline-Pfad als Direkt-Fallback.
+- **Genauigkeit:** Whisper `tiny` ist extrem schnell, aber weniger präzise als `small` oder `medium`.
 
 ---
 
-## Danksagung
+## 📄 Lizenz & Danksagung
 
-Inspiriert von modernen Voice-Dictation-Tools und Fluent Design / Dynamic Island UI-Patterns.
+Dieses Projekt steht unter der **MIT-Lizenz** – siehe [LICENSE](LICENSE) für Details.
+
+*Inspiriert von modernen Voice-Dictation-Tools und Fluent Design / Dynamic Island UI-Patterns.*
