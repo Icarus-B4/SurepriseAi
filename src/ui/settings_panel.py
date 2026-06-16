@@ -29,6 +29,9 @@ class SettingsWindow(QDialog):
     """Rahmenloses Einstellungsfenster mit Glassmorphism-Design."""
 
     setting_changed = pyqtSignal(str)
+    request_toggle_recording = pyqtSignal()
+    request_transcribe_url = pyqtSignal()
+    request_style_change = pyqtSignal(str)
 
     def __init__(
         self,
@@ -175,6 +178,29 @@ class SettingsWindow(QDialog):
 
         layout.addWidget(self._settings_nav_btn)
         layout.addWidget(self._history_nav_btn)
+        
+        layout.addSpacing(16)
+        
+        from PyQt6.QtWidgets import QMenu
+        from src.services.style_definitions import STYLE_DEFINITIONS
+
+        self._record_btn = self._make_action_button("🎙  Diktat starten")
+        self._record_btn.clicked.connect(self.request_toggle_recording.emit)
+        layout.addWidget(self._record_btn)
+
+        self._style_btn = self._make_action_button("🎨  Polishing-Stil ▾")
+        style_menu = QMenu(self._style_btn)
+        style_menu.setStyleSheet("QMenu { background-color: #1A1A1F; border: 1px solid #333; border-radius: 6px; padding: 4px; } QMenu::item { padding: 6px 24px; color: #E0E0E0; font-size: 12px; } QMenu::item:selected { background-color: #2D2D36; border-radius: 4px; }")
+        for key, name in STYLE_DEFINITIONS:
+            action = style_menu.addAction(name)
+            action.triggered.connect(lambda checked, k=key: self.request_style_change.emit(k))
+        self._style_btn.setMenu(style_menu)
+        layout.addWidget(self._style_btn)
+
+        self._url_btn = self._make_action_button("🔗  URL transkribieren…")
+        self._url_btn.clicked.connect(self.request_transcribe_url.emit)
+        layout.addWidget(self._url_btn)
+
         layout.addStretch(1)
 
         brand = QLabel("SurepriseAi", sidebar)
@@ -189,6 +215,14 @@ class SettingsWindow(QDialog):
         btn.setCheckable(True)
         btn.setMinimumHeight(38)
         btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        return btn
+
+    def _make_action_button(self, text: str) -> QPushButton:
+        btn = QPushButton(text, self)
+        btn.setObjectName("SidebarActionButton")
+        btn.setMinimumHeight(38)
+        btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        btn.setStyleSheet("text-align: left; padding-left: 12px; color: #A0A0A0; background: transparent; border: none; font-size: 14px;")
         return btn
 
     def _set_active_nav(self, view: str) -> None:

@@ -325,10 +325,13 @@ class ExpandedPillWidget(QWidget):
         return True
 
     def resizeEvent(self, event) -> None:
-        """Resize-Handle immer unten rechts positionieren."""
+        """Resize-Handle immer unten rechts im Text-Frame positionieren."""
         super().resizeEvent(event)
         handle = self._resize_handle
-        handle.move(self.width() - handle.width() - 2, self.height() - handle.height() - 2)
+        tf = self.findChild(QFrame, "ExpandedTextFrame")
+        if tf:
+            handle.move(tf.geometry().right() - handle.width() - 2, tf.geometry().bottom() - handle.height() - 2)
+
 
 
 class _ResizeHandle(QWidget):

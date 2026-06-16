@@ -87,6 +87,9 @@ class AppController(QObject):
 
         self.app.window.settings_changed_callback = self.apply_runtime_setting
         self.app.window.open_history_callback = self._open_history
+        self.app.window.request_toggle_recording_callback = self.app.pipeline.toggle
+        self.app.window.request_transcribe_url_callback = self._open_url_dialog
+        self.app.window.request_style_change_callback = self._on_style_changed
         self.app.window.history_service = self.history
         self.runtime_settings = RuntimeSettingsHandler(self.app)
 

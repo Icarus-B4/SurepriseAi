@@ -78,35 +78,6 @@ class SurepriseTrayIcon(QSystemTrayIcon):
             }}
         """)
         
-        # Diktat-Aktion
-        self.record_action = self.menu.addAction("🎙 Diktat starten")
-        self.record_action.triggered.connect(self.toggle_recording.emit)
-        
-        self.menu.addSeparator()
-        
-        # Stil-Submenü
-        self.style_menu = self.menu.addMenu("🎨 Polishing-Stil")
-        self.style_menu.setStyleSheet(self.menu.styleSheet())
-        
-        self.style_actions = {}
-        for key, label in STYLE_DEFINITIONS:
-            action = self.style_menu.addAction(label)
-            action.setCheckable(True)
-            action.triggered.connect(lambda checked, k=key: self.style_selected.emit(k))
-            self.style_actions[key] = action
-            
-        self.update_menu_states()
-        
-        self.menu.addSeparator()
-
-        history_action = self.menu.addAction("📜 Diktat-Verlauf")
-        history_action.triggered.connect(self.open_history.emit)
-
-        url_action = self.menu.addAction("🔗 URL transkribieren…")
-        url_action.triggered.connect(self.transcribe_url.emit)
-        
-        self.menu.addSeparator()
-        
         # Einstellungen
         settings_action = self.menu.addAction("⚙ Einstellungen")
         settings_action.triggered.connect(self.open_settings.emit)
@@ -129,16 +100,11 @@ class SurepriseTrayIcon(QSystemTrayIcon):
 
     def update_menu_states(self):
         """Synchronisiert die Checkmarks im Submenü mit der aktuellen Konfiguration."""
-        active_style = config.selected_style
-        for key, action in self.style_actions.items():
-            action.setChecked(key == active_style)
+        pass
 
     def set_recording_state(self, is_recording: bool):
         """Aktualisiert die Beschriftung der Aufnahme-Aktion."""
-        if is_recording:
-            self.record_action.setText("⏹ Aufnahme stoppen")
-        else:
-            self.record_action.setText("🎙 Diktat starten")
+        pass
 
     def refresh_tooltip(self, stats_line: str = "") -> None:
         """Setzt Tooltip inkl. Version und optionaler Tagesstatistik."""

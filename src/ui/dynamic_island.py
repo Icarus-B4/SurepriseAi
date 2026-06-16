@@ -566,6 +566,17 @@ class DynamicIslandWindow(QWidget):
                 self._settings_dialog.setting_changed.connect(cb)
             self._settings_dialog.finished.connect(self._on_settings_closed)
 
+            # Neue Signale für Sidebar-Aktionen
+            self._settings_dialog.request_toggle_recording.connect(
+                lambda: getattr(self, "request_toggle_recording_callback", lambda: None)()
+            )
+            self._settings_dialog.request_transcribe_url.connect(
+                lambda: getattr(self, "request_transcribe_url_callback", lambda: None)()
+            )
+            self._settings_dialog.request_style_change.connect(
+                lambda k: getattr(self, "request_style_change_callback", lambda x: None)(k)
+            )
+
         from PyQt6.QtWidgets import QApplication
         screen = QApplication.primaryScreen().geometry()
         dlg = self._settings_dialog
