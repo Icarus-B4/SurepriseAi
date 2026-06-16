@@ -51,6 +51,25 @@ LangString DESC_SecMain ${LANG_GERMAN} "SurepriseAi-Anwendung (erforderlich)."
 LangString DESC_SecDesktop ${LANG_GERMAN} "Verknüpfung auf dem Desktop erstellen."
 LangString DESC_SecAutostart ${LANG_GERMAN} "SurepriseAi beim Windows-Start im Tray starten."
 
+; Explorer-Icon-Cache nach Installation/Update aktualisieren
+!define SHCNE_ASSOCCHANGED 0x08000000
+
+Function NotifyShellIconCache
+  System::Call 'shell32::SHChangeNotify(i,i,i,i) v (${SHCNE_ASSOCCHANGED}, 0, 0, 0)'
+FunctionEnd
+
+Function RefreshStartMenuShortcut
+  CreateDirectory "$SMPROGRAMS\${APP_NAME}"
+  CreateShortCut "$SMPROGRAMS\${APP_NAME}\${APP_NAME}.lnk" \
+    "$INSTDIR\${APP_EXE}" "" "$INSTDIR\SurepriseAi.ico" 0
+FunctionEnd
+
+Function RefreshDesktopShortcut
+  Delete "$DESKTOP\${APP_NAME}.lnk"
+  CreateShortCut "$DESKTOP\${APP_NAME}.lnk" \
+    "$INSTDIR\${APP_EXE}" "" "$INSTDIR\SurepriseAi.ico" 0
+FunctionEnd
+
 Function .onInit
   ReadRegStr $0 HKCU "Software\${APP_PUBLISHER}\${APP_NAME}" "InstallPath"
   StrCmp $0 "" +2 0
@@ -72,14 +91,15 @@ Section "!Hauptprogramm" SecMain
   SetOutPath "$INSTDIR"
   SetOverwrite on
   File /r "..\dist\SurepriseAi\*.*"
-  File "assets\app_icon.ico"
-  Rename "$INSTDIR\app_icon.ico" "$INSTDIR\SurepriseAi.ico"
+  ; Icon immer frisch aus Installer-Assets (Rename scheitert sonst bei Updates)
+  Delete "$INSTDIR\SurepriseAi.ico"
+  File /oname=SurepriseAi.ico "assets\app_icon.ico"
+  IfFileExists "..\App_icon.png" 0 +2
+    File /oname=App_icon.png "..\App_icon.png"
 
   WriteUninstaller "$INSTDIR\Uninstall.exe"
 
-  CreateDirectory "$SMPROGRAMS\${APP_NAME}"
-  CreateShortCut "$SMPROGRAMS\${APP_NAME}\${APP_NAME}.lnk" \
-    "$INSTDIR\${APP_EXE}" "" "$INSTDIR\SurepriseAi.ico"
+  Call RefreshStartMenuShortcut
   CreateShortCut "$SMPROGRAMS\${APP_NAME}\Deinstallieren.lnk" \
     "$INSTDIR\Uninstall.exe"
 
@@ -99,7 +119,7 @@ Section "!Hauptprogramm" SecMain
 SectionEnd
 
 Section "Desktop-Verknüpfung" SecDesktop
-  CreateShortCut "$DESKTOP\${APP_NAME}.lnk" "$INSTDIR\${APP_EXE}" "" "$INSTDIR\SurepriseAi.ico"
+  Call RefreshDesktopShortcut
   WriteRegDWORD HKCU "${PREFS_KEY}" "WantDesktop" 1
 SectionEnd
 
@@ -134,6 +154,11 @@ Function .onInstSuccess
     Goto inst_done
   Call RemoveAutostart
   inst_done:
+  Call RefreshStartMenuShortcut
+  ReadRegDWORD $R0 HKCU "${PREFS_KEY}" "WantDesktop"
+  IntCmp $R0 1 0 +2
+    Call RefreshDesktopShortcut
+  Call NotifyShellIconCache
 FunctionEnd
 
 !insertmacro MUI_FUNCTION_DESCRIPTION_BEGIN

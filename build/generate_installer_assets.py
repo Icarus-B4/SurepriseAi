@@ -151,7 +151,7 @@ def create_app_icon() -> None:
         raise SystemExit(
             f"ICO zu klein ({ico_path.stat().st_size} B) – Mehrgrößen-Export fehlgeschlagen."
         )
-    shutil.copy2(ico_path, ASSETS / "surepriseAi.ico")
+    shutil.copy2(ico_path, ASSETS / "SurepriseAi.ico")
 
 
 def main() -> None:

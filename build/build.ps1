@@ -51,7 +51,9 @@ if (Test-Path "sounds") {
 if (Test-Path "App_icon.png") {
     Copy-Item -Force "App_icon.png" $dist
 }
-if (Test-Path "build\assets\app_icon.ico") {
+if (Test-Path "build\assets\SurepriseAi.ico") {
+    Copy-Item -Force "build\assets\SurepriseAi.ico" (Join-Path $dist "SurepriseAi.ico")
+} elseif (Test-Path "build\assets\app_icon.ico") {
     Copy-Item -Force "build\assets\app_icon.ico" (Join-Path $dist "SurepriseAi.ico")
 }
 New-Item -ItemType Directory -Force -Path (Join-Path $dist "models") | Out-Null

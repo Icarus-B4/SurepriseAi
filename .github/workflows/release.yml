@@ -57,8 +57,8 @@ jobs:
 
             **Windows-Installer** – Doppelklick auf `SurepriseAi-Setup.exe`.
 
-            ### Neu in v0.1.30
-            - **App-Icon:** Setup.exe, SurepriseAi.exe und Tray nutzen `App_icon.png` (Multi-Size-ICO-Fix für Windows).
-            - **Ollama:** Zuverlässigeres Beenden, kompakteres Status-Badge in den Einstellungen.
+            ### Neu in v0.1.31
+            - **Desktop-Icon:** Verknüpfungen zeigen nach Installation/Update das Waveform-Icon aus `App_icon.png`.
+            - Installer schreibt `SurepriseAi.ico` zuverlässig neu und aktualisiert den Windows-Icon-Cache.
 
-            Vollständiges Changelog: https://github.com/Icarus-B4/SurepriseAi/compare/v0.1.29...${{ github.ref_name }}
+            Vollständiges Changelog: https://github.com/Icarus-B4/SurepriseAi/compare/v0.1.30...${{ github.ref_name }}
