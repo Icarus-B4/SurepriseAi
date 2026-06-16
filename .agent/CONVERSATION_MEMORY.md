@@ -664,3 +664,21 @@ Drei UX-Probleme der Expanded-Pill beheben:
 
 ### QS-Ergebnisse
 - Syntax-Check aller 5 geänderten Module: ✅ PASS
+
+## Eintrag 37: 2026-06-16 – UX-Feinschliff & Neues Release v0.1.26
+
+### Aufgabe
+- Outside-Click Overlay für Expanded-Pill verlässlich machen.
+- Resize-Handle für die Textansicht (Expanded) exakt ins Textfeld verschieben.
+- Tray-Menü verschlanken (nur App-Info, Einstellungen, Update, Beenden). 
+- Aktionen (Diktat starten, Polishing-Stil, URL transkribieren) in das Sidebar-Menü des Einstellungsfensters verlagern.
+- Release v0.1.26 erstellen.
+
+### Implementiertes
+- **Outside-Click-Fix**: `outside_click_overlay.py` mit opaker, aber transparenter Hintergrundfarbe (`rgba(1,1,1,1)`) versehen, sodass Klicks abgefangen werden.
+- **Resize-Handle-Fix**: In `expanded_pill_widget.py` wird der Handle über `tf.geometry()` exakt unten rechts innerhalb des Textbereichs positioniert.
+- **Menü-Verlagerung**:
+  - `tray_icon.py` entschlackt und auf wesentliche Funktionen reduziert (Einstellungen, Version, Updates, Beenden).
+  - `settings_panel.py` um Signale (`request_toggle_recording`, `request_transcribe_url`, `request_style_change`) und Buttons in der Sidebar ergänzt (inklusive Dropdown-Menü für Polishing-Stile).
+  - `app_controller.py` leitet die neuen Signale der `SettingsWindow`-Klasse an die zugehörigen Methoden weiter.
+- **Release**: Version `0.1.26` in `version.py` hochgezählt, git commit und git tag v0.1.26 erstellt und nach `main` gepusht.

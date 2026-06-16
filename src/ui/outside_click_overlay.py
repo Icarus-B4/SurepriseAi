@@ -1,49 +1,35 @@
 """
 outside_click_overlay.py
-Vollbild-Ebene unter der Expanded-Island – einmal anzeigen, kein raise()-Spam.
+Verwendet pynput, um Klicks außerhalb der Island zuverlässig abzufangen.
 """
 
-from PyQt6.QtWidgets import QWidget, QApplication
-from PyQt6.QtCore import Qt, pyqtSignal, QRect
+from PyQt6.QtCore import QObject, pyqtSignal
+from pynput import mouse
 
+class OutsideClickOverlay(QObject):
+    """
+    Nutzt pynput für einen globalen Mouse-Hook statt eines fehleranfälligen
+    transparenten Fensters in Windows.
+    """
 
-class OutsideClickOverlay(QWidget):
-    """Fängt Klicks außerhalb der Island ab (nur im EXPANDED-Modus aktiv)."""
-
-    clicked = pyqtSignal()
+    global_click = pyqtSignal(int, int)
 
     def __init__(self, parent=None):
-        super().__init__(
-            parent,
-            Qt.WindowType.FramelessWindowHint
-            | Qt.WindowType.Tool
-            | Qt.WindowType.WindowStaysOnTopHint
-            | Qt.WindowType.WindowDoesNotAcceptFocus,
-        )
-        self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
-        self.setStyleSheet("background-color: rgba(1, 1, 1, 1);")
-        self.setAttribute(Qt.WidgetAttribute.WA_ShowWithoutActivating)
-        self.setFocusPolicy(Qt.FocusPolicy.NoFocus)
-        self._active_screen_geo: QRect | None = None
+        super().__init__(parent)
+        self._listener = None
 
-    def show_below(self, anchor: QWidget) -> None:
-        screen = QApplication.primaryScreen()
-        if not screen:
-            return
-        geo = screen.geometry()
-        if not self.isVisible() or self._active_screen_geo != geo:
-            self.setGeometry(geo)
-            self._active_screen_geo = geo
-            self.show()
-        anchor.raise_()
+    def show_below(self, anchor) -> None:
+        """Aktiviert den globalen Mouse-Hook."""
+        if self._listener is None:
+            self._listener = mouse.Listener(on_click=self._on_click)
+            self._listener.start()
 
     def hide_overlay(self) -> None:
-        self.hide()
-        self._active_screen_geo = None
+        """Deaktiviert den globalen Mouse-Hook."""
+        if self._listener is not None:
+            self._listener.stop()
+            self._listener = None
 
-    def mousePressEvent(self, event) -> None:
-        if event.button() == Qt.MouseButton.LeftButton:
-            self.clicked.emit()
-            event.accept()
-            return
-        super().mousePressEvent(event)
+    def _on_click(self, x, y, button, pressed):
+        if pressed and button == mouse.Button.left:
+            self.global_click.emit(int(x), int(y))

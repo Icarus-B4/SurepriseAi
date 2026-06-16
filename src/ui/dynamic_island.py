@@ -53,8 +53,9 @@ class DynamicIslandWindow(QWidget):
         self._setup_position()
         self._init_quick_controls()
 
+        # Outside Click Catcher
         self._outside_overlay = OutsideClickOverlay()
-        self._outside_overlay.clicked.connect(self._on_outside_overlay_clicked)
+        self._outside_overlay.global_click.connect(self._on_outside_overlay_clicked)
         self.outside_dismiss_callback = None
         self._expanded_height = IslandSize.EXPANDED_HEIGHT  # Aktuelle Expanded-Höhe (resizeable)
 
@@ -471,9 +472,14 @@ class DynamicIslandWindow(QWidget):
         local = self.mapFromGlobal(QPoint(global_x, global_y))
         return not self._local_point_hits_chrome(local)
 
-    def _on_outside_overlay_clicked(self) -> None:
+    def _on_outside_overlay_clicked(self, x: int, y: int) -> None:
         if not self.state_machine.is_expanded:
             return
+            
+        from PyQt6.QtCore import QPoint
+        if self.geometry().contains(QPoint(x, y)):
+            return
+            
         if self.outside_dismiss_callback:
             self.outside_dismiss_callback()
 
