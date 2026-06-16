@@ -6,7 +6,7 @@
 ![Python](https://img.shields.io/badge/Python-3.11+-3776AB?style=flat-square&logo=python&logoColor=white)
 ![PyQt6](https://img.shields.io/badge/GUI-PyQt6-41CD52?style=flat-square&logo=qt&logoColor=white)
 ![Platform](https://img.shields.io/badge/Plattform-Windows-0078D6?style=flat-square&logo=windows&logoColor=white)
-![Status](https://img.shields.io/badge/Status-Alpha-FF6B35?style=flat-square)
+![Status](https://img.shields.io/badge/Status-Beta-FF6B35?style=flat-square)
 ![License](https://img.shields.io/badge/Lizenz-MIT-blue?style=flat-square)
 
 **SurepriseAi** ist eine Windows-Desktop-App für intelligentes Voice-Dictation mit **Dynamic Island**-Overlay, Live-Transkription und KI-Text-Polishing – inspiriert von modernen Diktier-Tools, vollständig lokal auf deinem Rechner.
