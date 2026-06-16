@@ -18,6 +18,7 @@ a = Analysis(
     datas=[
         (str(ROOT / "config.example.json"), "."),
         (str(ROOT / "LICENSE"), "."),
+        (str(ROOT / "sounds"), "sounds"),
         (certifi.where(), "certifi"),
     ],
     hiddenimports=[
@@ -25,6 +26,7 @@ a = Analysis(
         "PyQt6.QtCore",
         "PyQt6.QtGui",
         "PyQt6.QtWidgets",
+        "PyQt6.QtMultimedia",
         "sounddevice",
         "numpy",
         "pyperclip",

@@ -19,6 +19,7 @@ from src.services.dictation_history import DictationHistoryService
 from src.services.usage_stats import UsageStatsService
 from src.services.runtime_settings_handler import RuntimeSettingsHandler
 from src.services.update_controller import UpdateController
+from src.services.recording_sound_service import RecordingSoundService
 
 
 class AppController(QObject):
@@ -38,6 +39,7 @@ class AppController(QObject):
         self._history_dialog: HistoryDialog | None = None
         self.runtime_settings: RuntimeSettingsHandler | None = None
         self.updates = UpdateController(app_instance)
+        self.recording_sounds = RecordingSoundService(self)
 
     def connect_all(self):
         """Verknüpft alle Signale und Callbacks."""
@@ -91,6 +93,7 @@ class AppController(QObject):
         self.app.window.request_transcribe_url_callback = self._open_url_dialog
         self.app.window.request_style_change_callback = self._on_style_changed
         self.app.window.history_service = self.history
+        self.app.window.recording_sound_preview_callback = self.recording_sounds.preview
         self.runtime_settings = RuntimeSettingsHandler(self.app)
 
         self._refresh_tray_tooltip()
@@ -169,6 +172,12 @@ class AppController(QObject):
         self.app.toast.show_success("Bereit zum Diktieren – drücke F8!")
 
     def _on_pipeline_state(self, state_name: str):
+        was_recording = self.app.state_machine.is_recording
+        if state_name == "recording":
+            self.recording_sounds.play_start()
+        elif state_name == "processing" and was_recording:
+            self.recording_sounds.play_stop()
+
         self.app.state_machine.transition_by_name(state_name)
         self.app.tray.set_recording_state(self.app.state_machine.is_recording)
         if getattr(self.app, "mini_fab", None):

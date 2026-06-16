@@ -58,6 +58,10 @@ _DEFAULTS: dict[str, Any] = {
     "screen_context_max_chars": 1200,
     "screen_context_timeout_s": 3,
     "check_updates_on_startup":  True,
+    "enable_recording_sounds":   True,
+    "recording_start_sound":     "start.mp3",
+    "recording_stop_sound":      "end.mp3",
+    "recording_sound_volume":    75,
 }
 
 

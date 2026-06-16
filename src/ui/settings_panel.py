@@ -21,6 +21,7 @@ from src.ui.settings_features_section import add_features_section
 from src.ui.toggle_switch import ToggleRow
 from src.services.config_service import config
 from src.services.dictation_history import DictationHistoryService
+from src.services.recording_sound_service import RecordingSoundService
 
 _CORNER_RADIUS = 16
 
@@ -129,6 +130,11 @@ class SettingsWindow(QDialog):
         self.whisper_combo = self._add_dropdown(scroll_layout, "Whisper-Modell (Fallback)", "whisper_model_size", ["tiny", "base", "small"])
         self.lang_combo = self._add_dropdown(scroll_layout, "Diktier-Sprache", "transcription_language", ["auto", "de", "en", "fr", "es", "it"])
         self.translate_check = self._add_checkbox(scroll_layout, "Auf Englisch übersetzen (Whisper)", "translate_to_english")
+
+        self._add_section(scroll_layout, "Aufnahme-Sounds", "🔊")
+        self.sounds_check = self._add_checkbox(scroll_layout, "Sounds bei Start/Stopp", "enable_recording_sounds")
+        self.start_sound_combo = self._add_sound_picker(scroll_layout, "Sound beim Start", "recording_start_sound")
+        self.stop_sound_combo = self._add_sound_picker(scroll_layout, "Sound beim Stopp", "recording_stop_sound")
 
         self._add_section(scroll_layout, "KI-Polishing", "🤖")
         self.polish_check = self._add_checkbox(scroll_layout, "Ollama Polishing aktivieren", "ollama_polishing")
@@ -288,7 +294,7 @@ class SettingsWindow(QDialog):
         if self._content_stack is not None and self._settings_page is not None:
             self._content_stack.setCurrentWidget(self._settings_page)
         self._set_active_nav("settings")
-        self.setMinimumSize(1180, 720)
+        self.setMinimumSize(900, 650)
         self._apply_rounded_mask()
 
     def _hide_island_presence(self) -> None:
@@ -335,27 +341,89 @@ class SettingsWindow(QDialog):
         return row
 
     def _add_dropdown(self, layout: QVBoxLayout, label: str, key: str, options: list) -> QComboBox:
+        row = QHBoxLayout()
+        row.setContentsMargins(0, 0, 0, 0)
         lbl = QLabel(label)
         lbl.setObjectName("FieldLabel")
         cb = QComboBox()
         cb.addItems(options)
         cb.setCurrentText(config.get_str(key))
         cb.currentTextChanged.connect(lambda val: config.set(key, val))
-        layout.addWidget(lbl)
-        layout.addWidget(cb)
+        cb.setFixedWidth(200)
+        row.addWidget(lbl)
+        row.addStretch()
+        row.addWidget(cb)
+        layout.addLayout(row)
         return cb
 
+    def _add_sound_picker(self, layout: QVBoxLayout, label: str, key: str) -> QComboBox:
+        row = QHBoxLayout()
+        row.setContentsMargins(0, 0, 0, 0)
+        lbl = QLabel(label)
+        lbl.setObjectName("FieldLabel")
+
+        cb = QComboBox()
+        sounds = RecordingSoundService.list_sounds()
+        for filename, display in sounds:
+            cb.addItem(display, filename)
+
+        current = config.get_str(key)
+        index = cb.findData(current)
+        if index >= 0:
+            cb.setCurrentIndex(index)
+        elif cb.count() > 0:
+            cb.setCurrentIndex(0)
+            config.set(key, cb.currentData())
+
+        cb.currentIndexChanged.connect(
+            lambda _idx, combo=cb, config_key=key: config.set(config_key, combo.currentData())
+        )
+
+        preview_btn = QPushButton("▶")
+        preview_btn.setObjectName("SoundPreviewButton")
+        preview_btn.setFixedSize(34, 30)
+        preview_btn.setToolTip("Sound testen")
+        preview_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        preview_btn.clicked.connect(
+            lambda _checked=False, combo=cb: self._preview_sound(combo.currentData())
+        )
+
+        cb.setFixedWidth(200)
+        row.addWidget(lbl)
+        row.addStretch()
+        row.addWidget(cb)
+        row.addWidget(preview_btn)
+        layout.addLayout(row)
+        return cb
+
+    def _preview_sound(self, filename: str | None) -> None:
+        if not filename:
+            return
+        island = cast(Any, self.parent())
+        preview = getattr(island, "recording_sound_preview_callback", None)
+        if callable(preview):
+            preview(filename)
+            return
+        RecordingSoundService().preview(filename)
+
     def _add_text_field(self, layout: QVBoxLayout, label: str, key: str) -> QLineEdit:
+        row = QHBoxLayout()
+        row.setContentsMargins(0, 0, 0, 0)
         lbl = QLabel(label)
         lbl.setObjectName("FieldLabel")
         le = QLineEdit()
         le.setText(config.get_str(key))
         le.textChanged.connect(lambda val: config.set(key, val))
-        layout.addWidget(lbl)
-        layout.addWidget(le)
+        le.setFixedWidth(240)
+        row.addWidget(lbl)
+        row.addStretch()
+        row.addWidget(le)
+        layout.addLayout(row)
         return le
 
     def _add_list_field(self, layout: QVBoxLayout, label: str, key: str) -> QLineEdit:
+        row = QHBoxLayout()
+        row.setContentsMargins(0, 0, 0, 0)
         lbl = QLabel(label)
         lbl.setObjectName("FieldLabel")
         le = QLineEdit()
@@ -367,8 +435,11 @@ class SettingsWindow(QDialog):
 
         le.textChanged.connect(_on_change)
         le.home(False)
-        layout.addWidget(lbl)
-        layout.addWidget(le)
+        le.setFixedWidth(300)
+        row.addWidget(lbl)
+        row.addStretch()
+        row.addWidget(le)
+        layout.addLayout(row)
         return le
 
     def showEvent(self, event):

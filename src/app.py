@@ -36,8 +36,10 @@ class SurepriseApp:
     """
 
     def __init__(self):
+        from PyQt6.QtGui import QIcon
         self.app = QApplication(sys.argv)
         self.app.setQuitOnLastWindowClosed(False)
+        self.app.setWindowIcon(QIcon("App_icon.png"))
 
         self.signals = PipelineSignals()
         self.pipeline = TranscriptionPipeline()

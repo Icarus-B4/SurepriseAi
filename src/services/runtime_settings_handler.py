@@ -27,6 +27,8 @@ class RuntimeSettingsHandler:
             self.sync_presence_bar()
         if key in ("enable_global_hotkey", "global_hotkey", "push_to_talk", ""):
             self.sync_hotkey()
+        if key in ("recording_sound_volume", ""):
+            self.app.controller.recording_sounds.refresh_volume()
 
     def sync_hotkey(self) -> None:
         if config.hotkey_enabled:

@@ -43,5 +43,9 @@
     "screen_context_mode": "active_window",
     "screen_context_max_chars": 1200,
     "screen_context_timeout_s": 3,
-    "check_updates_on_startup": true
+    "check_updates_on_startup": true,
+    "enable_recording_sounds": true,
+    "recording_start_sound": "start.mp3",
+    "recording_stop_sound": "end.mp3",
+    "recording_sound_volume": 75
 }
