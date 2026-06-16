@@ -103,7 +103,7 @@ SurepriseAi/
 ## Start
 
 ```powershell
-cd c:\Users\ed\Webdesign\webstark.org\SurepriseAi
+cd C:\Pfad\zu\SurepriseAi
 .\venv\Scripts\python.exe run.py
 ```
 
