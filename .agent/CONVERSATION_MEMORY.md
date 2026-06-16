@@ -789,3 +789,4 @@ Erstellung eines automatisierten Demo-Aufnahme-Skripts zur Demonstration aller A
 - README ist nun kompakt und liest sich wesentlich flüssiger.
 - Release-Tag `v0.1.33` erfolgreich auf dem Remote-Server erstellt.
 - **CI-Build-Fix:** Ein Fehler im GitHub Actions Workflow (Fehlendes `App_icon.png` führte zu einem winzigen, PNG-komprimierten synthetischen ICO, welches den Größen-Check von `< 10_000` verletzte und den Build abbrach) wurde behoben. Der Schwellenwert wurde in `generate_installer_assets.py` auf `< 1000` Bytes gesenkt. Das Tag `v0.1.33` wurde nach dem Commit auf `main` mit Force neu gepusht.
+- **NSIS-Kompilier-Fix:** Ein NSIS-Compiler-Fehler im CI-Build (`File: "..\App_icon.png" -> no files found`) wurde durch das Hinzufügen des Flags `/nonfatal` beim `File`-Befehl in `installer.nsi` gelöst. Das Tag `v0.1.33` wurde nach dem Commit erneut mit Force gepusht.
