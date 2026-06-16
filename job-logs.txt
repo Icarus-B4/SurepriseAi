@@ -1,566 +1,330 @@
-﻿2026-06-16T20:11:33.2655887Z Current runner version: '2.335.1'
-2026-06-16T20:11:33.2684596Z ##[group]Runner Image Provisioner
-2026-06-16T20:11:33.2685410Z Hosted Compute Agent
-2026-06-16T20:11:33.2685951Z Version: 20260527.539
-2026-06-16T20:11:33.2686516Z Commit: a891dd388383b896fa6ac04a82c0b75cec981078
-2026-06-16T20:11:33.2687203Z Build Date: 2026-05-27T21:39:57Z
-2026-06-16T20:11:33.2687824Z Worker ID: {e846d1f4-c33d-4452-97cf-397c1ee68b2e}
-2026-06-16T20:11:33.2688472Z Azure Region: eastus
-2026-06-16T20:11:33.2688994Z ##[endgroup]
-2026-06-16T20:11:33.2690301Z ##[group]Operating System
-2026-06-16T20:11:33.2691179Z Microsoft Windows Server 2025
-2026-06-16T20:11:33.2691781Z 10.0.26100
-2026-06-16T20:11:33.2692241Z Datacenter
-2026-06-16T20:11:33.2692712Z ##[endgroup]
-2026-06-16T20:11:33.2693648Z ##[group]Runner Image
-2026-06-16T20:11:33.2694223Z Image: windows-2025-vs2026
-2026-06-16T20:11:33.2694769Z Version: 20260608.135.2
-2026-06-16T20:11:33.2696187Z Included Software: https://github.com/actions/runner-images/blob/win25-vs2026/20260608.135/images/windows/Windows2025-VS2026-Readme.md
-2026-06-16T20:11:33.2697777Z Image Release: https://github.com/actions/runner-images/releases/tag/win25-vs2026%2F20260608.135
-2026-06-16T20:11:33.2698727Z ##[endgroup]
-2026-06-16T20:11:33.2699876Z ##[group]GITHUB_TOKEN Permissions
-2026-06-16T20:11:33.2701986Z Contents: write
-2026-06-16T20:11:33.2702562Z Metadata: read
-2026-06-16T20:11:33.2703105Z ##[endgroup]
-2026-06-16T20:11:33.2705372Z Secret source: Actions
-2026-06-16T20:11:33.2706219Z Prepare workflow directory
-2026-06-16T20:11:33.3038832Z Prepare all required actions
-2026-06-16T20:11:33.3082041Z Getting action download info
-2026-06-16T20:11:33.4689400Z Download action repository 'actions/checkout@v4' (SHA:34e114876b0b11c390a56381ad16ebd13914f8d5)
-2026-06-16T20:11:33.5989933Z Download action repository 'actions/setup-python@v5' (SHA:a26af69be951a213d495a4c3e4e4022e16d87065)
-2026-06-16T20:11:33.7538822Z Download action repository 'softprops/action-gh-release@v2' (SHA:3bb12739c298aeb8a4eeaf626c5b8d85266b0e65)
-2026-06-16T20:11:34.0774330Z Complete job name: Windows-Installer bauen
-2026-06-16T20:11:34.3223886Z ##[group]Run actions/checkout@v4
-2026-06-16T20:11:34.3225116Z with:
-2026-06-16T20:11:34.3225582Z   repository: Icarus-B4/SurepriseAi
-2026-06-16T20:11:34.3231002Z   token: ***
-2026-06-16T20:11:34.3231439Z   ssh-strict: true
-2026-06-16T20:11:34.3231887Z   ssh-user: git
-2026-06-16T20:11:34.3232329Z   persist-credentials: true
-2026-06-16T20:11:34.3232821Z   clean: true
-2026-06-16T20:11:34.3233258Z   sparse-checkout-cone-mode: true
-2026-06-16T20:11:34.3234514Z   fetch-depth: 1
-2026-06-16T20:11:34.3234949Z   fetch-tags: false
-2026-06-16T20:11:34.3235397Z   show-progress: true
-2026-06-16T20:11:34.3235855Z   lfs: false
-2026-06-16T20:11:34.3236533Z   submodules: false
-2026-06-16T20:11:34.3236994Z   set-safe-directory: true
-2026-06-16T20:11:34.3238075Z ##[endgroup]
-2026-06-16T20:11:34.5040177Z Syncing repository: Icarus-B4/SurepriseAi
-2026-06-16T20:11:34.5042901Z ##[group]Getting Git version info
-2026-06-16T20:11:34.5044145Z Working directory is 'D:\a\SurepriseAi\SurepriseAi'
-2026-06-16T20:11:34.5944131Z [command]"C:\Program Files\Git\bin\git.exe" version
-2026-06-16T20:11:34.8971784Z git version 2.54.0.windows.1
-2026-06-16T20:11:34.9028662Z ##[endgroup]
-2026-06-16T20:11:34.9053225Z Temporarily overriding HOME='D:\a\_temp\2dad42c3-8c30-4bd7-958b-eb8f6354c0c3' before making global git config changes
-2026-06-16T20:11:34.9056003Z Adding repository directory to the temporary git global config as a safe directory
-2026-06-16T20:11:34.9066657Z [command]"C:\Program Files\Git\bin\git.exe" config --global --add safe.directory D:\a\SurepriseAi\SurepriseAi
-2026-06-16T20:11:34.9424472Z Deleting the contents of 'D:\a\SurepriseAi\SurepriseAi'
-2026-06-16T20:11:34.9432265Z ##[group]Initializing the repository
-2026-06-16T20:11:34.9446261Z [command]"C:\Program Files\Git\bin\git.exe" init D:\a\SurepriseAi\SurepriseAi
-2026-06-16T20:11:35.0214758Z Initialized empty Git repository in D:/a/SurepriseAi/SurepriseAi/.git/
-2026-06-16T20:11:35.0275805Z [command]"C:\Program Files\Git\bin\git.exe" remote add origin https://github.com/Icarus-B4/SurepriseAi
-2026-06-16T20:11:35.0640793Z ##[endgroup]
-2026-06-16T20:11:35.0642411Z ##[group]Disabling automatic garbage collection
-2026-06-16T20:11:35.0654556Z [command]"C:\Program Files\Git\bin\git.exe" config --local gc.auto 0
-2026-06-16T20:11:35.1029730Z ##[endgroup]
-2026-06-16T20:11:35.1031471Z ##[group]Setting up auth
-2026-06-16T20:11:35.1048891Z [command]"C:\Program Files\Git\bin\git.exe" config --local --name-only --get-regexp core\.sshCommand
-2026-06-16T20:11:35.1420338Z [command]"C:\Program Files\Git\bin\git.exe" submodule foreach --recursive "sh -c \"git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :\""
-2026-06-16T20:11:36.4499879Z [command]"C:\Program Files\Git\bin\git.exe" config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
-2026-06-16T20:11:36.4875484Z [command]"C:\Program Files\Git\bin\git.exe" submodule foreach --recursive "sh -c \"git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :\""
-2026-06-16T20:11:37.1084936Z [command]"C:\Program Files\Git\bin\git.exe" config --local --name-only --get-regexp ^includeIf\.gitdir:
-2026-06-16T20:11:37.1427662Z [command]"C:\Program Files\Git\bin\git.exe" submodule foreach --recursive "git config --local --show-origin --name-only --get-regexp remote.origin.url"
-2026-06-16T20:11:37.6951770Z [command]"C:\Program Files\Git\bin\git.exe" config --local http.https://github.com/.extraheader "AUTHORIZATION: basic ***"
-2026-06-16T20:11:37.7286941Z ##[endgroup]
-2026-06-16T20:11:37.7287792Z ##[group]Fetching the repository
-2026-06-16T20:11:37.7302108Z [command]"C:\Program Files\Git\bin\git.exe" -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +2647f071ed9b5a7f270941aedd634650a940a0cf:refs/tags/v0.1.33
-2026-06-16T20:11:38.6931486Z From https://github.com/Icarus-B4/SurepriseAi
-2026-06-16T20:11:38.6932490Z  * [new ref]         2647f071ed9b5a7f270941aedd634650a940a0cf -> v0.1.33
-2026-06-16T20:11:38.7137417Z ##[endgroup]
-2026-06-16T20:11:38.7137842Z ##[group]Determining the checkout info
-2026-06-16T20:11:38.7140068Z ##[endgroup]
-2026-06-16T20:11:38.7156348Z [command]"C:\Program Files\Git\bin\git.exe" sparse-checkout disable
-2026-06-16T20:11:38.7534780Z [command]"C:\Program Files\Git\bin\git.exe" config --local --unset-all extensions.worktreeConfig
-2026-06-16T20:11:38.7878619Z ##[group]Checking out the ref
-2026-06-16T20:11:38.7890338Z [command]"C:\Program Files\Git\bin\git.exe" checkout --progress --force refs/tags/v0.1.33
-2026-06-16T20:11:38.8695288Z Note: switching to 'refs/tags/v0.1.33'.
-2026-06-16T20:11:38.8695751Z 
-2026-06-16T20:11:38.8695998Z You are in 'detached HEAD' state. You can look around, make experimental
-2026-06-16T20:11:38.8696480Z changes and commit them, and you can discard any commits you make in this
-2026-06-16T20:11:38.8697043Z state without impacting any branches by switching back to a branch.
-2026-06-16T20:11:38.8697324Z 
-2026-06-16T20:11:38.8697505Z If you want to create a new branch to retain commits you create, you may
-2026-06-16T20:11:38.8698047Z do so (now or later) by using -c with the switch command. Example:
-2026-06-16T20:11:38.8698290Z 
-2026-06-16T20:11:38.8698408Z   git switch -c <new-branch-name>
-2026-06-16T20:11:38.8698605Z 
-2026-06-16T20:11:38.8698702Z Or undo this operation with:
-2026-06-16T20:11:38.8698892Z 
-2026-06-16T20:11:38.8699002Z   git switch -
-2026-06-16T20:11:38.8700629Z 
-2026-06-16T20:11:38.8700839Z Turn off this advice by setting config variable advice.detachedHead to false
-2026-06-16T20:11:38.8701144Z 
-2026-06-16T20:11:38.8701462Z HEAD is now at 2647f07 fix: lower size threshold for generated ICO to allow PNG compression in CI
-2026-06-16T20:11:38.8781065Z ##[endgroup]
-2026-06-16T20:11:38.9167439Z [command]"C:\Program Files\Git\bin\git.exe" log -1 --format=%H
-2026-06-16T20:11:38.9458327Z 2647f071ed9b5a7f270941aedd634650a940a0cf
-2026-06-16T20:11:38.9908022Z ##[group]Run actions/setup-python@v5
-2026-06-16T20:11:38.9908388Z with:
-2026-06-16T20:11:38.9908583Z   python-version: 3.11
-2026-06-16T20:11:38.9908791Z   cache: pip
-2026-06-16T20:11:38.9909096Z   cache-dependency-path: requirements.txt
+﻿2026-06-16T21:56:53.3041041Z Current runner version: '2.335.1'
+2026-06-16T21:56:53.3066745Z ##[group]Runner Image Provisioner
+2026-06-16T21:56:53.3067585Z Hosted Compute Agent
+2026-06-16T21:56:53.3068168Z Version: 20260527.539
+2026-06-16T21:56:53.3068794Z Commit: a891dd388383b896fa6ac04a82c0b75cec981078
+2026-06-16T21:56:53.3069498Z Build Date: 2026-05-27T21:39:57Z
+2026-06-16T21:56:53.3070143Z Worker ID: {d1c86152-1988-449f-bb01-44f1442d3758}
+2026-06-16T21:56:53.3070803Z Azure Region: westus
+2026-06-16T21:56:53.3072093Z ##[endgroup]
+2026-06-16T21:56:53.3073643Z ##[group]Operating System
+2026-06-16T21:56:53.3074355Z Microsoft Windows Server 2025
+2026-06-16T21:56:53.3074954Z 10.0.26100
+2026-06-16T21:56:53.3075427Z Datacenter
+2026-06-16T21:56:53.3075947Z ##[endgroup]
+2026-06-16T21:56:53.3076456Z ##[group]Runner Image
+2026-06-16T21:56:53.3077015Z Image: windows-2025-vs2026
+2026-06-16T21:56:53.3077612Z Version: 20260608.135.2
+2026-06-16T21:56:53.3079197Z Included Software: https://github.com/actions/runner-images/blob/win25-vs2026/20260608.135/images/windows/Windows2025-VS2026-Readme.md
+2026-06-16T21:56:53.3080820Z Image Release: https://github.com/actions/runner-images/releases/tag/win25-vs2026%2F20260608.135
+2026-06-16T21:56:53.3081760Z ##[endgroup]
+2026-06-16T21:56:53.3082886Z ##[group]GITHUB_TOKEN Permissions
+2026-06-16T21:56:53.3084768Z Contents: read
+2026-06-16T21:56:53.3085359Z Metadata: read
+2026-06-16T21:56:53.3085880Z Packages: read
+2026-06-16T21:56:53.3086435Z ##[endgroup]
+2026-06-16T21:56:53.3088531Z Secret source: Actions
+2026-06-16T21:56:53.3089506Z Prepare workflow directory
+2026-06-16T21:56:53.3578649Z Prepare all required actions
+2026-06-16T21:56:53.3636588Z Getting action download info
+2026-06-16T21:56:53.7169097Z Download action repository 'actions/checkout@v4' (SHA:34e114876b0b11c390a56381ad16ebd13914f8d5)
+2026-06-16T21:56:53.8604778Z Download action repository 'actions/setup-python@v5' (SHA:a26af69be951a213d495a4c3e4e4022e16d87065)
+2026-06-16T21:56:54.2038173Z Complete job name: Smoke-Test (Windows)
+2026-06-16T21:56:54.3905758Z ##[group]Run actions/checkout@v4
+2026-06-16T21:56:54.3906803Z with:
+2026-06-16T21:56:54.3907233Z   repository: Icarus-B4/SurepriseAi
+2026-06-16T21:56:54.3912015Z   token: ***
+2026-06-16T21:56:54.3912676Z   ssh-strict: true
+2026-06-16T21:56:54.3913098Z   ssh-user: git
+2026-06-16T21:56:54.3913515Z   persist-credentials: true
+2026-06-16T21:56:54.3913983Z   clean: true
+2026-06-16T21:56:54.3914404Z   sparse-checkout-cone-mode: true
+2026-06-16T21:56:54.3914905Z   fetch-depth: 1
+2026-06-16T21:56:54.3915306Z   fetch-tags: false
+2026-06-16T21:56:54.3915723Z   show-progress: true
+2026-06-16T21:56:54.3916137Z   lfs: false
+2026-06-16T21:56:54.3916526Z   submodules: false
+2026-06-16T21:56:54.3916949Z   set-safe-directory: true
+2026-06-16T21:56:54.3917682Z ##[endgroup]
+2026-06-16T21:56:54.5714652Z Syncing repository: Icarus-B4/SurepriseAi
+2026-06-16T21:56:54.5716819Z ##[group]Getting Git version info
+2026-06-16T21:56:54.5717586Z Working directory is 'D:\a\SurepriseAi\SurepriseAi'
+2026-06-16T21:56:54.6693772Z [command]"C:\Program Files\Git\bin\git.exe" version
+2026-06-16T21:56:54.8152231Z git version 2.54.0.windows.1
+2026-06-16T21:56:54.8208397Z ##[endgroup]
+2026-06-16T21:56:54.8230127Z Temporarily overriding HOME='D:\a\_temp\332ed774-8761-4326-a359-770aa58565c4' before making global git config changes
+2026-06-16T21:56:54.8231493Z Adding repository directory to the temporary git global config as a safe directory
+2026-06-16T21:56:54.8242708Z [command]"C:\Program Files\Git\bin\git.exe" config --global --add safe.directory D:\a\SurepriseAi\SurepriseAi
+2026-06-16T21:56:54.8552865Z Deleting the contents of 'D:\a\SurepriseAi\SurepriseAi'
+2026-06-16T21:56:54.8560376Z ##[group]Initializing the repository
+2026-06-16T21:56:54.8570664Z [command]"C:\Program Files\Git\bin\git.exe" init D:\a\SurepriseAi\SurepriseAi
+2026-06-16T21:56:54.9053301Z Initialized empty Git repository in D:/a/SurepriseAi/SurepriseAi/.git/
+2026-06-16T21:56:54.9106609Z [command]"C:\Program Files\Git\bin\git.exe" remote add origin https://github.com/Icarus-B4/SurepriseAi
+2026-06-16T21:56:54.9442007Z ##[endgroup]
+2026-06-16T21:56:54.9442877Z ##[group]Disabling automatic garbage collection
+2026-06-16T21:56:54.9453048Z [command]"C:\Program Files\Git\bin\git.exe" config --local gc.auto 0
+2026-06-16T21:56:54.9787564Z ##[endgroup]
+2026-06-16T21:56:54.9788350Z ##[group]Setting up auth
+2026-06-16T21:56:54.9808194Z [command]"C:\Program Files\Git\bin\git.exe" config --local --name-only --get-regexp core\.sshCommand
+2026-06-16T21:56:55.0120765Z [command]"C:\Program Files\Git\bin\git.exe" submodule foreach --recursive "sh -c \"git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :\""
+2026-06-16T21:56:55.9522094Z [command]"C:\Program Files\Git\bin\git.exe" config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-06-16T21:56:55.9840806Z [command]"C:\Program Files\Git\bin\git.exe" submodule foreach --recursive "sh -c \"git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :\""
+2026-06-16T21:56:56.5819252Z [command]"C:\Program Files\Git\bin\git.exe" config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-06-16T21:56:56.6161824Z [command]"C:\Program Files\Git\bin\git.exe" submodule foreach --recursive "git config --local --show-origin --name-only --get-regexp remote.origin.url"
+2026-06-16T21:56:57.1904506Z [command]"C:\Program Files\Git\bin\git.exe" config --local http.https://github.com/.extraheader "AUTHORIZATION: basic ***"
+2026-06-16T21:56:57.2247124Z ##[endgroup]
+2026-06-16T21:56:57.2248004Z ##[group]Fetching the repository
+2026-06-16T21:56:57.2262489Z [command]"C:\Program Files\Git\bin\git.exe" -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +f90fa2384d574debfc2f6b4f466a10448e623e4a:refs/remotes/origin/main
+2026-06-16T21:56:59.4915412Z From https://github.com/Icarus-B4/SurepriseAi
+2026-06-16T21:56:59.4916509Z  * [new ref]         f90fa2384d574debfc2f6b4f466a10448e623e4a -> origin/main
+2026-06-16T21:56:59.5155207Z ##[endgroup]
+2026-06-16T21:56:59.5155881Z ##[group]Determining the checkout info
+2026-06-16T21:56:59.5158836Z ##[endgroup]
+2026-06-16T21:56:59.5170785Z [command]"C:\Program Files\Git\bin\git.exe" sparse-checkout disable
+2026-06-16T21:56:59.5576597Z [command]"C:\Program Files\Git\bin\git.exe" config --local --unset-all extensions.worktreeConfig
+2026-06-16T21:56:59.5973678Z ##[group]Checking out the ref
+2026-06-16T21:56:59.5990623Z [command]"C:\Program Files\Git\bin\git.exe" checkout --progress --force -B main refs/remotes/origin/main
+2026-06-16T21:56:59.6891389Z Switched to a new branch 'main'
+2026-06-16T21:56:59.6917345Z branch 'main' set up to track 'origin/main'.
+2026-06-16T21:56:59.6975333Z ##[endgroup]
+2026-06-16T21:56:59.7329256Z [command]"C:\Program Files\Git\bin\git.exe" log -1 --format=%H
+2026-06-16T21:56:59.7639448Z f90fa2384d574debfc2f6b4f466a10448e623e4a
+2026-06-16T21:56:59.8104734Z ##[group]Run actions/setup-python@v5
+2026-06-16T21:56:59.8105319Z with:
+2026-06-16T21:56:59.8105513Z   python-version: 3.11
+2026-06-16T21:56:59.8105732Z   cache: pip
+2026-06-16T21:56:59.8106041Z   cache-dependency-path: requirements.txt
 requirements-build.txt
 
-2026-06-16T20:11:38.9909461Z   check-latest: false
-2026-06-16T20:11:38.9912993Z   token: ***
-2026-06-16T20:11:38.9913191Z   update-environment: true
-2026-06-16T20:11:38.9913417Z   allow-prereleases: false
-2026-06-16T20:11:38.9913625Z   freethreaded: false
-2026-06-16T20:11:38.9913824Z ##[endgroup]
-2026-06-16T20:11:39.2384677Z ##[group]Installed versions
-2026-06-16T20:11:39.2520138Z Successfully set up CPython (3.11.9)
-2026-06-16T20:11:39.2521305Z ##[endgroup]
-2026-06-16T20:11:44.9260393Z Cache hit for: setup-python-Windows-x64-python-3.11.9-pip-29c4067ce5787fc5461c2c228cba2f9c0578630eacc7b9eb94f92e19cc8e4b48
-2026-06-16T20:11:46.0055752Z Received 176160768 of 208185944 (84.6%), 165.7 MBs/sec
-2026-06-16T20:11:46.2098322Z Received 208185944 of 208185944 (100.0%), 163.0 MBs/sec
-2026-06-16T20:11:46.2177229Z Cache Size: ~199 MB (208185944 B)
-2026-06-16T20:11:46.2266247Z [command]"C:\Program Files\Git\usr\bin\tar.exe" -xf D:/a/_temp/eb08890b-79e1-4a92-a2af-d91d0e68caa8/cache.tzst -P -C D:/a/SurepriseAi/SurepriseAi --force-local --use-compress-program "zstd -d"
-2026-06-16T20:11:48.6972579Z Cache restored successfully
-2026-06-16T20:11:48.7104460Z Cache restored from key: setup-python-Windows-x64-python-3.11.9-pip-29c4067ce5787fc5461c2c228cba2f9c0578630eacc7b9eb94f92e19cc8e4b48
-2026-06-16T20:11:48.7426651Z ##[group]Run python -m venv venv
-2026-06-16T20:11:48.7427085Z [36;1mpython -m venv venv[0m
-2026-06-16T20:11:48.7427475Z [36;1m.\venv\Scripts\python.exe -m pip install --upgrade pip[0m
-2026-06-16T20:11:48.7427972Z [36;1m.\venv\Scripts\pip install -r requirements.txt -r requirements-build.txt[0m
-2026-06-16T20:11:48.7915010Z shell: C:\Program Files\PowerShell\7\pwsh.EXE -command ". '{0}'"
-2026-06-16T20:11:48.7915411Z env:
-2026-06-16T20:11:48.7915699Z   pythonLocation: C:\hostedtoolcache\windows\Python\3.11.9\x64
-2026-06-16T20:11:48.7916169Z   PKG_CONFIG_PATH: C:\hostedtoolcache\windows\Python\3.11.9\x64/lib/pkgconfig
-2026-06-16T20:11:48.7916605Z   Python_ROOT_DIR: C:\hostedtoolcache\windows\Python\3.11.9\x64
-2026-06-16T20:11:48.7917012Z   Python2_ROOT_DIR: C:\hostedtoolcache\windows\Python\3.11.9\x64
-2026-06-16T20:11:48.7917402Z   Python3_ROOT_DIR: C:\hostedtoolcache\windows\Python\3.11.9\x64
-2026-06-16T20:11:48.7917711Z ##[endgroup]
-2026-06-16T20:12:05.2773449Z Requirement already satisfied: pip in d:\a\surepriseai\surepriseai\venv\lib\site-packages (24.0)
-2026-06-16T20:12:05.9659859Z Collecting pip
-2026-06-16T20:12:05.9693091Z   Using cached pip-26.1.2-py3-none-any.whl.metadata (4.6 kB)
-2026-06-16T20:12:05.9763857Z Using cached pip-26.1.2-py3-none-any.whl (1.8 MB)
-2026-06-16T20:12:06.0474003Z Installing collected packages: pip
-2026-06-16T20:12:06.0475616Z   Attempting uninstall: pip
-2026-06-16T20:12:06.0509302Z     Found existing installation: pip 24.0
-2026-06-16T20:12:06.1523117Z     Uninstalling pip-24.0:
-2026-06-16T20:12:06.1749086Z       Successfully uninstalled pip-24.0
-2026-06-16T20:12:07.5201833Z Successfully installed pip-26.1.2
-2026-06-16T20:12:09.9297463Z Collecting PyQt6>=6.6.0 (from -r requirements.txt (line 2))
-2026-06-16T20:12:09.9327871Z   Using cached pyqt6-6.11.0-cp310-abi3-win_amd64.whl.metadata (2.2 kB)
-2026-06-16T20:12:09.9653420Z Collecting sounddevice>=0.5.0 (from -r requirements.txt (line 3))
-2026-06-16T20:12:09.9683725Z   Using cached sounddevice-0.5.5-py3-none-win_amd64.whl.metadata (1.4 kB)
-2026-06-16T20:12:10.1648965Z Collecting numpy>=1.24.0 (from -r requirements.txt (line 4))
-2026-06-16T20:12:10.1678639Z   Using cached numpy-2.4.6-cp311-cp311-win_amd64.whl.metadata (6.6 kB)
-2026-06-16T20:12:10.2290796Z Collecting pyperclip>=1.8.0 (from -r requirements.txt (line 5))
-2026-06-16T20:12:10.2320022Z   Using cached pyperclip-1.11.0-py3-none-any.whl.metadata (2.4 kB)
-2026-06-16T20:12:10.2653204Z Collecting pynput>=1.7.0 (from -r requirements.txt (line 6))
-2026-06-16T20:12:10.2681508Z   Using cached pynput-1.8.2-py2.py3-none-any.whl.metadata (32 kB)
-2026-06-16T20:12:10.3005968Z Collecting faster-whisper>=1.0.0 (from -r requirements.txt (line 7))
-2026-06-16T20:12:10.3036352Z   Using cached faster_whisper-1.2.1-py3-none-any.whl.metadata (16 kB)
-2026-06-16T20:12:10.4873404Z Collecting sherpa-onnx>=1.12.0 (from -r requirements.txt (line 8))
-2026-06-16T20:12:10.7050558Z   Downloading sherpa_onnx-1.13.3-cp311-cp311-win_amd64.whl.metadata (50 kB)
-2026-06-16T20:12:10.8930940Z Collecting soundfile>=0.12.0 (from -r requirements.txt (line 9))
-2026-06-16T20:12:10.8958723Z   Using cached soundfile-0.14.0-py2.py3-none-win_amd64.whl.metadata (18 kB)
-2026-06-16T20:12:11.0577319Z Collecting Pillow>=10.0.0 (from -r requirements.txt (line 10))
-2026-06-16T20:12:11.0608056Z   Using cached pillow-12.2.0-cp311-cp311-win_amd64.whl.metadata (9.0 kB)
-2026-06-16T20:12:11.0911127Z Collecting winocr>=0.0.15 (from -r requirements.txt (line 11))
-2026-06-16T20:12:11.0937450Z   Using cached winocr-0.0.15-py3-none-any.whl.metadata (15 kB)
-2026-06-16T20:12:11.2255860Z Collecting yt-dlp>=2024.1.0 (from -r requirements.txt (line 12))
-2026-06-16T20:12:11.2285462Z   Using cached yt_dlp-2026.6.9-py3-none-any.whl.metadata (183 kB)
-2026-06-16T20:12:11.2810531Z Collecting certifi>=2024.2.2 (from -r requirements.txt (line 13))
-2026-06-16T20:12:11.2853501Z   Using cached certifi-2026.5.20-py3-none-any.whl.metadata (2.5 kB)
-2026-06-16T20:12:11.3642306Z Collecting pyinstaller>=6.3.0 (from -r requirements-build.txt (line 2))
-2026-06-16T20:12:11.3712686Z   Downloading pyinstaller-6.21.0-py3-none-win_amd64.whl.metadata (8.5 kB)
-2026-06-16T20:12:11.4360196Z Collecting PyQt6-sip<14,>=13.8 (from PyQt6>=6.6.0->-r requirements.txt (line 2))
-2026-06-16T20:12:11.4388209Z   Using cached pyqt6_sip-13.11.1-cp311-cp311-win_amd64.whl.metadata (516 bytes)
-2026-06-16T20:12:11.4715871Z Collecting PyQt6-Qt6<6.12.0,>=6.11.0 (from PyQt6>=6.6.0->-r requirements.txt (line 2))
-2026-06-16T20:12:11.4742850Z   Using cached pyqt6_qt6-6.11.1-py3-none-win_amd64.whl.metadata (552 bytes)
-2026-06-16T20:12:11.5814352Z Collecting cffi (from sounddevice>=0.5.0->-r requirements.txt (line 3))
-2026-06-16T20:12:11.5842235Z   Using cached cffi-2.0.0-cp311-cp311-win_amd64.whl.metadata (2.6 kB)
-2026-06-16T20:12:11.6314310Z Collecting six (from pynput>=1.7.0->-r requirements.txt (line 6))
-2026-06-16T20:12:11.6342807Z   Using cached six-1.17.0-py2.py3-none-any.whl.metadata (1.7 kB)
-2026-06-16T20:12:11.7384452Z Collecting ctranslate2<5,>=4.0 (from faster-whisper>=1.0.0->-r requirements.txt (line 7))
-2026-06-16T20:12:11.7412033Z   Using cached ctranslate2-4.8.0-cp311-cp311-win_amd64.whl.metadata (11 kB)
-2026-06-16T20:12:11.8688317Z Collecting huggingface-hub>=0.21 (from faster-whisper>=1.0.0->-r requirements.txt (line 7))
-2026-06-16T20:12:11.8755238Z   Downloading huggingface_hub-1.19.0-py3-none-any.whl.metadata (14 kB)
-2026-06-16T20:12:12.0809050Z Collecting tokenizers<1,>=0.13 (from faster-whisper>=1.0.0->-r requirements.txt (line 7))
-2026-06-16T20:12:12.0841166Z   Using cached tokenizers-0.23.1-cp310-abi3-win_amd64.whl.metadata (10 kB)
-2026-06-16T20:12:12.1639119Z Collecting onnxruntime<2,>=1.14 (from faster-whisper>=1.0.0->-r requirements.txt (line 7))
-2026-06-16T20:12:12.1753446Z   Downloading onnxruntime-1.27.0-cp311-cp311-win_amd64.whl.metadata (5.6 kB)
-2026-06-16T20:12:12.2949153Z Collecting av>=11 (from faster-whisper>=1.0.0->-r requirements.txt (line 7))
-2026-06-16T20:12:12.2976148Z   Using cached av-17.1.0-cp311-abi3-win_amd64.whl.metadata (4.7 kB)
-2026-06-16T20:12:12.3408732Z Collecting tqdm (from faster-whisper>=1.0.0->-r requirements.txt (line 7))
-2026-06-16T20:12:12.3436195Z   Using cached tqdm-4.68.2-py3-none-any.whl.metadata (58 kB)
-2026-06-16T20:12:12.3527430Z Requirement already satisfied: setuptools in .\venv\Lib\site-packages (from ctranslate2<5,>=4.0->faster-whisper>=1.0.0->-r requirements.txt (line 7)) (65.5.0)
-2026-06-16T20:12:12.3963376Z Collecting pyyaml<7,>=5.3 (from ctranslate2<5,>=4.0->faster-whisper>=1.0.0->-r requirements.txt (line 7))
-2026-06-16T20:12:12.3990049Z   Using cached pyyaml-6.0.3-cp311-cp311-win_amd64.whl.metadata (2.4 kB)
-2026-06-16T20:12:12.4451169Z Collecting flatbuffers (from onnxruntime<2,>=1.14->faster-whisper>=1.0.0->-r requirements.txt (line 7))
-2026-06-16T20:12:12.4477179Z   Using cached flatbuffers-25.12.19-py2.py3-none-any.whl.metadata (1.0 kB)
-2026-06-16T20:12:12.5010450Z Collecting packaging (from onnxruntime<2,>=1.14->faster-whisper>=1.0.0->-r requirements.txt (line 7))
-2026-06-16T20:12:12.5036182Z   Using cached packaging-26.2-py3-none-any.whl.metadata (3.5 kB)
-2026-06-16T20:12:12.6927334Z Collecting protobuf>=4.25.8 (from onnxruntime<2,>=1.14->faster-whisper>=1.0.0->-r requirements.txt (line 7))
-2026-06-16T20:12:12.6984883Z   Downloading protobuf-7.35.1-cp310-abi3-win_amd64.whl.metadata (595 bytes)
-2026-06-16T20:12:12.7715612Z Collecting click>=8.4.0 (from huggingface-hub>=0.21->faster-whisper>=1.0.0->-r requirements.txt (line 7))
-2026-06-16T20:12:12.7748488Z   Using cached click-8.4.1-py3-none-any.whl.metadata (2.6 kB)
-2026-06-16T20:12:12.8613892Z Collecting filelock>=3.10.0 (from huggingface-hub>=0.21->faster-whisper>=1.0.0->-r requirements.txt (line 7))
-2026-06-16T20:12:12.8681948Z   Downloading filelock-3.29.4-py3-none-any.whl.metadata (2.0 kB)
-2026-06-16T20:12:12.9484098Z Collecting fsspec>=2023.5.0 (from huggingface-hub>=0.21->faster-whisper>=1.0.0->-r requirements.txt (line 7))
-2026-06-16T20:12:12.9539017Z   Downloading fsspec-2026.6.0-py3-none-any.whl.metadata (10 kB)
-2026-06-16T20:12:13.0627871Z Collecting hf-xet<2.0.0,>=1.5.1 (from huggingface-hub>=0.21->faster-whisper>=1.0.0->-r requirements.txt (line 7))
-2026-06-16T20:12:13.0655546Z   Using cached hf_xet-1.5.1-cp37-abi3-win_amd64.whl.metadata (4.9 kB)
-2026-06-16T20:12:13.0969673Z Collecting httpx<1,>=0.23.0 (from huggingface-hub>=0.21->faster-whisper>=1.0.0->-r requirements.txt (line 7))
-2026-06-16T20:12:13.1001539Z   Using cached httpx-0.28.1-py3-none-any.whl.metadata (7.1 kB)
-2026-06-16T20:12:13.1551694Z Collecting typer<0.26.0,>=0.20.0 (from huggingface-hub>=0.21->faster-whisper>=1.0.0->-r requirements.txt (line 7))
-2026-06-16T20:12:13.1581111Z   Using cached typer-0.25.1-py3-none-any.whl.metadata (15 kB)
-2026-06-16T20:12:13.1922268Z Collecting typing-extensions>=4.1.0 (from huggingface-hub>=0.21->faster-whisper>=1.0.0->-r requirements.txt (line 7))
-2026-06-16T20:12:13.1948234Z   Using cached typing_extensions-4.15.0-py3-none-any.whl.metadata (3.3 kB)
-2026-06-16T20:12:13.2812283Z Collecting anyio (from httpx<1,>=0.23.0->huggingface-hub>=0.21->faster-whisper>=1.0.0->-r requirements.txt (line 7))
-2026-06-16T20:12:13.2867114Z   Downloading anyio-4.14.0-py3-none-any.whl.metadata (4.6 kB)
-2026-06-16T20:12:13.3668236Z Collecting httpcore==1.* (from httpx<1,>=0.23.0->huggingface-hub>=0.21->faster-whisper>=1.0.0->-r requirements.txt (line 7))
-2026-06-16T20:12:13.3695356Z   Using cached httpcore-1.0.9-py3-none-any.whl.metadata (21 kB)
-2026-06-16T20:12:13.4028230Z Collecting idna (from httpx<1,>=0.23.0->huggingface-hub>=0.21->faster-whisper>=1.0.0->-r requirements.txt (line 7))
-2026-06-16T20:12:13.4058439Z   Using cached idna-3.18-py3-none-any.whl.metadata (6.1 kB)
-2026-06-16T20:12:13.4345353Z Collecting h11>=0.16 (from httpcore==1.*->httpx<1,>=0.23.0->huggingface-hub>=0.21->faster-whisper>=1.0.0->-r requirements.txt (line 7))
-2026-06-16T20:12:13.4371604Z   Using cached h11-0.16.0-py3-none-any.whl.metadata (8.3 kB)
-2026-06-16T20:12:13.4860308Z Collecting shellingham>=1.3.0 (from typer<0.26.0,>=0.20.0->huggingface-hub>=0.21->faster-whisper>=1.0.0->-r requirements.txt (line 7))
-2026-06-16T20:12:13.4892033Z   Using cached shellingham-1.5.4-py2.py3-none-any.whl.metadata (3.5 kB)
-2026-06-16T20:12:13.5278532Z Collecting rich>=13.8.0 (from typer<0.26.0,>=0.20.0->huggingface-hub>=0.21->faster-whisper>=1.0.0->-r requirements.txt (line 7))
-2026-06-16T20:12:13.5342164Z   Using cached rich-15.0.0-py3-none-any.whl.metadata (18 kB)
-2026-06-16T20:12:13.5598785Z Collecting annotated-doc>=0.0.2 (from typer<0.26.0,>=0.20.0->huggingface-hub>=0.21->faster-whisper>=1.0.0->-r requirements.txt (line 7))
-2026-06-16T20:12:13.5650635Z   Using cached annotated_doc-0.0.4-py3-none-any.whl.metadata (6.6 kB)
-2026-06-16T20:12:13.6797191Z Collecting sherpa-onnx-core==1.13.3 (from sherpa-onnx>=1.12.0->-r requirements.txt (line 8))
-2026-06-16T20:12:13.6866890Z   Downloading sherpa_onnx_core-1.13.3-py3-none-win_amd64.whl.metadata (532 bytes)
-2026-06-16T20:12:13.7774795Z Collecting winrt-windows-foundation-collections (from winocr>=0.0.15->-r requirements.txt (line 11))
-2026-06-16T20:12:13.7802680Z   Using cached winrt_windows_foundation_collections-3.2.1-cp311-cp311-win_amd64.whl.metadata (1.1 kB)
-2026-06-16T20:12:13.8422759Z Collecting winrt-windows-foundation (from winocr>=0.0.15->-r requirements.txt (line 11))
-2026-06-16T20:12:13.8449393Z   Using cached winrt_windows_foundation-3.2.1-cp311-cp311-win_amd64.whl.metadata (1.0 kB)
-2026-06-16T20:12:13.8886679Z Collecting winrt-windows-globalization (from winocr>=0.0.15->-r requirements.txt (line 11))
-2026-06-16T20:12:13.8914163Z   Using cached winrt_windows_globalization-3.2.1-cp311-cp311-win_amd64.whl.metadata (1.2 kB)
-2026-06-16T20:12:13.9435518Z Collecting winrt-windows-graphics-imaging (from winocr>=0.0.15->-r requirements.txt (line 11))
-2026-06-16T20:12:13.9463804Z   Using cached winrt_windows_graphics_imaging-3.2.1-cp311-cp311-win_amd64.whl.metadata (1.3 kB)
-2026-06-16T20:12:13.9755220Z Collecting winrt-windows-media-ocr (from winocr>=0.0.15->-r requirements.txt (line 11))
-2026-06-16T20:12:13.9782831Z   Using cached winrt_windows_media_ocr-3.2.1-cp311-cp311-win_amd64.whl.metadata (1.3 kB)
-2026-06-16T20:12:14.0130670Z Collecting winrt-windows-storage-streams (from winocr>=0.0.15->-r requirements.txt (line 11))
-2026-06-16T20:12:14.0159107Z   Using cached winrt_windows_storage_streams-3.2.1-cp311-cp311-win_amd64.whl.metadata (1.3 kB)
-2026-06-16T20:12:14.0810333Z Collecting altgraph (from pyinstaller>=6.3.0->-r requirements-build.txt (line 2))
-2026-06-16T20:12:14.0870138Z   Downloading altgraph-0.17.5-py2.py3-none-any.whl.metadata (7.5 kB)
-2026-06-16T20:12:14.1943212Z Collecting pefile>=2022.5.30 (from pyinstaller>=6.3.0->-r requirements-build.txt (line 2))
-2026-06-16T20:12:14.2013671Z   Downloading pefile-2024.8.26-py3-none-any.whl.metadata (1.4 kB)
-2026-06-16T20:12:14.2959599Z Collecting pyinstaller-hooks-contrib>=2026.6 (from pyinstaller>=6.3.0->-r requirements-build.txt (line 2))
-2026-06-16T20:12:14.3018181Z   Downloading pyinstaller_hooks_contrib-2026.6-py3-none-any.whl.metadata (16 kB)
-2026-06-16T20:12:14.4094446Z Collecting pywin32-ctypes>=0.2.1 (from pyinstaller>=6.3.0->-r requirements-build.txt (line 2))
-2026-06-16T20:12:14.4212080Z   Downloading pywin32_ctypes-0.2.3-py3-none-any.whl.metadata (3.9 kB)
-2026-06-16T20:12:14.4954294Z Collecting pycparser (from cffi->sounddevice>=0.5.0->-r requirements.txt (line 3))
-2026-06-16T20:12:14.4985147Z   Using cached pycparser-3.0-py3-none-any.whl.metadata (8.2 kB)
-2026-06-16T20:12:14.5261516Z Collecting colorama (from click>=8.4.0->huggingface-hub>=0.21->faster-whisper>=1.0.0->-r requirements.txt (line 7))
-2026-06-16T20:12:14.5288721Z   Using cached colorama-0.4.6-py2.py3-none-any.whl.metadata (17 kB)
-2026-06-16T20:12:14.5610871Z Collecting markdown-it-py>=2.2.0 (from rich>=13.8.0->typer<0.26.0,>=0.20.0->huggingface-hub>=0.21->faster-whisper>=1.0.0->-r requirements.txt (line 7))
-2026-06-16T20:12:14.5636903Z   Using cached markdown_it_py-4.2.0-py3-none-any.whl.metadata (7.4 kB)
-2026-06-16T20:12:14.5967435Z Collecting pygments<3.0.0,>=2.13.0 (from rich>=13.8.0->typer<0.26.0,>=0.20.0->huggingface-hub>=0.21->faster-whisper>=1.0.0->-r requirements.txt (line 7))
-2026-06-16T20:12:14.5993915Z   Using cached pygments-2.20.0-py3-none-any.whl.metadata (2.5 kB)
-2026-06-16T20:12:14.6256550Z Collecting mdurl~=0.1 (from markdown-it-py>=2.2.0->rich>=13.8.0->typer<0.26.0,>=0.20.0->huggingface-hub>=0.21->faster-whisper>=1.0.0->-r requirements.txt (line 7))
-2026-06-16T20:12:14.6282085Z   Using cached mdurl-0.1.2-py3-none-any.whl.metadata (1.6 kB)
-2026-06-16T20:12:14.6725224Z Collecting winrt-runtime~=3.2.1.0 (from winrt-windows-foundation->winocr>=0.0.15->-r requirements.txt (line 11))
-2026-06-16T20:12:14.6752395Z   Using cached winrt_runtime-3.2.1-cp311-cp311-win_amd64.whl.metadata (780 bytes)
-2026-06-16T20:12:14.6919276Z Using cached pyqt6-6.11.0-cp310-abi3-win_amd64.whl (6.8 MB)
-2026-06-16T20:12:14.6979487Z Using cached pyqt6_qt6-6.11.1-py3-none-win_amd64.whl (78.4 MB)
-2026-06-16T20:12:14.7461790Z Using cached pyqt6_sip-13.11.1-cp311-cp311-win_amd64.whl (54 kB)
-2026-06-16T20:12:14.7488138Z Using cached sounddevice-0.5.5-py3-none-win_amd64.whl (365 kB)
-2026-06-16T20:12:14.7515160Z Using cached numpy-2.4.6-cp311-cp311-win_amd64.whl (12.6 MB)
-2026-06-16T20:12:14.7611335Z Using cached pyperclip-1.11.0-py3-none-any.whl (11 kB)
-2026-06-16T20:12:14.7635155Z Using cached pynput-1.8.2-py2.py3-none-any.whl (92 kB)
-2026-06-16T20:12:14.7657659Z Using cached faster_whisper-1.2.1-py3-none-any.whl (1.1 MB)
-2026-06-16T20:12:14.7686730Z Using cached ctranslate2-4.8.0-cp311-cp311-win_amd64.whl (19.2 MB)
-2026-06-16T20:12:14.7915071Z Downloading onnxruntime-1.27.0-cp311-cp311-win_amd64.whl (13.4 MB)
-2026-06-16T20:12:15.8411153Z    ---------------------------------------- 13.4/13.4 MB 12.5 MB/s  0:00:01
-2026-06-16T20:12:15.8436115Z Using cached pyyaml-6.0.3-cp311-cp311-win_amd64.whl (158 kB)
-2026-06-16T20:12:15.8458712Z Using cached tokenizers-0.23.1-cp310-abi3-win_amd64.whl (2.8 MB)
-2026-06-16T20:12:15.8601557Z Downloading huggingface_hub-1.19.0-py3-none-any.whl (693 kB)
-2026-06-16T20:12:15.9441314Z    ---------------------------------------- 693.4/693.4 kB 5.5 MB/s  0:00:00
-2026-06-16T20:12:15.9464807Z Using cached hf_xet-1.5.1-cp37-abi3-win_amd64.whl (4.0 MB)
-2026-06-16T20:12:15.9554876Z Using cached httpx-0.28.1-py3-none-any.whl (73 kB)
-2026-06-16T20:12:15.9579943Z Using cached httpcore-1.0.9-py3-none-any.whl (78 kB)
-2026-06-16T20:12:15.9602051Z Using cached typer-0.25.1-py3-none-any.whl (58 kB)
-2026-06-16T20:12:15.9752250Z Downloading sherpa_onnx-1.13.3-cp311-cp311-win_amd64.whl (2.2 MB)
-2026-06-16T20:12:16.0519715Z    ---------------------------------------- 2.2/2.2 MB 31.8 MB/s  0:00:00
-2026-06-16T20:12:16.0640208Z Downloading sherpa_onnx_core-1.13.3-py3-none-win_amd64.whl (15.8 MB)
-2026-06-16T20:12:16.3107401Z    ---------------------------------------- 15.8/15.8 MB 62.0 MB/s  0:00:00
-2026-06-16T20:12:16.3769029Z Using cached soundfile-0.14.0-py2.py3-none-win_amd64.whl (1.0 MB)
-2026-06-16T20:12:16.3801454Z Using cached pillow-12.2.0-cp311-cp311-win_amd64.whl (7.1 MB)
-2026-06-16T20:12:16.3867175Z Using cached winocr-0.0.15-py3-none-any.whl (7.7 kB)
-2026-06-16T20:12:16.3893443Z Using cached yt_dlp-2026.6.9-py3-none-any.whl (3.2 MB)
-2026-06-16T20:12:16.3939119Z Using cached certifi-2026.5.20-py3-none-any.whl (134 kB)
-2026-06-16T20:12:16.4086927Z Downloading pyinstaller-6.21.0-py3-none-win_amd64.whl (1.4 MB)
-2026-06-16T20:12:16.4725181Z    ---------------------------------------- 1.4/1.4 MB 18.3 MB/s  0:00:00
-2026-06-16T20:12:16.4751738Z Using cached annotated_doc-0.0.4-py3-none-any.whl (5.3 kB)
-2026-06-16T20:12:16.4777502Z Using cached av-17.1.0-cp311-abi3-win_amd64.whl (28.0 MB)
-2026-06-16T20:12:16.4960198Z Using cached cffi-2.0.0-cp311-cp311-win_amd64.whl (182 kB)
-2026-06-16T20:12:16.5017597Z Using cached click-8.4.1-py3-none-any.whl (116 kB)
-2026-06-16T20:12:16.5082205Z Downloading filelock-3.29.4-py3-none-any.whl (42 kB)
-2026-06-16T20:12:16.5517220Z Downloading fsspec-2026.6.0-py3-none-any.whl (203 kB)
-2026-06-16T20:12:16.5999060Z Using cached h11-0.16.0-py3-none-any.whl (37 kB)
-2026-06-16T20:12:16.6021386Z Using cached packaging-26.2-py3-none-any.whl (100 kB)
-2026-06-16T20:12:16.6084919Z Downloading pefile-2024.8.26-py3-none-any.whl (74 kB)
-2026-06-16T20:12:16.6671232Z Downloading protobuf-7.35.1-cp310-abi3-win_amd64.whl (439 kB)
-2026-06-16T20:12:16.7408052Z Downloading pyinstaller_hooks_contrib-2026.6-py3-none-any.whl (457 kB)
-2026-06-16T20:12:16.8015936Z Downloading pywin32_ctypes-0.2.3-py3-none-any.whl (30 kB)
-2026-06-16T20:12:16.8815325Z Using cached rich-15.0.0-py3-none-any.whl (310 kB)
-2026-06-16T20:12:16.8845167Z Using cached pygments-2.20.0-py3-none-any.whl (1.2 MB)
-2026-06-16T20:12:16.8877360Z Using cached markdown_it_py-4.2.0-py3-none-any.whl (91 kB)
-2026-06-16T20:12:16.8900210Z Using cached mdurl-0.1.2-py3-none-any.whl (10.0 kB)
-2026-06-16T20:12:16.8922046Z Using cached shellingham-1.5.4-py2.py3-none-any.whl (9.8 kB)
-2026-06-16T20:12:16.8944471Z Using cached tqdm-4.68.2-py3-none-any.whl (78 kB)
-2026-06-16T20:12:16.8966722Z Using cached typing_extensions-4.15.0-py3-none-any.whl (44 kB)
-2026-06-16T20:12:16.9030596Z Downloading altgraph-0.17.5-py2.py3-none-any.whl (21 kB)
-2026-06-16T20:12:16.9606359Z Downloading anyio-4.14.0-py3-none-any.whl (123 kB)
-2026-06-16T20:12:17.0346781Z Using cached idna-3.18-py3-none-any.whl (65 kB)
-2026-06-16T20:12:17.0372136Z Using cached colorama-0.4.6-py2.py3-none-any.whl (25 kB)
-2026-06-16T20:12:17.0394356Z Using cached flatbuffers-25.12.19-py2.py3-none-any.whl (26 kB)
-2026-06-16T20:12:17.0415708Z Using cached pycparser-3.0-py3-none-any.whl (48 kB)
-2026-06-16T20:12:17.0437508Z Using cached six-1.17.0-py2.py3-none-any.whl (11 kB)
-2026-06-16T20:12:17.0459432Z Using cached winrt_windows_foundation-3.2.1-cp311-cp311-win_amd64.whl (118 kB)
-2026-06-16T20:12:17.0482679Z Using cached winrt_runtime-3.2.1-cp311-cp311-win_amd64.whl (242 kB)
-2026-06-16T20:12:17.0506859Z Using cached winrt_windows_foundation_collections-3.2.1-cp311-cp311-win_amd64.whl (70 kB)
-2026-06-16T20:12:17.0527650Z Using cached winrt_windows_globalization-3.2.1-cp311-cp311-win_amd64.whl (138 kB)
-2026-06-16T20:12:17.0607151Z Using cached winrt_windows_graphics_imaging-3.2.1-cp311-cp311-win_amd64.whl (144 kB)
-2026-06-16T20:12:17.0633971Z Using cached winrt_windows_media_ocr-3.2.1-cp311-cp311-win_amd64.whl (42 kB)
-2026-06-16T20:12:17.0656079Z Using cached winrt_windows_storage_streams-3.2.1-cp311-cp311-win_amd64.whl (132 kB)
-2026-06-16T20:12:17.5773731Z Installing collected packages: sherpa-onnx-core, PyQt6-Qt6, pyperclip, flatbuffers, altgraph, yt-dlp, typing-extensions, six, sherpa-onnx, shellingham, pyyaml, pywin32-ctypes, PyQt6-sip, pygments, pycparser, protobuf, Pillow, pefile, packaging, numpy, mdurl, idna, hf-xet, h11, fsspec, filelock, colorama, certifi, av, annotated-doc, winrt-runtime, tqdm, PyQt6, pynput, pyinstaller-hooks-contrib, onnxruntime, markdown-it-py, httpcore, ctranslate2, click, cffi, anyio, winrt-windows-storage-streams, winrt-windows-media-ocr, winrt-windows-graphics-imaging, winrt-windows-globalization, winrt-windows-foundation-collections, winrt-windows-foundation, soundfile, sounddevice, rich, pyinstaller, httpx, winocr, typer, huggingface-hub, tokenizers, faster-whisper
-2026-06-16T20:12:33.5114089Z 
-2026-06-16T20:12:33.5147098Z Successfully installed Pillow-12.2.0 PyQt6-6.11.0 PyQt6-Qt6-6.11.1 PyQt6-sip-13.11.1 altgraph-0.17.5 annotated-doc-0.0.4 anyio-4.14.0 av-17.1.0 certifi-2026.5.20 cffi-2.0.0 click-8.4.1 colorama-0.4.6 ctranslate2-4.8.0 faster-whisper-1.2.1 filelock-3.29.4 flatbuffers-25.12.19 fsspec-2026.6.0 h11-0.16.0 hf-xet-1.5.1 httpcore-1.0.9 httpx-0.28.1 huggingface-hub-1.19.0 idna-3.18 markdown-it-py-4.2.0 mdurl-0.1.2 numpy-2.4.6 onnxruntime-1.27.0 packaging-26.2 pefile-2024.8.26 protobuf-7.35.1 pycparser-3.0 pygments-2.20.0 pyinstaller-6.21.0 pyinstaller-hooks-contrib-2026.6 pynput-1.8.2 pyperclip-1.11.0 pywin32-ctypes-0.2.3 pyyaml-6.0.3 rich-15.0.0 shellingham-1.5.4 sherpa-onnx-1.13.3 sherpa-onnx-core-1.13.3 six-1.17.0 sounddevice-0.5.5 soundfile-0.14.0 tokenizers-0.23.1 tqdm-4.68.2 typer-0.25.1 typing-extensions-4.15.0 winocr-0.0.15 winrt-runtime-3.2.1 winrt-windows-foundation-3.2.1 winrt-windows-foundation-collections-3.2.1 winrt-windows-globalization-3.2.1 winrt-windows-graphics-imaging-3.2.1 winrt-windows-media-ocr-3.2.1 winrt-windows-storage-streams-3.2.1 yt-dlp-2026.6.9
-2026-06-16T20:12:34.4620901Z ##[group]Run ./build/install_nsis.ps1
-2026-06-16T20:12:34.4621281Z [36;1m./build/install_nsis.ps1[0m
-2026-06-16T20:12:34.4690546Z shell: C:\Program Files\PowerShell\7\pwsh.EXE -command ". '{0}'"
-2026-06-16T20:12:34.4690987Z env:
-2026-06-16T20:12:34.4691459Z   pythonLocation: C:\hostedtoolcache\windows\Python\3.11.9\x64
-2026-06-16T20:12:34.4691957Z   PKG_CONFIG_PATH: C:\hostedtoolcache\windows\Python\3.11.9\x64/lib/pkgconfig
-2026-06-16T20:12:34.4692405Z   Python_ROOT_DIR: C:\hostedtoolcache\windows\Python\3.11.9\x64
-2026-06-16T20:12:34.4692801Z   Python2_ROOT_DIR: C:\hostedtoolcache\windows\Python\3.11.9\x64
-2026-06-16T20:12:34.4693192Z   Python3_ROOT_DIR: C:\hostedtoolcache\windows\Python\3.11.9\x64
-2026-06-16T20:12:34.4693504Z ##[endgroup]
-2026-06-16T20:12:35.7669415Z Versuche NSIS via winget...
-2026-06-16T20:12:36.8967610Z 
-2026-06-16T20:12:38.8668507Z    - 
-2026-06-16T20:12:38.8669206Z                                                                                                                         
-2026-06-16T20:12:38.8669685Z 
-2026-06-16T20:12:38.8670252Z   █████████▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒  1024 KB / 3.04 MB
-2026-06-16T20:12:38.8670778Z   ███████████████████▒▒▒▒▒▒▒▒▒▒▒  2.00 MB / 3.04 MB
-2026-06-16T20:12:38.8671287Z   █████████████████████████████▒  3.00 MB / 3.04 MB
-2026-06-16T20:12:38.8671776Z   ██████████████████████████████  3.04 MB / 3.04 MB
-2026-06-16T20:12:38.8672305Z                                                                                                                         
-2026-06-16T20:12:38.8672692Z 
-2026-06-16T20:12:38.8672883Z   ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒  0%
-2026-06-16T20:12:38.8673292Z   ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒  0%
-2026-06-16T20:12:38.8673716Z   ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒  1%
-2026-06-16T20:12:38.8674131Z   ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒  2%
-2026-06-16T20:12:38.8674585Z   ██████████████████▒▒▒▒▒▒▒▒▒▒▒▒  62%
-2026-06-16T20:12:38.8674964Z   ████████████████████▒▒▒▒▒▒▒▒▒▒  69%
-2026-06-16T20:12:38.8675316Z   █████████████████████▒▒▒▒▒▒▒▒▒  71%
-2026-06-16T20:12:38.8675628Z   ████████████████████████▒▒▒▒▒▒  81%
-2026-06-16T20:12:38.8675905Z   ███████████████████████████▒▒▒  91%
-2026-06-16T20:12:38.8676182Z   ███████████████████████████▒▒▒  91%
-2026-06-16T20:12:38.8676470Z   ██████████████████████████████  100%
-2026-06-16T20:12:38.8676815Z                                                                                                                         
-2026-06-16T20:12:38.8677305Z The `msstore` source requires that you view the following agreements before using.
-2026-06-16T20:12:38.8677859Z Terms of Transaction: https://aka.ms/microsoft-store-terms-of-transaction
-2026-06-16T20:12:38.8678553Z The source requires the current machine's 2-letter geographic region to be sent to the backend service to function properly (ex. "US").
-2026-06-16T20:12:38.8679041Z 
-2026-06-16T20:12:39.0571203Z 
-2026-06-16T20:12:40.2001192Z    - 
-2026-06-16T20:12:40.2001683Z                                                                                                                         
-2026-06-16T20:12:40.2002176Z Found Nullsoft Install System [NSIS.NSIS] Version 3.12
-2026-06-16T20:12:40.2002530Z This application is licensed to you by its owner.
-2026-06-16T20:12:40.2002989Z Microsoft is not responsible for, nor does it grant any licenses to, third-party packages.
-2026-06-16T20:12:40.2219901Z Downloading https://sourceforge.net/projects/nsis/files/NSIS%203/3.12/nsis-3.12-setup.exe/download
-2026-06-16T20:12:40.3223182Z 
-2026-06-16T20:12:40.5740312Z    - 
-2026-06-16T20:12:40.8392393Z    \ 
-2026-06-16T20:12:41.0927103Z    | 
-2026-06-16T20:12:41.3441285Z    / 
-2026-06-16T20:12:41.5952283Z    - 
-2026-06-16T20:12:41.8464763Z    \ 
-2026-06-16T20:12:42.0975254Z    | 
-2026-06-16T20:12:42.3541136Z    / 
-2026-06-16T20:12:42.3541728Z                                                                                                                         
-2026-06-16T20:12:42.3542119Z 
-2026-06-16T20:12:42.3546241Z   █████████▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒   506 KB / 1.49 MB
-2026-06-16T20:12:42.3546973Z   ██████████████████████████████  1.49 MB / 1.49 MB
-2026-06-16T20:12:42.3547421Z Successfully verified installer hash
-2026-06-16T20:12:42.5550946Z Starting package install...
-2026-06-16T20:12:42.6569381Z 
-2026-06-16T20:12:42.9086527Z    - 
-2026-06-16T20:12:43.1676458Z    \ 
-2026-06-16T20:12:43.4192668Z    | 
-2026-06-16T20:12:43.6708892Z    / 
-2026-06-16T20:12:43.9279453Z    - 
-2026-06-16T20:12:44.1816036Z    \ 
-2026-06-16T20:12:44.4343568Z    | 
-2026-06-16T20:12:44.6858688Z    / 
-2026-06-16T20:12:44.9405914Z    - 
-2026-06-16T20:12:45.1941802Z    \ 
-2026-06-16T20:12:45.1942203Z                                                                                                                         
-2026-06-16T20:12:45.1942601Z Successfully installed
-2026-06-16T20:12:46.4787543Z NSIS installiert: D:\a\SurepriseAi\SurepriseAi\.tools\NSIS\makensis.exe
-2026-06-16T20:12:46.5496272Z ##[group]Run $ver = $env:RELEASE_VERSION -replace '^v',''
-2026-06-16T20:12:46.5496845Z [36;1m$ver = $env:RELEASE_VERSION -replace '^v',''[0m
-2026-06-16T20:12:46.5497197Z [36;1mWrite-Host "Baue Version $ver"[0m
-2026-06-16T20:12:46.5497556Z [36;1m./build/build.ps1 -Installer -SkipPip -Version $ver[0m
-2026-06-16T20:12:46.5565568Z shell: C:\Program Files\PowerShell\7\pwsh.EXE -command ". '{0}'"
-2026-06-16T20:12:46.5565931Z env:
-2026-06-16T20:12:46.5566214Z   pythonLocation: C:\hostedtoolcache\windows\Python\3.11.9\x64
-2026-06-16T20:12:46.5567264Z   PKG_CONFIG_PATH: C:\hostedtoolcache\windows\Python\3.11.9\x64/lib/pkgconfig
-2026-06-16T20:12:46.5567955Z   Python_ROOT_DIR: C:\hostedtoolcache\windows\Python\3.11.9\x64
-2026-06-16T20:12:46.5568571Z   Python2_ROOT_DIR: C:\hostedtoolcache\windows\Python\3.11.9\x64
-2026-06-16T20:12:46.5569422Z   Python3_ROOT_DIR: C:\hostedtoolcache\windows\Python\3.11.9\x64
-2026-06-16T20:12:46.5573928Z   RELEASE_VERSION: v0.1.33
-2026-06-16T20:12:46.5575167Z ##[endgroup]
-2026-06-16T20:12:46.9147000Z Baue Version 0.1.33
-2026-06-16T20:12:46.9924525Z ==> SurepriseAi Build (Root: D:\a\SurepriseAi\SurepriseAi)
-2026-06-16T20:12:46.9972836Z ==> Version: 0.1.33
-2026-06-16T20:12:46.9995610Z ==> Installer-Grafiken...
-2026-06-16T20:12:47.2181725Z [Installer] App_icon.png fehlt � Fallback-Icon generiert
-2026-06-16T20:12:47.2182247Z [Installer] Assets erzeugt in D:\a\SurepriseAi\SurepriseAi\build\assets
-2026-06-16T20:12:47.2387200Z ==> PyInstaller...
-2026-06-16T20:12:47.5423493Z 184 INFO: PyInstaller: 6.21.0, contrib hooks: 2026.6
-2026-06-16T20:12:47.5423885Z 184 INFO: Python: 3.11.9
-2026-06-16T20:12:47.5509227Z 192 INFO: Platform: Windows-10-10.0.26100-SP0
-2026-06-16T20:12:47.5509824Z 192 INFO: Python environment: D:\a\SurepriseAi\SurepriseAi\venv
-2026-06-16T20:12:47.5538729Z 196 INFO: Removing temporary files and cleaning cache in C:\Users\runneradmin\AppData\Local\pyinstaller
-2026-06-16T20:12:47.5591949Z 201 INFO: Module search paths (PYTHONPATH):
-2026-06-16T20:12:47.5592418Z ['D:\\a\\SurepriseAi\\SurepriseAi',
-2026-06-16T20:12:47.5593239Z  'C:\\hostedtoolcache\\windows\\Python\\3.11.9\\x64\\python311.zip',
-2026-06-16T20:12:47.5593668Z  'C:\\hostedtoolcache\\windows\\Python\\3.11.9\\x64\\DLLs',
-2026-06-16T20:12:47.5594033Z  'C:\\hostedtoolcache\\windows\\Python\\3.11.9\\x64\\Lib',
-2026-06-16T20:12:47.5594378Z  'C:\\hostedtoolcache\\windows\\Python\\3.11.9\\x64',
-2026-06-16T20:12:47.5594684Z  'D:\\a\\SurepriseAi\\SurepriseAi\\venv',
-2026-06-16T20:12:47.5595022Z  'D:\\a\\SurepriseAi\\SurepriseAi\\venv\\Lib\\site-packages',
-2026-06-16T20:12:47.5595353Z  'D:\\a\\SurepriseAi\\SurepriseAi']
-2026-06-16T20:12:48.1895009Z 832 INFO: Appending 'datas' from .spec
-2026-06-16T20:12:48.1907607Z 832 INFO: checking Analysis
-2026-06-16T20:12:48.1908710Z 832 INFO: Building Analysis because Analysis-00.toc is non existent
-2026-06-16T20:12:48.1909315Z 832 INFO: Looking for Python shared library...
-2026-06-16T20:12:48.1910081Z 832 INFO: Using Python shared library: C:\hostedtoolcache\windows\Python\3.11.9\x64\python311.dll
-2026-06-16T20:12:48.1910690Z 832 INFO: Running Analysis Analysis-00.toc
-2026-06-16T20:12:48.1911133Z 832 INFO: Target bytecode optimization level: 0
-2026-06-16T20:12:48.1911579Z 834 INFO: Initializing module dependency graph...
-2026-06-16T20:12:48.1921289Z 834 INFO: Initializing module graph hook caches...
-2026-06-16T20:12:48.2075843Z 849 INFO: Analyzing modules for base_library.zip ...
-2026-06-16T20:12:49.1201975Z 1762 INFO: Processing standard module hook 'hook-heapq.py' from 'D:\\a\\SurepriseAi\\SurepriseAi\\venv\\Lib\\site-packages\\PyInstaller\\hooks'
-2026-06-16T20:12:49.2210245Z 1863 INFO: Processing standard module hook 'hook-encodings.py' from 'D:\\a\\SurepriseAi\\SurepriseAi\\venv\\Lib\\site-packages\\PyInstaller\\hooks'
-2026-06-16T20:12:51.1953770Z 3837 INFO: Processing standard module hook 'hook-math.py' from 'D:\\a\\SurepriseAi\\SurepriseAi\\venv\\Lib\\site-packages\\PyInstaller\\hooks'
-2026-06-16T20:12:51.3142429Z 3955 INFO: Processing standard module hook 'hook-pickle.py' from 'D:\\a\\SurepriseAi\\SurepriseAi\\venv\\Lib\\site-packages\\PyInstaller\\hooks'
-2026-06-16T20:12:53.7628788Z 6405 INFO: Caching module dependency graph...
-2026-06-16T20:12:53.8027924Z 6444 INFO: Analyzing D:\a\SurepriseAi\SurepriseAi\run.py
-2026-06-16T20:12:53.8087660Z 6451 INFO: Processing standard module hook 'hook-certifi.py' from 'D:\\a\\SurepriseAi\\SurepriseAi\\venv\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'
-2026-06-16T20:12:53.8188904Z 6460 INFO: Processing standard module hook 'hook-PyQt6.py' from 'D:\\a\\SurepriseAi\\SurepriseAi\\venv\\Lib\\site-packages\\PyInstaller\\hooks'
-2026-06-16T20:12:54.5128789Z 7155 INFO: Processing standard module hook 'hook-PyQt6.QtWidgets.py' from 'D:\\a\\SurepriseAi\\SurepriseAi\\venv\\Lib\\site-packages\\PyInstaller\\hooks'
-2026-06-16T20:12:57.8544340Z 10496 INFO: Processing standard module hook 'hook-PyQt6.QtCore.py' from 'D:\\a\\SurepriseAi\\SurepriseAi\\venv\\Lib\\site-packages\\PyInstaller\\hooks'
-2026-06-16T20:13:03.4702086Z 16111 INFO: Processing standard module hook 'hook-PyQt6.QtGui.py' from 'D:\\a\\SurepriseAi\\SurepriseAi\\venv\\Lib\\site-packages\\PyInstaller\\hooks'
-2026-06-16T20:13:26.6510597Z 39291 INFO: Processing standard module hook 'hook-difflib.py' from 'D:\\a\\SurepriseAi\\SurepriseAi\\venv\\Lib\\site-packages\\PyInstaller\\hooks'
-2026-06-16T20:13:26.8854818Z 39527 INFO: Processing standard module hook 'hook-PyQt6.QtMultimedia.py' from 'D:\\a\\SurepriseAi\\SurepriseAi\\venv\\Lib\\site-packages\\PyInstaller\\hooks'
-2026-06-16T20:13:28.8989059Z 41541 INFO: Processing standard module hook 'hook-PyQt6.QtNetwork.py' from 'D:\\a\\SurepriseAi\\SurepriseAi\\venv\\Lib\\site-packages\\PyInstaller\\hooks'
-2026-06-16T20:13:33.0959564Z 45738 INFO: Processing standard module hook 'hook-numpy.py' from 'D:\\a\\SurepriseAi\\SurepriseAi\\venv\\Lib\\site-packages\\PyInstaller\\hooks'
-2026-06-16T20:13:33.3631538Z 46005 INFO: Processing pre-safe-import-module hook 'hook-typing_extensions.py' from 'D:\\a\\SurepriseAi\\SurepriseAi\\venv\\Lib\\site-packages\\PyInstaller\\hooks\\pre_safe_import_module'
-2026-06-16T20:13:33.3637664Z 46005 INFO: SetuptoolsInfo: initializing cached setuptools info...
-2026-06-16T20:13:34.2849877Z 46926 INFO: Processing standard module hook 'hook-multiprocessing.util.py' from 'D:\\a\\SurepriseAi\\SurepriseAi\\venv\\Lib\\site-packages\\PyInstaller\\hooks'
-2026-06-16T20:13:34.3831284Z 47026 INFO: Processing standard module hook 'hook-xml.py' from 'D:\\a\\SurepriseAi\\SurepriseAi\\venv\\Lib\\site-packages\\PyInstaller\\hooks'
-2026-06-16T20:13:34.7114609Z 47354 INFO: Processing standard module hook 'hook-_ctypes.py' from 'D:\\a\\SurepriseAi\\SurepriseAi\\venv\\Lib\\site-packages\\PyInstaller\\hooks'
-2026-06-16T20:13:35.7568894Z 48398 INFO: Processing standard module hook 'hook-sysconfig.py' from 'D:\\a\\SurepriseAi\\SurepriseAi\\venv\\Lib\\site-packages\\PyInstaller\\hooks'
-2026-06-16T20:13:35.8517754Z 48493 INFO: Processing standard module hook 'hook-platform.py' from 'D:\\a\\SurepriseAi\\SurepriseAi\\venv\\Lib\\site-packages\\PyInstaller\\hooks'
-2026-06-16T20:13:36.2858714Z 48928 INFO: Processing standard module hook 'hook-webbrowser.py' from 'D:\\a\\SurepriseAi\\SurepriseAi\\venv\\Lib\\site-packages\\PyInstaller\\hooks'
-2026-06-16T20:13:37.5965151Z 50239 INFO: Processing standard module hook 'hook-yt_dlp.py' from 'D:\\a\\SurepriseAi\\SurepriseAi\\venv\\Lib\\site-packages\\yt_dlp\\__pyinstaller'
-2026-06-16T20:13:37.7559380Z 50398 WARNING: collect_data_files - skipping data collection for module 'curl_cffi' as it is not a package.
-2026-06-16T20:13:37.7563869Z 50398 WARNING: collect_data_files - skipping data collection for module 'yt_dlp_ejs' as it is not a package.
-2026-06-16T20:13:37.9420389Z 50584 INFO: Processing standard module hook 'hook-xml.etree.cElementTree.py' from 'D:\\a\\SurepriseAi\\SurepriseAi\\venv\\Lib\\site-packages\\PyInstaller\\hooks'
-2026-06-16T20:13:38.2891154Z 50931 INFO: Processing standard module hook 'hook-sqlite3.py' from 'D:\\a\\SurepriseAi\\SurepriseAi\\venv\\Lib\\site-packages\\PyInstaller\\hooks'
-2026-06-16T20:13:45.5833606Z 58224 INFO: Processing standard module hook 'hook-pynput.py' from 'D:\\a\\SurepriseAi\\SurepriseAi\\venv\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'
-2026-06-16T20:13:45.8840711Z 58526 INFO: Processing pre-safe-import-module hook 'hook-six.moves.py' from 'D:\\a\\SurepriseAi\\SurepriseAi\\venv\\Lib\\site-packages\\PyInstaller\\hooks\\pre_safe_import_module'
-2026-06-16T20:13:46.0130600Z 58655 INFO: Processing standard module hook 'hook-sounddevice.py' from 'D:\\a\\SurepriseAi\\SurepriseAi\\venv\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'
-2026-06-16T20:13:46.1269921Z 58768 INFO: Processing standard module hook 'hook-av.py' from 'D:\\a\\SurepriseAi\\SurepriseAi\\venv\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'
-2026-06-16T20:13:46.7530635Z 59395 INFO: Processing standard module hook 'hook-PIL.py' from 'D:\\a\\SurepriseAi\\SurepriseAi\\venv\\Lib\\site-packages\\PyInstaller\\hooks'
-2026-06-16T20:13:46.8501276Z 59492 INFO: Processing standard module hook 'hook-PIL.Image.py' from 'D:\\a\\SurepriseAi\\SurepriseAi\\venv\\Lib\\site-packages\\PyInstaller\\hooks'
-2026-06-16T20:13:47.2653888Z 59907 INFO: Processing standard module hook 'hook-PIL.ImageFilter.py' from 'D:\\a\\SurepriseAi\\SurepriseAi\\venv\\Lib\\site-packages\\PyInstaller\\hooks'
-2026-06-16T20:13:47.8022531Z 60444 INFO: Processing pre-safe-import-module hook 'hook-tensorflow.py' from 'D:\\a\\SurepriseAi\\SurepriseAi\\venv\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\pre_safe_import_module'
-2026-06-16T20:13:48.4256633Z 61068 INFO: Processing standard module hook 'hook-anyio.py' from 'D:\\a\\SurepriseAi\\SurepriseAi\\venv\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'
-2026-06-16T20:13:49.8253154Z 62466 INFO: Processing standard module hook 'hook-pygments.py' from 'D:\\a\\SurepriseAi\\SurepriseAi\\venv\\Lib\\site-packages\\PyInstaller\\hooks'
-2026-06-16T20:13:50.8466422Z 63489 INFO: Processing standard module hook 'hook-rich.py' from 'D:\\a\\SurepriseAi\\SurepriseAi\\venv\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'
-2026-06-16T20:13:52.6715574Z 65312 INFO: Processing pre-safe-import-module hook 'hook-importlib_metadata.py' from 'D:\\a\\SurepriseAi\\SurepriseAi\\venv\\Lib\\site-packages\\PyInstaller\\hooks\\pre_safe_import_module'
-2026-06-16T20:13:52.6721759Z 65314 INFO: Processing pre-safe-import-module hook 'hook-importlib_resources.py' from 'D:\\a\\SurepriseAi\\SurepriseAi\\venv\\Lib\\site-packages\\PyInstaller\\hooks\\pre_safe_import_module'
-2026-06-16T20:13:54.0619882Z 66703 INFO: Processing pre-safe-import-module hook 'hook-packaging.py' from 'D:\\a\\SurepriseAi\\SurepriseAi\\venv\\Lib\\site-packages\\PyInstaller\\hooks\\pre_safe_import_module'
-2026-06-16T20:13:54.1249372Z 66767 INFO: Processing standard module hook 'hook-fsspec.py' from 'D:\\a\\SurepriseAi\\SurepriseAi\\venv\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'
-2026-06-16T20:13:54.7300647Z 67372 INFO: Processing pre-safe-import-module hook 'hook-backports.py' from 'D:\\a\\SurepriseAi\\SurepriseAi\\venv\\Lib\\site-packages\\PyInstaller\\hooks\\pre_safe_import_module'
-2026-06-16T20:13:54.9034920Z 67545 INFO: Processing standard module hook 'hook-onnxruntime.py' from 'D:\\a\\SurepriseAi\\SurepriseAi\\venv\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'
-2026-06-16T20:13:55.0068286Z 67649 INFO: Processing standard module hook 'hook-soundfile.py' from 'D:\\a\\SurepriseAi\\SurepriseAi\\venv\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'
-2026-06-16T20:13:55.3869447Z 68029 INFO: Processing module hooks (post-graph stage)...
-2026-06-16T20:13:56.6632281Z 69305 INFO: Processing standard module hook 'hook-PIL.SpiderImagePlugin.py' from 'D:\\a\\SurepriseAi\\SurepriseAi\\venv\\Lib\\site-packages\\PyInstaller\\hooks'
-2026-06-16T20:13:58.8753848Z 71517 INFO: Performing binary vs. data reclassification (199 entries)
-2026-06-16T20:13:58.9283649Z 71571 INFO: Looking for ctypes DLLs
-2026-06-16T20:13:59.3172034Z 71959 INFO: Analyzing run-time hooks ...
-2026-06-16T20:13:59.3303348Z 71972 INFO: Including run-time hook 'pyi_rth_inspect.py' from 'D:\\a\\SurepriseAi\\SurepriseAi\\venv\\Lib\\site-packages\\PyInstaller\\hooks\\rthooks'
-2026-06-16T20:13:59.3327949Z 71974 INFO: Including run-time hook 'pyi_rth_pkgutil.py' from 'D:\\a\\SurepriseAi\\SurepriseAi\\venv\\Lib\\site-packages\\PyInstaller\\hooks\\rthooks'
-2026-06-16T20:13:59.3346553Z 71976 INFO: Including run-time hook 'pyi_rth_multiprocessing.py' from 'D:\\a\\SurepriseAi\\SurepriseAi\\venv\\Lib\\site-packages\\PyInstaller\\hooks\\rthooks'
-2026-06-16T20:13:59.3369862Z 71979 INFO: Including run-time hook 'pyi_rth_pyqt6.py' from 'D:\\a\\SurepriseAi\\SurepriseAi\\venv\\Lib\\site-packages\\PyInstaller\\hooks\\rthooks'
-2026-06-16T20:13:59.3386290Z 71980 INFO: Processing pre-find-module-path hook 'hook-_pyi_rth_utils.py' from 'D:\\a\\SurepriseAi\\SurepriseAi\\venv\\Lib\\site-packages\\PyInstaller\\hooks\\pre_find_module_path'
-2026-06-16T20:13:59.3399379Z 71982 INFO: Processing standard module hook 'hook-_pyi_rth_utils.py' from 'D:\\a\\SurepriseAi\\SurepriseAi\\venv\\Lib\\site-packages\\PyInstaller\\hooks'
-2026-06-16T20:13:59.3852598Z 72026 INFO: Creating base_library.zip...
-2026-06-16T20:13:59.4056195Z 72048 INFO: Looking for dynamic libraries
-2026-06-16T20:14:04.3108120Z 76951 INFO: Extra DLL search directories (AddDllDirectory): ['D:\\a\\SurepriseAi\\SurepriseAi\\venv\\Lib\\site-packages\\PyQt6\\Qt6\\bin', 'D:\\a\\SurepriseAi\\SurepriseAi\\venv\\Lib\\site-packages\\numpy.libs', 'D:\\a\\SurepriseAi\\SurepriseAi\\venv\\Lib\\site-packages\\ctranslate2', 'D:\\a\\SurepriseAi\\SurepriseAi\\venv\\Lib\\site-packages\\ctranslate2/../_rocm_sdk_core/bin', 'D:\\a\\SurepriseAi\\SurepriseAi\\venv\\Lib\\site-packages\\av.libs']
-2026-06-16T20:14:04.3109789Z 76951 INFO: Extra DLL search directories (PATH): []
-2026-06-16T20:14:07.7493945Z 80392 INFO: Warnings written to D:\a\SurepriseAi\SurepriseAi\build\sureprise\warn-sureprise.txt
-2026-06-16T20:14:07.9779543Z 80620 INFO: Graph cross-reference written to D:\a\SurepriseAi\SurepriseAi\build\sureprise\xref-sureprise.html
-2026-06-16T20:14:08.0453263Z 80687 INFO: checking PYZ
-2026-06-16T20:14:08.0453885Z 80687 INFO: Building PYZ because PYZ-00.toc is non existent
-2026-06-16T20:14:08.0454709Z 80687 INFO: Building PYZ (ZlibArchive) D:\a\SurepriseAi\SurepriseAi\build\sureprise\PYZ-00.pyz
-2026-06-16T20:14:09.8456628Z 82487 INFO: Building PYZ (ZlibArchive) D:\a\SurepriseAi\SurepriseAi\build\sureprise\PYZ-00.pyz completed successfully.
-2026-06-16T20:14:09.9129045Z 82554 INFO: checking PKG
-2026-06-16T20:14:09.9130602Z 82554 INFO: Building PKG because PKG-00.toc is non existent
-2026-06-16T20:14:09.9131620Z 82554 INFO: Building PKG (CArchive) SurepriseAi.pkg
-2026-06-16T20:14:09.9384941Z 82580 INFO: Building PKG (CArchive) SurepriseAi.pkg completed successfully.
-2026-06-16T20:14:09.9392980Z 82580 INFO: Bootloader D:\a\SurepriseAi\SurepriseAi\venv\Lib\site-packages\PyInstaller\bootloader\Windows-64bit-intel\runw.exe
-2026-06-16T20:14:09.9394185Z 82580 INFO: checking EXE
-2026-06-16T20:14:09.9395123Z 82580 INFO: Building EXE because EXE-00.toc is non existent
-2026-06-16T20:14:09.9395691Z 82580 INFO: Building EXE from EXE-00.toc
-2026-06-16T20:14:09.9397100Z 82580 INFO: Copying bootloader EXE to D:\a\SurepriseAi\SurepriseAi\build\sureprise\SurepriseAi.exe
-2026-06-16T20:14:09.9417694Z 82582 INFO: Copying icon to EXE
-2026-06-16T20:14:09.9435943Z 82586 INFO: Copying 0 resources to EXE
-2026-06-16T20:14:09.9436709Z 82586 INFO: Embedding manifest in EXE
-2026-06-16T20:14:09.9452199Z 82586 INFO: Appending PKG archive to EXE
-2026-06-16T20:14:09.9551858Z 82596 INFO: Fixing EXE headers
-2026-06-16T20:14:10.0645393Z 82706 INFO: Building EXE from EXE-00.toc completed successfully.
-2026-06-16T20:14:10.0688570Z 82711 INFO: checking COLLECT
-2026-06-16T20:14:10.0689643Z 82711 INFO: Building COLLECT because COLLECT-00.toc is non existent
-2026-06-16T20:14:10.0692381Z 82711 INFO: Building COLLECT COLLECT-00.toc
-2026-06-16T20:14:10.6593706Z 83301 INFO: Building COLLECT COLLECT-00.toc completed successfully.
-2026-06-16T20:14:10.6672952Z 83309 INFO: Build complete! The results are available in: D:\a\SurepriseAi\SurepriseAi\dist
-2026-06-16T20:14:10.6683000Z Adding imports: ['yt_dlp.compat._legacy', 'yt_dlp.compat._deprecated', 'yt_dlp.utils._legacy', 'yt_dlp.utils._deprecated', 'Cryptodome', 'mutagen', 'brotli', 'certifi', 'secretstorage', 'curl_cffi']
-2026-06-16T20:14:10.9371671Z ==> Bundle fertig: D:\a\SurepriseAi\SurepriseAi\dist\SurepriseAi
-2026-06-16T20:14:10.9447059Z ==> NSIS Setup.exe (Wizard, wie Hermes Desktop)...
-2026-06-16T20:14:11.1078911Z Command line defined: "APP_VERSION=0.1.33"
-2026-06-16T20:14:11.1079760Z Processing config: D:\a\SurepriseAi\SurepriseAi\.tools\NSIS\nsisconf.nsh
-2026-06-16T20:14:11.1337987Z Processing script file: "build\installer.nsi" (ACP)
-2026-06-16T20:15:08.2145809Z File: "..\App_icon.png" -> no files found.
-2026-06-16T20:15:08.2149071Z Usage: File [/nonfatal] [/a] ([/r] [/x filespec [...]] filespec [...] |
-2026-06-16T20:15:08.2149722Z    /oname=outfile one_file_only)
-2026-06-16T20:15:08.2150455Z Error in script "build\installer.nsi" on line 98 -- aborting creation process
-2026-06-16T20:15:08.2618777Z ##[error]Process completed with exit code 1.
-2026-06-16T20:15:08.2901357Z Post job cleanup.
-2026-06-16T20:15:08.5384823Z [command]"C:\Program Files\Git\bin\git.exe" version
-2026-06-16T20:15:08.5728174Z git version 2.54.0.windows.1
-2026-06-16T20:15:08.5817580Z Temporarily overriding HOME='D:\a\_temp\2758680f-6bea-4679-bfdc-9a923631cc69' before making global git config changes
-2026-06-16T20:15:08.5818784Z Adding repository directory to the temporary git global config as a safe directory
-2026-06-16T20:15:08.5832880Z [command]"C:\Program Files\Git\bin\git.exe" config --global --add safe.directory D:\a\SurepriseAi\SurepriseAi
-2026-06-16T20:15:08.6233843Z [command]"C:\Program Files\Git\bin\git.exe" config --local --name-only --get-regexp core\.sshCommand
-2026-06-16T20:15:08.6601694Z [command]"C:\Program Files\Git\bin\git.exe" submodule foreach --recursive "sh -c \"git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :\""
-2026-06-16T20:15:09.2594598Z [command]"C:\Program Files\Git\bin\git.exe" config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
-2026-06-16T20:15:09.2898604Z http.https://github.com/.extraheader
-2026-06-16T20:15:09.2950396Z [command]"C:\Program Files\Git\bin\git.exe" config --local --unset-all http.https://github.com/.extraheader
-2026-06-16T20:15:09.3286124Z [command]"C:\Program Files\Git\bin\git.exe" submodule foreach --recursive "sh -c \"git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :\""
-2026-06-16T20:15:09.8992156Z [command]"C:\Program Files\Git\bin\git.exe" config --local --name-only --get-regexp ^includeIf\.gitdir:
-2026-06-16T20:15:09.9321242Z [command]"C:\Program Files\Git\bin\git.exe" submodule foreach --recursive "git config --local --show-origin --name-only --get-regexp remote.origin.url"
-2026-06-16T20:15:10.5548749Z Cleaning up orphan processes
-2026-06-16T20:15:10.6107308Z ##[warning]Node.js 20 actions are deprecated. The following actions are running on Node.js 20 and may not work as expected: actions/checkout@v4, actions/setup-python@v5. Actions will be forced to run with Node.js 24 by default starting June 16th, 2026. Node.js 20 will be removed from the runner on September 16th, 2026. Please check if updated versions of these actions are available that support Node.js 24. To opt into Node.js 24 now, set the FORCE_JAVASCRIPT_ACTIONS_TO_NODE24=true environment variable on the runner or in your workflow file. Once Node.js 24 becomes the default, you can temporarily opt out by setting ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+2026-06-16T21:56:59.8106398Z   check-latest: false
+2026-06-16T21:56:59.8109420Z   token: ***
+2026-06-16T21:56:59.8109655Z   update-environment: true
+2026-06-16T21:56:59.8109927Z   allow-prereleases: false
+2026-06-16T21:56:59.8110151Z   freethreaded: false
+2026-06-16T21:56:59.8110348Z ##[endgroup]
+2026-06-16T21:57:00.1101167Z ##[group]Installed versions
+2026-06-16T21:57:00.1280584Z Successfully set up CPython (3.11.9)
+2026-06-16T21:57:00.1281753Z ##[endgroup]
+2026-06-16T21:57:09.1154088Z Cache hit for: setup-python-Windows-x64-python-3.11.9-pip-29c4067ce5787fc5461c2c228cba2f9c0578630eacc7b9eb94f92e19cc8e4b48
+2026-06-16T21:57:10.4206319Z Received 29360128 of 208185944 (14.1%), 28.0 MBs/sec
+2026-06-16T21:57:11.4358433Z Received 138412032 of 208185944 (66.5%), 65.4 MBs/sec
+2026-06-16T21:57:11.8591011Z Received 208185944 of 208185944 (100.0%), 81.4 MBs/sec
+2026-06-16T21:57:11.8597505Z Cache Size: ~199 MB (208185944 B)
+2026-06-16T21:57:11.8643524Z [command]"C:\Program Files\Git\usr\bin\tar.exe" -xf D:/a/_temp/c792835c-00d0-445f-b65a-bfdf26d08d30/cache.tzst -P -C D:/a/SurepriseAi/SurepriseAi --force-local --use-compress-program "zstd -d"
+2026-06-16T21:57:13.2466056Z Cache restored successfully
+2026-06-16T21:57:13.2650631Z Cache restored from key: setup-python-Windows-x64-python-3.11.9-pip-29c4067ce5787fc5461c2c228cba2f9c0578630eacc7b9eb94f92e19cc8e4b48
+2026-06-16T21:57:13.3074984Z ##[group]Run python -m pip install --upgrade pip
+2026-06-16T21:57:13.3075441Z [36;1mpython -m pip install --upgrade pip[0m
+2026-06-16T21:57:13.3075761Z [36;1mpip install -r requirements.txt[0m
+2026-06-16T21:57:13.3186760Z shell: C:\Program Files\PowerShell\7\pwsh.EXE -command ". '{0}'"
+2026-06-16T21:57:13.3187131Z env:
+2026-06-16T21:57:13.3187399Z   pythonLocation: C:\hostedtoolcache\windows\Python\3.11.9\x64
+2026-06-16T21:57:13.3187871Z   PKG_CONFIG_PATH: C:\hostedtoolcache\windows\Python\3.11.9\x64/lib/pkgconfig
+2026-06-16T21:57:13.3188326Z   Python_ROOT_DIR: C:\hostedtoolcache\windows\Python\3.11.9\x64
+2026-06-16T21:57:13.3188745Z   Python2_ROOT_DIR: C:\hostedtoolcache\windows\Python\3.11.9\x64
+2026-06-16T21:57:13.3189132Z   Python3_ROOT_DIR: C:\hostedtoolcache\windows\Python\3.11.9\x64
+2026-06-16T21:57:13.3189439Z ##[endgroup]
+2026-06-16T21:57:21.0525383Z Requirement already satisfied: pip in C:\hostedtoolcache\windows\Python\3.11.9\x64\Lib\site-packages (26.1.2)
+2026-06-16T21:57:22.8832802Z Collecting PyQt6>=6.6.0 (from -r requirements.txt (line 2))
+2026-06-16T21:57:22.8861307Z   Using cached pyqt6-6.11.0-cp310-abi3-win_amd64.whl.metadata (2.2 kB)
+2026-06-16T21:57:22.9139786Z Collecting sounddevice>=0.5.0 (from -r requirements.txt (line 3))
+2026-06-16T21:57:22.9167948Z   Using cached sounddevice-0.5.5-py3-none-win_amd64.whl.metadata (1.4 kB)
+2026-06-16T21:57:23.1190811Z Collecting numpy>=1.24.0 (from -r requirements.txt (line 4))
+2026-06-16T21:57:23.1219259Z   Using cached numpy-2.4.6-cp311-cp311-win_amd64.whl.metadata (6.6 kB)
+2026-06-16T21:57:23.1533169Z Collecting pyperclip>=1.8.0 (from -r requirements.txt (line 5))
+2026-06-16T21:57:23.1560040Z   Using cached pyperclip-1.11.0-py3-none-any.whl.metadata (2.4 kB)
+2026-06-16T21:57:23.1807900Z Collecting pynput>=1.7.0 (from -r requirements.txt (line 6))
+2026-06-16T21:57:23.1833460Z   Using cached pynput-1.8.2-py2.py3-none-any.whl.metadata (32 kB)
+2026-06-16T21:57:23.2043551Z Collecting faster-whisper>=1.0.0 (from -r requirements.txt (line 7))
+2026-06-16T21:57:23.2069416Z   Using cached faster_whisper-1.2.1-py3-none-any.whl.metadata (16 kB)
+2026-06-16T21:57:23.3622921Z Collecting sherpa-onnx>=1.12.0 (from -r requirements.txt (line 8))
+2026-06-16T21:57:23.5808283Z   Downloading sherpa_onnx-1.13.3-cp311-cp311-win_amd64.whl.metadata (50 kB)
+2026-06-16T21:57:23.7142715Z Collecting soundfile>=0.12.0 (from -r requirements.txt (line 9))
+2026-06-16T21:57:23.7170527Z   Using cached soundfile-0.14.0-py2.py3-none-win_amd64.whl.metadata (18 kB)
+2026-06-16T21:57:23.8763988Z Collecting Pillow>=10.0.0 (from -r requirements.txt (line 10))
+2026-06-16T21:57:23.8791927Z   Using cached pillow-12.2.0-cp311-cp311-win_amd64.whl.metadata (9.0 kB)
+2026-06-16T21:57:23.9656613Z Collecting winocr>=0.0.15 (from -r requirements.txt (line 11))
+2026-06-16T21:57:23.9683422Z   Using cached winocr-0.0.15-py3-none-any.whl.metadata (15 kB)
+2026-06-16T21:57:24.0786633Z Collecting yt-dlp>=2024.1.0 (from -r requirements.txt (line 12))
+2026-06-16T21:57:24.0815496Z   Using cached yt_dlp-2026.6.9-py3-none-any.whl.metadata (183 kB)
+2026-06-16T21:57:24.1218310Z Collecting certifi>=2024.2.2 (from -r requirements.txt (line 13))
+2026-06-16T21:57:24.1246741Z   Using cached certifi-2026.5.20-py3-none-any.whl.metadata (2.5 kB)
+2026-06-16T21:57:24.1665079Z Collecting PyQt6-sip<14,>=13.8 (from PyQt6>=6.6.0->-r requirements.txt (line 2))
+2026-06-16T21:57:24.1693944Z   Using cached pyqt6_sip-13.11.1-cp311-cp311-win_amd64.whl.metadata (516 bytes)
+2026-06-16T21:57:24.1967616Z Collecting PyQt6-Qt6<6.12.0,>=6.11.0 (from PyQt6>=6.6.0->-r requirements.txt (line 2))
+2026-06-16T21:57:24.1992717Z   Using cached pyqt6_qt6-6.11.1-py3-none-win_amd64.whl.metadata (552 bytes)
+2026-06-16T21:57:24.2994209Z Collecting cffi (from sounddevice>=0.5.0->-r requirements.txt (line 3))
+2026-06-16T21:57:24.3026890Z   Using cached cffi-2.0.0-cp311-cp311-win_amd64.whl.metadata (2.6 kB)
+2026-06-16T21:57:24.3235223Z Collecting six (from pynput>=1.7.0->-r requirements.txt (line 6))
+2026-06-16T21:57:24.3260723Z   Using cached six-1.17.0-py2.py3-none-any.whl.metadata (1.7 kB)
+2026-06-16T21:57:24.4378436Z Collecting ctranslate2<5,>=4.0 (from faster-whisper>=1.0.0->-r requirements.txt (line 7))
+2026-06-16T21:57:24.4406120Z   Using cached ctranslate2-4.8.0-cp311-cp311-win_amd64.whl.metadata (11 kB)
+2026-06-16T21:57:24.5043610Z Collecting huggingface-hub>=0.21 (from faster-whisper>=1.0.0->-r requirements.txt (line 7))
+2026-06-16T21:57:24.5092724Z   Downloading huggingface_hub-1.19.0-py3-none-any.whl.metadata (14 kB)
+2026-06-16T21:57:24.6793225Z Collecting tokenizers<1,>=0.13 (from faster-whisper>=1.0.0->-r requirements.txt (line 7))
+2026-06-16T21:57:24.6819675Z   Using cached tokenizers-0.23.1-cp310-abi3-win_amd64.whl.metadata (10 kB)
+2026-06-16T21:57:24.7732242Z Collecting onnxruntime<2,>=1.14 (from faster-whisper>=1.0.0->-r requirements.txt (line 7))
+2026-06-16T21:57:24.7780649Z   Downloading onnxruntime-1.27.0-cp311-cp311-win_amd64.whl.metadata (5.6 kB)
+2026-06-16T21:57:24.8409041Z Collecting av>=11 (from faster-whisper>=1.0.0->-r requirements.txt (line 7))
+2026-06-16T21:57:24.8436338Z   Using cached av-17.1.0-cp311-abi3-win_amd64.whl.metadata (4.7 kB)
+2026-06-16T21:57:24.8849059Z Collecting tqdm (from faster-whisper>=1.0.0->-r requirements.txt (line 7))
+2026-06-16T21:57:24.8875794Z   Using cached tqdm-4.68.2-py3-none-any.whl.metadata (58 kB)
+2026-06-16T21:57:24.8999885Z Requirement already satisfied: setuptools in C:\hostedtoolcache\windows\Python\3.11.9\x64\Lib\site-packages (from ctranslate2<5,>=4.0->faster-whisper>=1.0.0->-r requirements.txt (line 7)) (65.5.0)
+2026-06-16T21:57:24.9387565Z Collecting pyyaml<7,>=5.3 (from ctranslate2<5,>=4.0->faster-whisper>=1.0.0->-r requirements.txt (line 7))
+2026-06-16T21:57:24.9414915Z   Using cached pyyaml-6.0.3-cp311-cp311-win_amd64.whl.metadata (2.4 kB)
+2026-06-16T21:57:24.9602507Z Collecting flatbuffers (from onnxruntime<2,>=1.14->faster-whisper>=1.0.0->-r requirements.txt (line 7))
+2026-06-16T21:57:24.9626753Z   Using cached flatbuffers-25.12.19-py2.py3-none-any.whl.metadata (1.0 kB)
+2026-06-16T21:57:24.9884502Z Collecting packaging (from onnxruntime<2,>=1.14->faster-whisper>=1.0.0->-r requirements.txt (line 7))
+2026-06-16T21:57:24.9909888Z   Using cached packaging-26.2-py3-none-any.whl.metadata (3.5 kB)
+2026-06-16T21:57:25.1453361Z Collecting protobuf>=4.25.8 (from onnxruntime<2,>=1.14->faster-whisper>=1.0.0->-r requirements.txt (line 7))
+2026-06-16T21:57:25.1521809Z   Downloading protobuf-7.35.1-cp310-abi3-win_amd64.whl.metadata (595 bytes)
+2026-06-16T21:57:25.2027019Z Collecting click>=8.4.0 (from huggingface-hub>=0.21->faster-whisper>=1.0.0->-r requirements.txt (line 7))
+2026-06-16T21:57:25.2059983Z   Using cached click-8.4.1-py3-none-any.whl.metadata (2.6 kB)
+2026-06-16T21:57:25.2392311Z Collecting filelock>=3.10.0 (from huggingface-hub>=0.21->faster-whisper>=1.0.0->-r requirements.txt (line 7))
+2026-06-16T21:57:25.2439004Z   Downloading filelock-3.29.4-py3-none-any.whl.metadata (2.0 kB)
+2026-06-16T21:57:25.3022196Z Collecting fsspec>=2023.5.0 (from huggingface-hub>=0.21->faster-whisper>=1.0.0->-r requirements.txt (line 7))
+2026-06-16T21:57:25.3069462Z   Downloading fsspec-2026.6.0-py3-none-any.whl.metadata (10 kB)
+2026-06-16T21:57:25.3773422Z Collecting hf-xet<2.0.0,>=1.5.1 (from huggingface-hub>=0.21->faster-whisper>=1.0.0->-r requirements.txt (line 7))
+2026-06-16T21:57:25.3800932Z   Using cached hf_xet-1.5.1-cp37-abi3-win_amd64.whl.metadata (4.9 kB)
+2026-06-16T21:57:25.4114403Z Collecting httpx<1,>=0.23.0 (from huggingface-hub>=0.21->faster-whisper>=1.0.0->-r requirements.txt (line 7))
+2026-06-16T21:57:25.4139442Z   Using cached httpx-0.28.1-py3-none-any.whl.metadata (7.1 kB)
+2026-06-16T21:57:25.4423760Z Collecting typer<0.26.0,>=0.20.0 (from huggingface-hub>=0.21->faster-whisper>=1.0.0->-r requirements.txt (line 7))
+2026-06-16T21:57:25.4449937Z   Using cached typer-0.25.1-py3-none-any.whl.metadata (15 kB)
+2026-06-16T21:57:25.4686212Z Collecting typing-extensions>=4.1.0 (from huggingface-hub>=0.21->faster-whisper>=1.0.0->-r requirements.txt (line 7))
+2026-06-16T21:57:25.4710628Z   Using cached typing_extensions-4.15.0-py3-none-any.whl.metadata (3.3 kB)
+2026-06-16T21:57:25.5018883Z Collecting anyio (from httpx<1,>=0.23.0->huggingface-hub>=0.21->faster-whisper>=1.0.0->-r requirements.txt (line 7))
+2026-06-16T21:57:25.5062781Z   Downloading anyio-4.14.0-py3-none-any.whl.metadata (4.6 kB)
+2026-06-16T21:57:25.5491617Z Collecting httpcore==1.* (from httpx<1,>=0.23.0->huggingface-hub>=0.21->faster-whisper>=1.0.0->-r requirements.txt (line 7))
+2026-06-16T21:57:25.5517667Z   Using cached httpcore-1.0.9-py3-none-any.whl.metadata (21 kB)
+2026-06-16T21:57:25.5726281Z Collecting idna (from httpx<1,>=0.23.0->huggingface-hub>=0.21->faster-whisper>=1.0.0->-r requirements.txt (line 7))
+2026-06-16T21:57:25.5764358Z   Using cached idna-3.18-py3-none-any.whl.metadata (6.1 kB)
+2026-06-16T21:57:25.5965758Z Collecting h11>=0.16 (from httpcore==1.*->httpx<1,>=0.23.0->huggingface-hub>=0.21->faster-whisper>=1.0.0->-r requirements.txt (line 7))
+2026-06-16T21:57:25.5990645Z   Using cached h11-0.16.0-py3-none-any.whl.metadata (8.3 kB)
+2026-06-16T21:57:25.6206758Z Collecting shellingham>=1.3.0 (from typer<0.26.0,>=0.20.0->huggingface-hub>=0.21->faster-whisper>=1.0.0->-r requirements.txt (line 7))
+2026-06-16T21:57:25.6231752Z   Using cached shellingham-1.5.4-py2.py3-none-any.whl.metadata (3.5 kB)
+2026-06-16T21:57:25.6552171Z Collecting rich>=13.8.0 (from typer<0.26.0,>=0.20.0->huggingface-hub>=0.21->faster-whisper>=1.0.0->-r requirements.txt (line 7))
+2026-06-16T21:57:25.6578055Z   Using cached rich-15.0.0-py3-none-any.whl.metadata (18 kB)
+2026-06-16T21:57:25.6797853Z Collecting annotated-doc>=0.0.2 (from typer<0.26.0,>=0.20.0->huggingface-hub>=0.21->faster-whisper>=1.0.0->-r requirements.txt (line 7))
+2026-06-16T21:57:25.6836278Z   Using cached annotated_doc-0.0.4-py3-none-any.whl.metadata (6.6 kB)
+2026-06-16T21:57:25.7236759Z Collecting sherpa-onnx-core==1.13.3 (from sherpa-onnx>=1.12.0->-r requirements.txt (line 8))
+2026-06-16T21:57:25.7320081Z   Downloading sherpa_onnx_core-1.13.3-py3-none-win_amd64.whl.metadata (532 bytes)
+2026-06-16T21:57:25.7716539Z Collecting winrt-windows-foundation-collections (from winocr>=0.0.15->-r requirements.txt (line 11))
+2026-06-16T21:57:25.7742891Z   Using cached winrt_windows_foundation_collections-3.2.1-cp311-cp311-win_amd64.whl.metadata (1.1 kB)
+2026-06-16T21:57:25.7972884Z Collecting winrt-windows-foundation (from winocr>=0.0.15->-r requirements.txt (line 11))
+2026-06-16T21:57:25.7998438Z   Using cached winrt_windows_foundation-3.2.1-cp311-cp311-win_amd64.whl.metadata (1.0 kB)
+2026-06-16T21:57:25.8274961Z Collecting winrt-windows-globalization (from winocr>=0.0.15->-r requirements.txt (line 11))
+2026-06-16T21:57:25.8301019Z   Using cached winrt_windows_globalization-3.2.1-cp311-cp311-win_amd64.whl.metadata (1.2 kB)
+2026-06-16T21:57:25.8539047Z Collecting winrt-windows-graphics-imaging (from winocr>=0.0.15->-r requirements.txt (line 11))
+2026-06-16T21:57:25.8564286Z   Using cached winrt_windows_graphics_imaging-3.2.1-cp311-cp311-win_amd64.whl.metadata (1.3 kB)
+2026-06-16T21:57:25.9044103Z Collecting winrt-windows-media-ocr (from winocr>=0.0.15->-r requirements.txt (line 11))
+2026-06-16T21:57:25.9070768Z   Using cached winrt_windows_media_ocr-3.2.1-cp311-cp311-win_amd64.whl.metadata (1.3 kB)
+2026-06-16T21:57:25.9364577Z Collecting winrt-windows-storage-streams (from winocr>=0.0.15->-r requirements.txt (line 11))
+2026-06-16T21:57:25.9389721Z   Using cached winrt_windows_storage_streams-3.2.1-cp311-cp311-win_amd64.whl.metadata (1.3 kB)
+2026-06-16T21:57:25.9633189Z Collecting pycparser (from cffi->sounddevice>=0.5.0->-r requirements.txt (line 3))
+2026-06-16T21:57:25.9660710Z   Using cached pycparser-3.0-py3-none-any.whl.metadata (8.2 kB)
+2026-06-16T21:57:25.9902183Z Collecting colorama (from click>=8.4.0->huggingface-hub>=0.21->faster-whisper>=1.0.0->-r requirements.txt (line 7))
+2026-06-16T21:57:25.9926933Z   Using cached colorama-0.4.6-py2.py3-none-any.whl.metadata (17 kB)
+2026-06-16T21:57:26.0258120Z Collecting markdown-it-py>=2.2.0 (from rich>=13.8.0->typer<0.26.0,>=0.20.0->huggingface-hub>=0.21->faster-whisper>=1.0.0->-r requirements.txt (line 7))
+2026-06-16T21:57:26.0283396Z   Using cached markdown_it_py-4.2.0-py3-none-any.whl.metadata (7.4 kB)
+2026-06-16T21:57:26.0537936Z Collecting pygments<3.0.0,>=2.13.0 (from rich>=13.8.0->typer<0.26.0,>=0.20.0->huggingface-hub>=0.21->faster-whisper>=1.0.0->-r requirements.txt (line 7))
+2026-06-16T21:57:26.0628651Z   Using cached pygments-2.20.0-py3-none-any.whl.metadata (2.5 kB)
+2026-06-16T21:57:26.1077476Z Collecting mdurl~=0.1 (from markdown-it-py>=2.2.0->rich>=13.8.0->typer<0.26.0,>=0.20.0->huggingface-hub>=0.21->faster-whisper>=1.0.0->-r requirements.txt (line 7))
+2026-06-16T21:57:26.1102662Z   Using cached mdurl-0.1.2-py3-none-any.whl.metadata (1.6 kB)
+2026-06-16T21:57:26.1472865Z Collecting winrt-runtime~=3.2.1.0 (from winrt-windows-foundation->winocr>=0.0.15->-r requirements.txt (line 11))
+2026-06-16T21:57:26.1498363Z   Using cached winrt_runtime-3.2.1-cp311-cp311-win_amd64.whl.metadata (780 bytes)
+2026-06-16T21:57:26.1604256Z Using cached pyqt6-6.11.0-cp310-abi3-win_amd64.whl (6.8 MB)
+2026-06-16T21:57:26.1660880Z Using cached pyqt6_qt6-6.11.1-py3-none-win_amd64.whl (78.4 MB)
+2026-06-16T21:57:26.2101701Z Using cached pyqt6_sip-13.11.1-cp311-cp311-win_amd64.whl (54 kB)
+2026-06-16T21:57:26.2126671Z Using cached sounddevice-0.5.5-py3-none-win_amd64.whl (365 kB)
+2026-06-16T21:57:26.2152651Z Using cached numpy-2.4.6-cp311-cp311-win_amd64.whl (12.6 MB)
+2026-06-16T21:57:26.2244239Z Using cached pyperclip-1.11.0-py3-none-any.whl (11 kB)
+2026-06-16T21:57:26.2267232Z Using cached pynput-1.8.2-py2.py3-none-any.whl (92 kB)
+2026-06-16T21:57:26.2290572Z Using cached faster_whisper-1.2.1-py3-none-any.whl (1.1 MB)
+2026-06-16T21:57:26.2319973Z Using cached ctranslate2-4.8.0-cp311-cp311-win_amd64.whl (19.2 MB)
+2026-06-16T21:57:26.2472178Z Downloading onnxruntime-1.27.0-cp311-cp311-win_amd64.whl (13.4 MB)
+2026-06-16T21:57:26.4206734Z    ---------------------------------------- 13.4/13.4 MB 92.9 MB/s  0:00:00
+2026-06-16T21:57:26.4227688Z Using cached pyyaml-6.0.3-cp311-cp311-win_amd64.whl (158 kB)
+2026-06-16T21:57:26.4263283Z Using cached tokenizers-0.23.1-cp310-abi3-win_amd64.whl (2.8 MB)
+2026-06-16T21:57:26.4331531Z Downloading huggingface_hub-1.19.0-py3-none-any.whl (693 kB)
+2026-06-16T21:57:26.4615557Z    ---------------------------------------- 693.4/693.4 kB 13.5 MB/s  0:00:00
+2026-06-16T21:57:26.4638301Z Using cached hf_xet-1.5.1-cp37-abi3-win_amd64.whl (4.0 MB)
+2026-06-16T21:57:26.4699578Z Using cached httpx-0.28.1-py3-none-any.whl (73 kB)
+2026-06-16T21:57:26.4724423Z Using cached httpcore-1.0.9-py3-none-any.whl (78 kB)
+2026-06-16T21:57:26.4746532Z Using cached typer-0.25.1-py3-none-any.whl (58 kB)
+2026-06-16T21:57:26.4805285Z Downloading sherpa_onnx-1.13.3-cp311-cp311-win_amd64.whl (2.2 MB)
+2026-06-16T21:57:26.5290586Z    ---------------------------------------- 2.2/2.2 MB 63.6 MB/s  0:00:00
+2026-06-16T21:57:26.5351856Z Downloading sherpa_onnx_core-1.13.3-py3-none-win_amd64.whl (15.8 MB)
+2026-06-16T21:57:26.7131260Z    ---------------------------------------- 15.8/15.8 MB 90.1 MB/s  0:00:00
+2026-06-16T21:57:26.7154567Z Using cached soundfile-0.14.0-py2.py3-none-win_amd64.whl (1.0 MB)
+2026-06-16T21:57:26.7184386Z Using cached pillow-12.2.0-cp311-cp311-win_amd64.whl (7.1 MB)
+2026-06-16T21:57:26.7242496Z Using cached winocr-0.0.15-py3-none-any.whl (7.7 kB)
+2026-06-16T21:57:26.7264958Z Using cached yt_dlp-2026.6.9-py3-none-any.whl (3.2 MB)
+2026-06-16T21:57:26.7303026Z Using cached certifi-2026.5.20-py3-none-any.whl (134 kB)
+2026-06-16T21:57:26.7325730Z Using cached annotated_doc-0.0.4-py3-none-any.whl (5.3 kB)
+2026-06-16T21:57:26.7346746Z Using cached av-17.1.0-cp311-abi3-win_amd64.whl (28.0 MB)
+2026-06-16T21:57:26.7514375Z Using cached cffi-2.0.0-cp311-cp311-win_amd64.whl (182 kB)
+2026-06-16T21:57:26.7539490Z Using cached click-8.4.1-py3-none-any.whl (116 kB)
+2026-06-16T21:57:26.7609216Z Downloading filelock-3.29.4-py3-none-any.whl (42 kB)
+2026-06-16T21:57:26.7807517Z Downloading fsspec-2026.6.0-py3-none-any.whl (203 kB)
+2026-06-16T21:57:26.8000647Z Using cached h11-0.16.0-py3-none-any.whl (37 kB)
+2026-06-16T21:57:26.8022805Z Using cached packaging-26.2-py3-none-any.whl (100 kB)
+2026-06-16T21:57:26.8067572Z Downloading protobuf-7.35.1-cp310-abi3-win_amd64.whl (439 kB)
+2026-06-16T21:57:26.8326303Z Using cached rich-15.0.0-py3-none-any.whl (310 kB)
+2026-06-16T21:57:26.8351982Z Using cached pygments-2.20.0-py3-none-any.whl (1.2 MB)
+2026-06-16T21:57:26.8382912Z Using cached markdown_it_py-4.2.0-py3-none-any.whl (91 kB)
+2026-06-16T21:57:26.8405130Z Using cached mdurl-0.1.2-py3-none-any.whl (10.0 kB)
+2026-06-16T21:57:26.8449674Z Using cached shellingham-1.5.4-py2.py3-none-any.whl (9.8 kB)
+2026-06-16T21:57:26.8471825Z Using cached tqdm-4.68.2-py3-none-any.whl (78 kB)
+2026-06-16T21:57:26.8494671Z Using cached typing_extensions-4.15.0-py3-none-any.whl (44 kB)
+2026-06-16T21:57:26.8538652Z Downloading anyio-4.14.0-py3-none-any.whl (123 kB)
+2026-06-16T21:57:26.8710351Z Using cached idna-3.18-py3-none-any.whl (65 kB)
+2026-06-16T21:57:26.8731555Z Using cached colorama-0.4.6-py2.py3-none-any.whl (25 kB)
+2026-06-16T21:57:26.8753267Z Using cached flatbuffers-25.12.19-py2.py3-none-any.whl (26 kB)
+2026-06-16T21:57:26.8774617Z Using cached pycparser-3.0-py3-none-any.whl (48 kB)
+2026-06-16T21:57:26.8796169Z Using cached six-1.17.0-py2.py3-none-any.whl (11 kB)
+2026-06-16T21:57:26.8818836Z Using cached winrt_windows_foundation-3.2.1-cp311-cp311-win_amd64.whl (118 kB)
+2026-06-16T21:57:26.8841293Z Using cached winrt_runtime-3.2.1-cp311-cp311-win_amd64.whl (242 kB)
+2026-06-16T21:57:26.8863691Z Using cached winrt_windows_foundation_collections-3.2.1-cp311-cp311-win_amd64.whl (70 kB)
+2026-06-16T21:57:26.8886336Z Using cached winrt_windows_globalization-3.2.1-cp311-cp311-win_amd64.whl (138 kB)
+2026-06-16T21:57:26.8933673Z Using cached winrt_windows_graphics_imaging-3.2.1-cp311-cp311-win_amd64.whl (144 kB)
+2026-06-16T21:57:26.8956612Z Using cached winrt_windows_media_ocr-3.2.1-cp311-cp311-win_amd64.whl (42 kB)
+2026-06-16T21:57:26.8979103Z Using cached winrt_windows_storage_streams-3.2.1-cp311-cp311-win_amd64.whl (132 kB)
+2026-06-16T21:57:27.3378571Z Installing collected packages: sherpa-onnx-core, PyQt6-Qt6, pyperclip, flatbuffers, yt-dlp, typing-extensions, six, sherpa-onnx, shellingham, pyyaml, PyQt6-sip, pygments, pycparser, protobuf, Pillow, packaging, numpy, mdurl, idna, hf-xet, h11, fsspec, filelock, colorama, certifi, av, annotated-doc, winrt-runtime, tqdm, PyQt6, pynput, onnxruntime, markdown-it-py, httpcore, ctranslate2, click, cffi, anyio, winrt-windows-storage-streams, winrt-windows-media-ocr, winrt-windows-graphics-imaging, winrt-windows-globalization, winrt-windows-foundation-collections, winrt-windows-foundation, soundfile, sounddevice, rich, httpx, winocr, typer, huggingface-hub, tokenizers, faster-whisper
+2026-06-16T21:57:59.7706949Z 
+2026-06-16T21:57:59.7743905Z Successfully installed Pillow-12.2.0 PyQt6-6.11.0 PyQt6-Qt6-6.11.1 PyQt6-sip-13.11.1 annotated-doc-0.0.4 anyio-4.14.0 av-17.1.0 certifi-2026.5.20 cffi-2.0.0 click-8.4.1 colorama-0.4.6 ctranslate2-4.8.0 faster-whisper-1.2.1 filelock-3.29.4 flatbuffers-25.12.19 fsspec-2026.6.0 h11-0.16.0 hf-xet-1.5.1 httpcore-1.0.9 httpx-0.28.1 huggingface-hub-1.19.0 idna-3.18 markdown-it-py-4.2.0 mdurl-0.1.2 numpy-2.4.6 onnxruntime-1.27.0 packaging-26.2 protobuf-7.35.1 pycparser-3.0 pygments-2.20.0 pynput-1.8.2 pyperclip-1.11.0 pyyaml-6.0.3 rich-15.0.0 shellingham-1.5.4 sherpa-onnx-1.13.3 sherpa-onnx-core-1.13.3 six-1.17.0 sounddevice-0.5.5 soundfile-0.14.0 tokenizers-0.23.1 tqdm-4.68.2 typer-0.25.1 typing-extensions-4.15.0 winocr-0.0.15 winrt-runtime-3.2.1 winrt-windows-foundation-3.2.1 winrt-windows-foundation-collections-3.2.1 winrt-windows-globalization-3.2.1 winrt-windows-graphics-imaging-3.2.1 winrt-windows-media-ocr-3.2.1 winrt-windows-storage-streams-3.2.1 yt-dlp-2026.6.9
+2026-06-16T21:58:00.3779324Z ##[group]Run python build/ci_smoke_test.py
+2026-06-16T21:58:00.3779723Z [36;1mpython build/ci_smoke_test.py[0m
+2026-06-16T21:58:00.3840248Z shell: C:\Program Files\PowerShell\7\pwsh.EXE -command ". '{0}'"
+2026-06-16T21:58:00.3840599Z env:
+2026-06-16T21:58:00.3840884Z   pythonLocation: C:\hostedtoolcache\windows\Python\3.11.9\x64
+2026-06-16T21:58:00.3841335Z   PKG_CONFIG_PATH: C:\hostedtoolcache\windows\Python\3.11.9\x64/lib/pkgconfig
+2026-06-16T21:58:00.3841804Z   Python_ROOT_DIR: C:\hostedtoolcache\windows\Python\3.11.9\x64
+2026-06-16T21:58:00.3842203Z   Python2_ROOT_DIR: C:\hostedtoolcache\windows\Python\3.11.9\x64
+2026-06-16T21:58:00.3842600Z   Python3_ROOT_DIR: C:\hostedtoolcache\windows\Python\3.11.9\x64
+2026-06-16T21:58:00.3842928Z ##[endgroup]
+2026-06-16T21:58:01.4434298Z Traceback (most recent call last):
+2026-06-16T21:58:01.4443542Z   File "D:\a\SurepriseAi\SurepriseAi\build\ci_smoke_test.py", line 60, in <module>
+2026-06-16T21:58:01.4444544Z [Config] Erstkonfiguration angelegt: D:\a\SurepriseAi\SurepriseAi\config.json
+2026-06-16T21:58:01.4445783Z [Update] Pr�fung fehlgeschlagen: GitHub API HTTP 403
+2026-06-16T21:58:01.4446255Z     main()
+2026-06-16T21:58:01.4446783Z   File "D:\a\SurepriseAi\SurepriseAi\build\ci_smoke_test.py", line 35, in main
+2026-06-16T21:58:01.4447547Z     assert result.error is None, f"GitHub-Update-Check: {result.error}"
+2026-06-16T21:58:01.4448076Z            ^^^^^^^^^^^^^^^^^^^^
+2026-06-16T21:58:01.4448528Z AssertionError: GitHub-Update-Check: GitHub API HTTP 403
+2026-06-16T21:58:01.5881682Z ##[error]Process completed with exit code 1.
+2026-06-16T21:58:01.6139791Z Post job cleanup.
+2026-06-16T21:58:01.9076152Z [command]"C:\Program Files\Git\bin\git.exe" version
+2026-06-16T21:58:01.9482325Z git version 2.54.0.windows.1
+2026-06-16T21:58:01.9574680Z Temporarily overriding HOME='D:\a\_temp\ffe83917-6f6e-4912-af41-3ffd4130a226' before making global git config changes
+2026-06-16T21:58:01.9576327Z Adding repository directory to the temporary git global config as a safe directory
+2026-06-16T21:58:01.9592111Z [command]"C:\Program Files\Git\bin\git.exe" config --global --add safe.directory D:\a\SurepriseAi\SurepriseAi
+2026-06-16T21:58:01.9950259Z [command]"C:\Program Files\Git\bin\git.exe" config --local --name-only --get-regexp core\.sshCommand
+2026-06-16T21:58:02.0368566Z [command]"C:\Program Files\Git\bin\git.exe" submodule foreach --recursive "sh -c \"git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :\""
+2026-06-16T21:58:02.6521526Z [command]"C:\Program Files\Git\bin\git.exe" config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-06-16T21:58:02.6823170Z http.https://github.com/.extraheader
+2026-06-16T21:58:02.6890916Z [command]"C:\Program Files\Git\bin\git.exe" config --local --unset-all http.https://github.com/.extraheader
+2026-06-16T21:58:02.7323894Z [command]"C:\Program Files\Git\bin\git.exe" submodule foreach --recursive "sh -c \"git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :\""
+2026-06-16T21:58:03.3511396Z [command]"C:\Program Files\Git\bin\git.exe" config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-06-16T21:58:03.3849989Z [command]"C:\Program Files\Git\bin\git.exe" submodule foreach --recursive "git config --local --show-origin --name-only --get-regexp remote.origin.url"
+2026-06-16T21:58:03.9998404Z Cleaning up orphan processes
+2026-06-16T21:58:04.0387320Z ##[warning]Node.js 20 actions are deprecated. The following actions are running on Node.js 20 and may not work as expected: actions/checkout@v4, actions/setup-python@v5. Actions will be forced to run with Node.js 24 by default starting June 16th, 2026. Node.js 20 will be removed from the runner on September 16th, 2026. Please check if updated versions of these actions are available that support Node.js 24. To opt into Node.js 24 now, set the FORCE_JAVASCRIPT_ACTIONS_TO_NODE24=true environment variable on the runner or in your workflow file. Once Node.js 24 becomes the default, you can temporarily opt out by setting ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/

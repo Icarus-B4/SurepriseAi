@@ -32,9 +32,12 @@ def main() -> None:
     assert config.get_str("global_hotkey")
 
     result = UpdateService()._fetch_latest()
-    assert result.error is None, f"GitHub-Update-Check: {result.error}"
-    if result.info:
-        assert is_newer(f"v{result.info.version}", "0.0.0")
+    if result.error and "403" in result.error:
+        print("GitHub-Update-Check: Rate-limited (403), uebersprungen.")
+    else:
+        assert result.error is None, f"GitHub-Update-Check: {result.error}"
+        if result.info:
+            assert is_newer(f"v{result.info.version}", "0.0.0")
 
     import importlib.util
 

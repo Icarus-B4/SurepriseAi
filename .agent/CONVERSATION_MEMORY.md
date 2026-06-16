@@ -817,3 +817,4 @@ Erstellung eines automatisierten Demo-Aufnahme-Skripts zur Demonstration aller A
 ### Version Bump & Release
 - `src/version.py` auf `"0.1.34"` erhöht.
 - Änderungen getrackt, committet und Tag `v0.1.34` per Force-Push auf GitHub gepusht, um den CI-Release-Build zu starten.
+- **CI-Fix (`v0.1.35`)**: Der CI-Build ist aufgrund eines `HTTP 403` Rate-Limits bei unauthentifizierten GitHub-API-Abfragen (`UpdateService()._fetch_latest()`) im Smoke-Test fehlgeschlagen. Der Smoke-Test wurde angepasst, um 403-Fehler abzufangen. Version auf `0.1.35` erhöht und neuer Tag gepusht.
