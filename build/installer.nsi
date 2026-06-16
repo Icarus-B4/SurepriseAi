@@ -95,7 +95,7 @@ Section "!Hauptprogramm" SecMain
   Delete "$INSTDIR\SurepriseAi.ico"
   File /oname=SurepriseAi.ico "assets\app_icon.ico"
   IfFileExists "..\App_icon.png" 0 +2
-    File /oname=App_icon.png "..\App_icon.png"
+    File /nonfatal /oname=App_icon.png "..\App_icon.png"
 
   WriteUninstaller "$INSTDIR\Uninstall.exe"
 
