@@ -43,7 +43,7 @@ Hier ist ein automatisierter Durchlauf aller wichtigen Funktionen (Aufnahme, Liv
 | **Dynamic Island** | Schwebendes Overlay oben am Bildschirm – Idle, Aufnahme, Verarbeitung, Ergebnis |
 | **Live-Transkription** | Echtzeit-Anzeige des gesprochenen Textes während der Aufnahme |
 | **KI-Polishing** | Bereinigung und Stil-Umformung via **Ollama** (optional) oder schnellem Offline-Fallback |
-| **7 Stil-Chips** | Bereinigen · Business · Stichpunkte · Kernpunkte · Kompakt · Lang · Formell – sofort umschaltbar |
+| **8 Stil-Chips** | Bereinigen · Business · Stichpunkte · Kernpunkte · Kompakt · Lang · Formell · **Developer** – sofort umschaltbar |
 | **Whisper & Parakeet** | Lokale Spracherkennung (`faster-whisper` oder `sherpa-onnx`) |
 | **Auto-Typing** | Fertiger Text wird optional direkt in die aktive Anwendung eingefügt |
 | **System-Tray** | Steuerung im Hintergrund: Diktat, Stil, Einstellungen |

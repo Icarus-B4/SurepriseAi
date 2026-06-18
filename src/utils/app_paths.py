@@ -60,6 +60,34 @@ def user_data_dir() -> Path:
     return data
 
 
+def desktop_dir() -> Path:
+    """Absoluter Desktop-Ordner (Shell API / OneDrive), sonst AppData-Fallback."""
+    candidates: list[Path] = []
+    if sys.platform == "win32":
+        try:
+            import ctypes
+            from ctypes import wintypes
+
+            buf = ctypes.create_unicode_buffer(wintypes.MAX_PATH)
+            if ctypes.windll.shell32.SHGetFolderPathW(None, 0x10, None, 0, buf) == 0:
+                candidates.append(Path(buf.value))
+        except Exception:
+            pass
+        one_drive = os.environ.get("OneDrive")
+        if one_drive:
+            candidates.append(Path(one_drive) / "Desktop")
+    home = Path(os.environ.get("USERPROFILE", Path.home()))
+    candidates.extend([home / "Desktop", Path.home() / "Desktop"])
+
+    for path in candidates:
+        try:
+            if path.is_dir():
+                return path
+        except OSError:
+            continue
+    return user_data_dir()
+
+
 def config_path() -> Path:
     """Pfad zur config.json."""
     if is_frozen():

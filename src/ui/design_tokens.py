@@ -32,6 +32,11 @@ class FluentIcons:
     ERROR      = "⚠"
     COPY       = "📋"
     RETRY      = "↺"
+    HISTORY    = "☰"
+    TRANSCRIPT = "▤"
+    REWRITE    = "✦"
+    DEVICE_CYCLE = "⇄"
+    MUTE       = "⊘"
 
 # ── Farben (Hex und QColor) ───────────────────────────────────────────────────
 
@@ -149,7 +154,7 @@ class Typography:
         letter_spacing: float | None = None,
     ) -> QFont:
         font = QFont(cls.FONT_FAMILY)
-        font.setPointSize(size)
+        font.setPointSize(max(1, int(size)))
         if weight is not None:
             font.setWeight(weight)
         else:
@@ -162,7 +167,7 @@ class Typography:
     @classmethod
     def get_icon_font(cls, size: int) -> QFont:
         font = QFont("Segoe UI Symbol")
-        font.setPointSize(size)
+        font.setPointSize(max(1, int(size)))
         return font
 
 
@@ -238,17 +243,22 @@ class IslandSize:
     IDLE_WIDTH  = 290
     IDLE_HEIGHT = 44
 
-    # Presence-Bar (kollabierte Dynamic Island, immer sichtbar im Idle)
+    # BASICS / SurepriseAI Hub
+    BASICS_WIDTH  = 400
+    BASICS_HEIGHT = 44
+
+    # Presence-Bar (kollabierte Dynamic Island im Idle)
     PRESENCE_WIDTH          = 118
     PRESENCE_HEIGHT         = 11
     PRESENCE_TOP_Y          = 4
     PRESENCE_IDLE_TIMEOUT_S = 5.0
+    PRESENCE_PROXIMITY_CM   = 2.0   # Auto-Hide wenn Maus weiter entfernt
     PRESENCE_TRIGGER_HALF_W = 250
     PRESENCE_TRIGGER_MAX_Y  = 120
 
     # RECORDING: Expandierte Pill mit Waveform
-    RECORDING_WIDTH  = 360
-    RECORDING_HEIGHT = 56
+    RECORDING_WIDTH  = 420
+    RECORDING_HEIGHT = 64
 
     # PROCESSING: Mittlere Größe mit Spinner
     PROCESSING_WIDTH  = 300
@@ -272,11 +282,12 @@ class IslandSize:
     # Rundung (Pill-Form)
     BORDER_RADIUS = 19 # (Für standardmäßig 38px Höhe = 19px Radius)
 
-    # Waveform-Balken
+    # Waveform (Siri-Kurven in recording_widget)
     WAVEFORM_BARS    = 5
     WAVEFORM_BAR_W   = 3
     WAVEFORM_BAR_GAP = 3
-    WAVEFORM_MAX_H   = 20
+    WAVEFORM_WIDTH   = 240
+    WAVEFORM_MAX_H   = 42
     WAVEFORM_MIN_H   = 3
 
 # ── Animationszeiten (Emil Kowalski) ──────────────────────────────────────────

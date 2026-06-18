@@ -41,6 +41,10 @@ class SurepriseApp:
         self.app.setQuitOnLastWindowClosed(False)
         self.app.setWindowIcon(load_app_icon())
 
+        from src.utils.crash_diagnostics import install_qt_message_handler
+
+        install_qt_message_handler()
+
         # Zuerst Theme und Akzentfarbe laden, damit alle UI-Widgets direkt korrekt gestylt werden
         apply_theme_from_config()
         apply_accent_from_config()
@@ -58,7 +62,6 @@ class SurepriseApp:
         # Controller für die Event-Verarbeitung instanziieren
         self.controller = AppController(self)
         self.controller.connect_all()
-        self.mini_fab = None
 
     def start(self):
         """Startet Services und die Qt-Ereignisschleife."""
@@ -67,7 +70,6 @@ class SurepriseApp:
         dlog.write_session_header("SurepriseAi gestartet")
 
         self.pipeline.initialize_async(on_ready=self._on_pipeline_initialized)
-        self._sync_mini_fab_at_start()
 
         if config.hotkey_enabled:
             self.hotkey.start()
@@ -89,15 +91,6 @@ class SurepriseApp:
         else:
             dlog.write("WARNUNG: Transkriptions-Modell konnte nicht geladen werden")
         self.signals.ready.emit(success)
-
-    def _sync_mini_fab_at_start(self):
-        if config.get_bool("enable_mini_fab", False):
-            from src.ui.mini_fab import MiniFab
-            self.mini_fab = MiniFab()
-            self.mini_fab.toggle_recording.connect(self.pipeline.toggle)
-            self.mini_fab.show_with_fade()
-        else:
-            self.mini_fab = None
 
     def shutdown(self):
         """Delegiert das saubere Beenden an den AppController."""

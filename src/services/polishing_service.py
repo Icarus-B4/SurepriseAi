@@ -46,6 +46,22 @@ class PolishingService:
             return ollama_result
         return self._style_fallback(cleaned, active_style)
 
+    def polish_deep(
+        self,
+        text: str,
+        style: Optional[str] = None,
+        screen_context: Optional[str] = None,
+    ) -> Optional[str]:
+        """Nur Ollama-Polishing (für Hybrid-Pipeline Deep-Phase)."""
+        if not text or not text.strip() or not config.ollama_polishing:
+            return None
+        active_style = style or config.selected_style
+        cleaned = bereinige_text(text)
+        result = self._call_ollama(cleaned, active_style, screen_context)
+        if result and result.strip() != cleaned.strip():
+            return result
+        return result if result else None
+
     def polish_instant(self, text: str, style: Optional[str] = None) -> str:
         """Sofortiges Stil-Umschalten ohne Ollama – für Chip-Klicks im UI."""
         if not text or not text.strip():
@@ -138,6 +154,10 @@ class PolishingService:
 
         if style == "casual":
             return bereinige_text(text)
+
+        if style == "developer":
+            from src.services.developer_syntax import apply_developer_syntax
+            return apply_developer_syntax(bereinige_text(text))
 
         return text
 

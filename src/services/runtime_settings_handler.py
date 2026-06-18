@@ -1,6 +1,6 @@
 """
 runtime_settings_handler.py
-Wendet geänderte Einstellungen ohne Neustart an (FAB, Akzent, Privacy, Theme, Sprache).
+Wendet geänderte Einstellungen ohne Neustart an (Akzent, Privacy, Theme, Sprache).
 """
 
 from src.services.config_service import config
@@ -17,6 +17,10 @@ class RuntimeSettingsHandler:
         controller = self.app.controller
         if key in ("show_privacy_badge", "ollama_polishing", "enable_screen_context", "enable_selected_text_context", ""):
             controller._update_privacy_badge()
+        if key in ("personal_vocabulary", "word_replacements", ""):
+            self.app.pipeline.replacer.reload()
+        if key in ("enable_app_modes", "app_modes", ""):
+            controller._poll_app_mode()
         if key in ("use_windows_accent", ""):
             reset_accent_cache()
             if apply_accent_from_config():
@@ -26,8 +30,6 @@ class RuntimeSettingsHandler:
                 self.refresh_ui_theme()
         if key in ("app_language", ""):
             self.refresh_ui_language()
-        if key in ("enable_mini_fab", ""):
-            self.sync_mini_fab()
         if key in ("enable_presence_bar", ""):
             self.sync_presence_bar()
         if key in ("enable_global_hotkey", "global_hotkey", "push_to_talk", "enable_translate_hotkeys", "translate_german_hotkey", "translate_english_hotkey", ""):
@@ -40,11 +42,13 @@ class RuntimeSettingsHandler:
             self.app.hotkey.restart()
         else:
             self.app.hotkey.stop()
+        from src.ui.island_tooltips import refresh_island_tooltips
+        refresh_island_tooltips(self.app.window)
 
     def sync_presence_bar(self) -> None:
         window = self.app.window
         if window.state_machine.is_idle or window.state_machine.is_basics:
-            window._check_hover()
+            window.presence_controller.check_hover()
 
     def check_accent_changed(self) -> None:
         if not config.get_bool("use_windows_accent", True):
@@ -58,8 +62,6 @@ class RuntimeSettingsHandler:
         style_key = self.app.pipeline.session_style
         pill.expanded_widget.set_active_style(style_key)
         self.app.tray.setIcon(self.app.tray._create_tray_icon())
-        if self.app.mini_fab:
-            self.app.mini_fab.set_recording(self.app.state_machine.is_recording)
 
     def refresh_ui_theme(self) -> None:
         """Aktualisiert alle Fenster-Stylesheets basierend auf dem geänderten Theme."""
@@ -105,19 +107,10 @@ class RuntimeSettingsHandler:
             
         # 3. Expanded Pill aktualisieren
         window.pill.expanded_widget.retranslate_ui()
+
+        from src.ui.island_tooltips import refresh_island_tooltips
+        refresh_island_tooltips(window)
         
         # 4. Toast-Notification aktualisieren
         if hasattr(self.app, "toast"):
             self.app.toast.retranslate_ui()
-
-    def sync_mini_fab(self) -> None:
-        enabled = config.get_bool("enable_mini_fab", False)
-        if enabled and self.app.mini_fab is None:
-            from src.ui.mini_fab import MiniFab
-            self.app.mini_fab = MiniFab()
-            self.app.mini_fab.toggle_recording.connect(self.app.pipeline.toggle)
-            self.app.mini_fab.show_with_fade()
-            self.app.mini_fab.set_recording(self.app.state_machine.is_recording)
-        elif not enabled and self.app.mini_fab is not None:
-            self.app.mini_fab.close()
-            self.app.mini_fab = None

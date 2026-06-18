@@ -16,6 +16,10 @@ from src.utils.ssl_bootstrap import configure_ssl_environment
 
 configure_ssl_environment()
 
+from src.utils.crash_diagnostics import install_crash_handlers
+
+install_crash_handlers()
+
 from src.app import SurepriseApp
 
 def main():

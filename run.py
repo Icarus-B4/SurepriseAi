@@ -38,6 +38,10 @@ def main() -> None:
     if not check_dependencies():
         sys.exit(1)
 
+    from src.utils.crash_diagnostics import install_crash_handlers
+
+    install_crash_handlers()
+
     from src.main import main as app_main
     app_main()
 

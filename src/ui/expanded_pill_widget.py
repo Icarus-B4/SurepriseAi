@@ -18,6 +18,7 @@ from src.ui.drag_handle import DragHandleButton
 from src.ui.text_compare_slider import TextCompareSlider
 from src.services.config_service import config
 from src.services.style_definitions import STYLE_DEFINITIONS
+from src.utils.live_transcript_html import format_live_transcript_html
 from src.utils.translation import tr
 
 
@@ -32,6 +33,7 @@ class ExpandedPillWidget(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.chips: dict[str, QPushButton] = {}
+        self._live_mode = False
         self._init_ui()
 
     def _icon_button_style(self, hover_color: str, object_name: str) -> str:
@@ -195,6 +197,12 @@ class ExpandedPillWidget(QWidget):
         self.polish_status.setVisible(False)
         frame_layout.addWidget(self.polish_status)
 
+        self.live_badge = QLabel("● LIVE", self)
+        self.live_badge.setObjectName("LiveTranscriptBadge")
+        self.live_badge.setFont(Typography.get_font(Typography.TINY, bold=True))
+        self.live_badge.hide()
+        frame_layout.addWidget(self.live_badge)
+
         # Text-Vergleichs-Slider (Rohtext vs. Polished)
         self.compare_slider = TextCompareSlider(self)
         frame_layout.addWidget(self.compare_slider, stretch=1)
@@ -252,8 +260,11 @@ class ExpandedPillWidget(QWidget):
         self.words_lbl.setText(tr("history_words"))
         self.stats_desc.setText(tr("stats_desc"))
         self.box_title.setText(tr("polished_text"))
+        self.live_badge.setText(tr("live_badge"))
         self.box_undo_btn.setToolTip(tr("remove_last_sentence"))
         self.url_btn.setToolTip(tr("transcribe_url_tooltip"))
+        self.box_copy_btn.setToolTip(tr("island_copy"))
+        self.exp_close_btn.setToolTip(tr("island_close"))
 
     def refresh_theme(self) -> None:
         """Aktualisiert die QSS-Stile basierend auf den aktuellen Color-Tokens."""
@@ -289,6 +300,9 @@ class ExpandedPillWidget(QWidget):
         self.box_undo_btn.setStyleSheet(self._icon_button_style(Colors.ACCENT_BRIGHT_HEX, "ExpandedUndoBtn"))
         self.url_btn.setStyleSheet(self._icon_button_style(Colors.ACCENT_BRIGHT_HEX, "ExpandedUrlBtn"))
         self.polish_status.setStyleSheet(f"QLabel#PolishStatusLabel {{ color: {Colors.TEXT_SECONDARY_HEX}; background: transparent; }}")
+        self.live_badge.setStyleSheet(
+            f"QLabel#LiveTranscriptBadge {{ color: {Colors.RECORDING_RED_HEX}; background: transparent; letter-spacing: 1px; }}"
+        )
 
         self.exp_close_btn.setStyleSheet(f"""
             QPushButton#ExpandedCloseBtn {{
@@ -327,6 +341,48 @@ class ExpandedPillWidget(QWidget):
         """Wechselt zur Diff-Ansicht."""
         self.compare_slider.show_diff_view()
 
+    def enter_live_mode(self) -> None:
+        """Schaltet die Expanded Pill in den Live-Transkriptionsmodus."""
+        self._live_mode = True
+        self.live_badge.show()
+        self.box_title.setText(tr("live_transcript_title"))
+        self.compare_slider.slider.hide()
+        self.compare_slider.raw_label.hide()
+        self.compare_slider.polished_label.hide()
+        for btn in self.chips.values():
+            btn.hide()
+        self.exp_close_btn.show()
+        self.set_stats(0, 0)
+        self.stats_desc.setText(tr("live_transcript_hint"))
+        self.set_live_text("")
+
+    def exit_live_mode(self) -> None:
+        """Beendet den Live-Modus und stellt die normale Diff-Ansicht wieder her."""
+        if not self._live_mode:
+            return
+        self._live_mode = False
+        self.live_badge.hide()
+        self.box_title.setText(tr("polished_text"))
+        self.compare_slider.slider.show()
+        self.compare_slider.raw_label.show()
+        self.compare_slider.polished_label.show()
+        for btn in self.chips.values():
+            btn.show()
+        self.stats_desc.setText(tr("stats_desc"))
+
+    def set_live_text(self, text: str) -> None:
+        """Aktualisiert die Live-Transkription in der Textansicht."""
+        if not self._live_mode:
+            return
+        html_body = format_live_transcript_html(text or tr("listening"))
+        self.compare_slider.text_view.setHtml(
+            f'<p style="margin:0;line-height:1.7;font-family:Segoe UI,sans-serif;'
+            f'font-size:13px;">{html_body}</p>'
+        )
+        words = len(text.split()) if text else 0
+        self.words_val.setText(str(words))
+        self.wpm_val.setText("—")
+
     def set_active_style(self, active_key: str):
         """Färbt den ausgewählten Stil-Chip ein."""
         for key, btn in self.chips.items():
@@ -335,6 +391,15 @@ class ExpandedPillWidget(QWidget):
                 btn.setStyleSheet(self._chip_style(active=True))
             else:
                 btn.setStyleSheet(self._chip_style(active=False))
+
+    def set_app_mode_hint(self, app_key: str | None, style_key: str | None = None) -> None:
+        """Zeigt den erkannten App-Modus in der Statistik-Zeile."""
+        from src.services.style_definitions import style_label
+
+        if app_key and style_key:
+            self.stats_desc.setText(f"App-Modus: {app_key} · {style_label(style_key)}")
+        else:
+            self.stats_desc.setText(tr("stats_desc"))
 
     def set_style_busy(self, busy: bool) -> None:
         """Deaktiviert Chips während Re-Polishing läuft."""

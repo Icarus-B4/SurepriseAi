@@ -98,7 +98,10 @@ class PlaybackWaveform(QWidget):
             self.update()
 
     def set_position_ratio(self, ratio: float) -> None:
-        self._position_ratio = max(0.0, min(1.0, ratio))
+        ratio = max(0.0, min(1.0, ratio))
+        if abs(ratio - self._position_ratio) < 0.002:
+            return
+        self._position_ratio = ratio
         self.update()
 
     def _downsample(self, audio: np.ndarray, bins: int) -> list[float]:

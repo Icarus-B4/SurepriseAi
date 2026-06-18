@@ -6,6 +6,7 @@ Nutzt PipelineWorker für Hintergrundaufgaben zur Einhaltung der 200-Zeilen-Rege
 
 import threading
 import time
+import queue
 from typing import Callable, Optional
 import numpy as np
 import wave
@@ -25,6 +26,7 @@ from .pipeline_worker import PipelineWorker
 from .config_service import config
 from .app_mode_service import resolve_style_for_hwnd
 from .dictation_context_service import DictationContextService
+from .selected_text_rewrite import SelectedTextRewriteService
 from . import dictation_logger as dlog
 from src.utils.app_paths import user_data_dir
 
@@ -47,6 +49,14 @@ class TranscriptionPipeline:
         self.clipboard   = ClipboardService()
         self.replacer    = WordReplacementService()
         self.dictation_context = DictationContextService()
+        self._rewrite_mode = False
+        self.selected_text_rewrite = SelectedTextRewriteService(
+            self.clipboard,
+            self.polisher,
+            self._emit_state,
+            self._emit_error,
+            self._capture_target_window,
+        )
 
         # UI-Callbacks
         self._on_state_change: Optional[Callable[[str], None]] = None
@@ -67,23 +77,73 @@ class TranscriptionPipeline:
         self._last_partial_text: str = ""
         self.last_audio_path: Optional[str] = None
         self._session_translate: Optional[str] = None  # "de", "en" oder None
+        self._partial_queue: queue.Queue[str] = queue.Queue(maxsize=8)
+        self._state_queue: queue.Queue[str] = queue.Queue(maxsize=32)
+        self._error_queue: queue.Queue[str] = queue.Queue(maxsize=16)
+        self._result_queue: queue.Queue[tuple[str, str]] = queue.Queue(maxsize=8)
+        self._upgrade_queue: queue.Queue[tuple[str, str, str]] = queue.Queue(maxsize=8)
+
+    @staticmethod
+    def _queue_put(q: queue.Queue, item: object) -> None:
+        try:
+            q.put_nowait(item)
+        except queue.Full:
+            try:
+                q.get_nowait()
+            except queue.Empty:
+                pass
+            try:
+                q.put_nowait(item)
+            except queue.Full:
+                pass
+
+    @staticmethod
+    def _drain_queue(q: queue.Queue) -> list:
+        items: list = []
+        while True:
+            try:
+                items.append(q.get_nowait())
+            except queue.Empty:
+                break
+        return items
 
     def set_state_callback(self, cb: Callable[[str], None]) -> None:
+        """Legacy – State-Events laufen über drain_state_events() auf dem UI-Thread."""
         self._on_state_change = cb
 
     def set_result_callback(self, cb: Callable[[str, str], None]) -> None:
+        """Legacy – Ergebnis-Events laufen über drain_result_events() auf dem UI-Thread."""
         self._on_result = cb
 
     def set_error_callback(self, cb: Callable[[str], None]) -> None:
+        """Legacy – Fehler-Events laufen über drain_error_events() auf dem UI-Thread."""
         self._on_error = cb
 
     def set_level_callback(self, cb: Callable[[float], None]) -> None:
-        self._on_level = cb
-        self.audio.set_level_callback(cb)
+        self._on_level_change = cb
 
     def set_partial_callback(self, cb: Callable[[str], None]) -> None:
-        """Callback für Live-Zwischenergebnisse."""
+        """Legacy-Hook – Partials laufen über drain_partials() auf dem UI-Thread."""
         self._on_partial = cb
+
+    def drain_partials(self) -> str | None:
+        """Liefert das zuletzt gepufferte Live-Partial (nur vom UI-Thread)."""
+        latest: str | None = None
+        for item in self._drain_queue(self._partial_queue):
+            latest = item
+        return latest
+
+    def drain_state_events(self) -> list[str]:
+        return self._drain_queue(self._state_queue)
+
+    def drain_error_events(self) -> list[str]:
+        return self._drain_queue(self._error_queue)
+
+    def drain_result_events(self) -> list[tuple[str, str]]:
+        return self._drain_queue(self._result_queue)
+
+    def drain_upgrade_events(self) -> list[tuple[str, str, str]]:
+        return self._drain_queue(self._upgrade_queue)
 
     def initialize(self) -> bool:
         print("[Pipeline] Initialisierung...")
@@ -167,7 +227,8 @@ class TranscriptionPipeline:
 
         worker = PipelineWorker(
             self.transcriber, self.replacer, self.polisher, self.clipboard,
-            self._on_result, self._emit_state, self._emit_error
+            self._emit_result, self._emit_state, self._emit_error,
+            on_upgrade=self._emit_upgrade,
         )
         worker.process_audio_async(
             audio_data,
@@ -199,6 +260,14 @@ class TranscriptionPipeline:
             dlog.write_exception("Audio speichern")
             return None
 
+    def rewrite_selected_text(self, style: Optional[str] = None) -> None:
+        """Startet die In-Place-Umschrift für markierten Text."""
+        if self.audio.is_recording:
+            self._emit_error("Beende zuerst die laufende Aufnahme.")
+            return
+        self._rewrite_mode = True
+        self.selected_text_rewrite.capture_and_rewrite(style)
+
     def toggle(self) -> None:
         if self.audio.is_recording:
             self.stop_recording()
@@ -227,15 +296,19 @@ class TranscriptionPipeline:
     def _start_file_worker(self, file_path: str) -> None:
         """Gemeinsamer Einstieg für Datei- und URL-Transkription."""
         self._capture_target_window()
+        resolved = resolve_style_for_hwnd(self._target_hwnd)
+        session_style = resolved or config.selected_style
+        self._session_style = session_style
         self.dictation_context.capture_async(self._target_hwnd)
         worker = PipelineWorker(
             self.transcriber, self.replacer, self.polisher, self.clipboard,
-            self._on_result, self._emit_state, self._emit_error
+            self._emit_result, self._emit_state, self._emit_error,
+            on_upgrade=self._emit_upgrade,
         )
         context = self.dictation_context.get_context(timeout_s=2.0)
         worker.process_file_async(
             file_path,
-            style=config.selected_style,
+            style=session_style,
             screen_context=context,
         )
 
@@ -262,10 +335,25 @@ class TranscriptionPipeline:
                 if text and text.strip() and text != last_text:
                     last_text = text
                     corrected = self.replacer.apply(text)
+                    from src.services.text_postprocessor import apply_postprocessing
+                    corrected = apply_postprocessing(
+                        corrected,
+                        self.session_style,
+                        hwnd=self._target_hwnd,
+                    )
                     self._last_partial_text = corrected
                     dlog.write(f"Live-Partial: '{corrected[:60]}'")
-                    if self._on_partial:
-                        self._on_partial(corrected)
+                    try:
+                        self._partial_queue.put_nowait(corrected)
+                    except queue.Full:
+                        try:
+                            self._partial_queue.get_nowait()
+                        except queue.Empty:
+                            pass
+                        try:
+                            self._partial_queue.put_nowait(corrected)
+                        except queue.Full:
+                            pass
             except Exception as e:
                 dlog.write_exception("Live-Transkript")
                 print(f"[Pipeline] Fehler Live-Transkript: {e}")
@@ -287,10 +375,18 @@ class TranscriptionPipeline:
             self._target_hwnd = None
 
     def _emit_state(self, state: str) -> None:
-        if self._on_state_change: self._on_state_change(state)
+        if state != "processing":
+            self._rewrite_mode = False
+        self._queue_put(self._state_queue, state)
 
     def _emit_error(self, msg: str) -> None:
-        if self._on_error: self._on_error(msg)
+        self._queue_put(self._error_queue, msg)
+
+    def _emit_result(self, raw: str, polished: str) -> None:
+        self._queue_put(self._result_queue, (raw, polished))
+
+    def _emit_upgrade(self, raw: str, instant: str, deep: str) -> None:
+        self._queue_put(self._upgrade_queue, (raw, instant, deep))
 
     @property
     def session_style(self) -> str:

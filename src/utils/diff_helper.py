@@ -12,6 +12,28 @@ from typing import List, Tuple
 Frame = Tuple[str, str]  # ("plain"|"html", inhalt)
 
 
+def count_text_changes(raw: str, polished: str) -> int:
+    """Zählt geänderte Wort-Segmente zwischen Rohtext und poliertem Text."""
+    raw = (raw or "").strip()
+    polished = (polished or "").strip()
+    if not raw or not polished or raw == polished:
+        return 0
+
+    raw_words = raw.split()
+    pol_words = polished.split()
+    matcher = difflib.SequenceMatcher(None, raw_words, pol_words)
+    changes = 0
+    for tag, _i1, _i2, _j1, _j2 in matcher.get_opcodes():
+        if tag != "equal":
+            changes += 1
+    return changes
+
+
+def texts_differ(raw: str, polished: str) -> bool:
+    """True wenn Rohtext und polierter Text inhaltlich abweichen."""
+    return (raw or "").strip() != (polished or "").strip()
+
+
 def generate_diff_frames(
     raw: str,
     polished: str,

@@ -5,6 +5,7 @@ Unterstützt dynamische Übersetzung und Design-Themenwechsel.
 """
 
 from pathlib import Path
+import time
 
 from PyQt6.QtCore import Qt, QUrl, QTimer, QSignalBlocker
 from PyQt6.QtMultimedia import QAudioOutput, QMediaPlayer
@@ -57,6 +58,7 @@ class HistoryDialog(QDialog):
         self._player.positionChanged.connect(self._on_position_changed)
         self._player.durationChanged.connect(self._on_duration_changed)
         self._player.playbackStateChanged.connect(self._on_playback_state)
+        self._last_waveform_paint = 0.0
         
         if embedded:
             self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
@@ -388,19 +390,20 @@ class HistoryDialog(QDialog):
         else:
             self._update_detail(self._current_entry)
 
+    def _detach_detail(self) -> None:
+        """Löst das Detail-Panel ab, bevor Listeneinträge zerstört werden."""
+        self._player.stop()
+        self.detail.setParent(None)
+        self.detail.setVisible(False)
+
     def _refresh_list(self, query: str = "") -> None:
-        # Clear existing list items
+        self._detach_detail()
+        self._current_entry = None
+
         while self.list_layout.count() > 1:
             item = self.list_layout.takeAt(0)
             if item.widget():
-                if item.widget() == self.detail:
-                    self.detail.setParent(None)
-                else:
-                    item.widget().deleteLater()
-                    
-        self._current_entry = None
-        self.detail.setVisible(False)
-        self.detail.setParent(None)
+                item.widget().deleteLater()
 
         entries = self.history.search(query) if query else self.history.list_all()
         for entry in entries:
@@ -412,6 +415,7 @@ class HistoryDialog(QDialog):
             label = f"{ts}  ·  {style}  ·  {preview}"
             
             entry_widget = QWidget()
+            entry_widget.setProperty("entry_id", entry.get("id", ""))
             entry_layout = QVBoxLayout(entry_widget)
             entry_layout.setContentsMargins(0, 0, 0, 0)
             entry_layout.setSpacing(0)
@@ -423,6 +427,25 @@ class HistoryDialog(QDialog):
             
             entry_layout.addWidget(btn)
             self.list_layout.insertWidget(self.list_layout.count() - 1, entry_widget)
+
+    def _update_entry_button_label(self, entry: dict) -> None:
+        entry_id = entry.get("id", "")
+        if not entry_id:
+            return
+        ts = entry.get("timestamp", "")[:16].replace("T", " ")
+        style = style_label(entry.get("style", ""))
+        preview = entry.get("polished", "").replace("\n", " ")
+        if len(preview) > 45:
+            preview = preview[:42] + "…"
+        label = f"{ts}  ·  {style}  ·  {preview}"
+        for i in range(self.list_layout.count() - 1):
+            item = self.list_layout.itemAt(i)
+            ew = item.widget() if item else None
+            if ew is not None and ew.property("entry_id") == entry_id:
+                btn = ew.findChild(QPushButton, "HistoryListButton")
+                if btn is not None:
+                    btn.setText(label)
+                break
 
     def _set_active_style(self, style: str) -> None:
         for key, btn in self._style_buttons.items():
@@ -521,7 +544,8 @@ class HistoryDialog(QDialog):
         self.audio_hint.setToolTip(audio_path if has_audio else "")
         self.audio_slider.setValue(0)
         self.time_label.setText("0:00")
-        self.waveform.load_audio_file(audio_path if has_audio else None)
+        path_for_waveform = audio_path if has_audio else None
+        QTimer.singleShot(0, lambda p=path_for_waveform: self.waveform.load_audio_file(p))
         if has_audio:
             self._player.setSource(QUrl.fromLocalFile(audio_path))
 
@@ -560,7 +584,7 @@ class HistoryDialog(QDialog):
         )
         self._set_active_style(style_key)
         self._update_detail(entry)
-        self._refresh_list(self.search_input.text())
+        self._update_entry_button_label(entry)
         if style_key in _STRUCTURED_STYLES:
             self.compare_slider.show_polished_view()
 
@@ -588,7 +612,12 @@ class HistoryDialog(QDialog):
                 self.audio_slider.setValue(position_ms)
         self.time_label.setText(_fmt_ms(position_ms))
         if self.audio_slider.maximum() > 0:
-            self.waveform.set_position_ratio(position_ms / float(self.audio_slider.maximum()))
+            now = time.monotonic()
+            if now - self._last_waveform_paint >= 0.05:
+                self._last_waveform_paint = now
+                self.waveform.set_position_ratio(
+                    position_ms / float(self.audio_slider.maximum())
+                )
 
     def _seek_audio(self, position_ms: int) -> None:
         self._player.setPosition(position_ms)

@@ -294,24 +294,39 @@ class ClipboardService:
             return None
         return captured
 
-    def _restore_clipboard(self, text: str) -> None:
-        try:
-            pyperclip.copy(text)
-        except Exception as e:
-            print(f"[Clipboard] Wiederherstellung fehlgeschlagen: {e}")
+    def capture_all_text(self, target_hwnd: int, delay_ms: int = 100) -> Optional[str]:
+        """
+        Liest den sichtbaren Text eines Eingabefelds via Ctrl+A, Ctrl+C.
+        Stellt die Zwischenablage danach wieder her.
+        """
+        if not WIN32_AVAILABLE or not target_hwnd:
+            return None
 
-    def _clear_clipboard(self) -> None:
-        if not WIN32_AVAILABLE:
-            return
-        try:
-            ctypes.windll.user32.OpenClipboard(0)
-            ctypes.windll.user32.EmptyClipboard()
-            ctypes.windll.user32.CloseClipboard()
-        except Exception:
-            pass
+        original = self.read_clipboard()
+        self._force_foreground(target_hwnd)
+        time.sleep(0.05)
 
-    def _send_ctrl_c(self) -> bool:
-        """Sendet Ctrl+C an das fokussierte Fenster."""
+        if not self._send_ctrl_a() or not self._send_ctrl_c():
+            return None
+
+        time.sleep(delay_ms / 1000.0)
+        captured = self.read_clipboard().strip()
+
+        if original:
+            if PYPERCLIP_AVAILABLE:
+                self._restore_clipboard(original)
+            else:
+                self._copy_win32(original)
+        elif captured:
+            self._clear_clipboard()
+
+        return captured or None
+
+    def _send_ctrl_a(self) -> bool:
+        """Sendet Ctrl+A an das fokussierte Fenster."""
+        return self._send_ctrl_key(0x41)
+
+    def _send_ctrl_key(self, vk: int) -> bool:
         if not WIN32_AVAILABLE:
             return False
         try:
@@ -345,24 +360,50 @@ class ClipboardService:
 
             INPUT_KEYBOARD = 1
             KEYEVENTF_KEYUP = 0x0002
-            VK_CONTROL, VK_C = 0x11, 0x43
+            VK_CONTROL = 0x11
             scan_ctrl = ctypes.windll.user32.MapVirtualKeyW(VK_CONTROL, 0)
-            scan_c = ctypes.windll.user32.MapVirtualKeyW(VK_C, 0)
+            scan_key = ctypes.windll.user32.MapVirtualKeyW(vk, 0)
 
             inputs = (INPUT * 4)()
-            for i, (vk, scan, flags) in enumerate([
+            for i, (key_vk, scan, flags) in enumerate([
                 (VK_CONTROL, scan_ctrl, 0),
-                (VK_C, scan_c, 0),
-                (VK_C, scan_c, KEYEVENTF_KEYUP),
+                (vk, scan_key, 0),
+                (vk, scan_key, KEYEVENTF_KEYUP),
                 (VK_CONTROL, scan_ctrl, KEYEVENTF_KEYUP),
             ]):
                 inputs[i].type = INPUT_KEYBOARD
-                inputs[i].ki.wVk = vk
+                inputs[i].ki.wVk = key_vk
                 inputs[i].ki.wScan = scan
                 inputs[i].ki.dwFlags = flags
 
             res = ctypes.windll.user32.SendInput(4, inputs, ctypes.sizeof(INPUT))
             return res == 4
+        except Exception as e:
+            print(f"[Clipboard] Ctrl+Key fehlgeschlagen: {e}")
+            return False
+
+    def _restore_clipboard(self, text: str) -> None:
+        try:
+            pyperclip.copy(text)
+        except Exception as e:
+            print(f"[Clipboard] Wiederherstellung fehlgeschlagen: {e}")
+
+    def _clear_clipboard(self) -> None:
+        if not WIN32_AVAILABLE:
+            return
+        try:
+            ctypes.windll.user32.OpenClipboard(0)
+            ctypes.windll.user32.EmptyClipboard()
+            ctypes.windll.user32.CloseClipboard()
+        except Exception:
+            pass
+
+    def _send_ctrl_c(self) -> bool:
+        """Sendet Ctrl+C an das fokussierte Fenster."""
+        if not WIN32_AVAILABLE:
+            return False
+        try:
+            return self._send_ctrl_key(0x43)
         except Exception as e:
             print(f"[Clipboard] Ctrl+C fehlgeschlagen: {e}")
             return False

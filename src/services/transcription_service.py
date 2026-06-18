@@ -128,7 +128,7 @@ class TranscriptionService:
             return True
 
         except Exception as e:
-            _log(f"[Transcription] Parakeet-Fehler: {e} -> Fallback zu Whisper")
+            _log(f"[Transcription] Parakeet-Warnung: {e} -> Fallback zu Whisper")
             return self._init_whisper()
 
     def _init_whisper(self) -> bool:

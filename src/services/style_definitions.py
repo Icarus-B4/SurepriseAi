@@ -13,6 +13,7 @@ STYLE_DEFINITIONS: list[tuple[str, str]] = [
     ("concise", "Kompakt"),
     ("long", "Lang"),
     ("formal", "Formell"),
+    ("developer", "Developer"),
 ]
 
 STYLE_LABELS: dict[str, str] = dict(STYLE_DEFINITIONS)

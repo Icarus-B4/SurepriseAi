@@ -56,6 +56,12 @@ class HotkeyService:
         self._on_stop: Optional[Callable[[], None]] = None
         self._on_translate_de: Optional[Callable[[], None]] = None
         self._on_translate_en: Optional[Callable[[], None]] = None
+        self._on_mute_toggle: Optional[Callable[[], None]] = None
+        self._on_device_cycle: Optional[Callable[[], None]] = None
+        self._on_rewrite: Optional[Callable[[], None]] = None
+        self._on_escape: Optional[Callable[[], None]] = None
+        self._on_basics_nav: Optional[Callable[[str], None]] = None
+        self._on_open_settings: Optional[Callable[[], None]] = None
 
     def set_start_callback(self, cb: Callable[[], None]) -> None:
         self._on_start = cb
@@ -68,6 +74,24 @@ class HotkeyService:
 
     def set_translate_en_callback(self, cb: Callable[[], None]) -> None:
         self._on_translate_en = cb
+
+    def set_mute_toggle_callback(self, cb: Callable[[], None]) -> None:
+        self._on_mute_toggle = cb
+
+    def set_device_cycle_callback(self, cb: Callable[[], None]) -> None:
+        self._on_device_cycle = cb
+
+    def set_rewrite_callback(self, cb: Callable[[], None]) -> None:
+        self._on_rewrite = cb
+
+    def set_escape_callback(self, cb: Callable[[], None]) -> None:
+        self._on_escape = cb
+
+    def set_basics_nav_callback(self, cb: Callable[[str], None]) -> None:
+        self._on_basics_nav = cb
+
+    def set_open_settings_callback(self, cb: Callable[[], None]) -> None:
+        self._on_open_settings = cb
 
     # ── Listener-Steuerung ────────────────────────────────────────────────────
 
@@ -101,6 +125,13 @@ class HotkeyService:
                     f", EN={config.get_str('translate_english_hotkey', 'f7')}"
                 )
             print(f"[Hotkey] Listener gestartet – '{hotkey}' ({mode}-Modus){extras}")
+            print("[Hotkey] SelectedText Umschrift gebunden: f9")
+            print("[Hotkey] Basics-Steuerung: m=Mute, d=Device, Escape=Basics schließen")
+            try:
+                from src.services import dictation_logger as dlog
+                dlog.write("SelectedText Hotkey gebunden: f9", also_print=False)
+            except Exception:
+                pass
             return True
         except Exception as e:
             print(f"[Hotkey] Fehler beim Starten: {e}")
@@ -164,17 +195,47 @@ class HotkeyService:
                 threading.Thread(target=self._on_translate_en, daemon=True).start()
                 return
 
+        if self._key_matches(key, "f9") and self._on_rewrite:
+            threading.Thread(target=self._on_rewrite, daemon=True).start()
+            return
+
+        if self._key_matches(key, "m") and self._on_mute_toggle:
+            threading.Thread(target=self._on_mute_toggle, daemon=True).start()
+            return
+
+        if self._key_matches(key, "d") and self._on_device_cycle:
+            threading.Thread(target=self._on_device_cycle, daemon=True).start()
+            return
+
+        if self._key_matches(key, "s") and self._on_open_settings:
+            threading.Thread(target=self._on_open_settings, daemon=True).start()
+            return
+
+        if key == pynput_kb.Key.esc and self._on_escape:
+            threading.Thread(target=self._on_escape, daemon=True).start()
+            return
+
+        if self._on_basics_nav:
+            nav_map = {
+                pynput_kb.Key.right: "right",
+                pynput_kb.Key.left: "left",
+            }
+            if key in nav_map:
+                name = nav_map[key]
+                threading.Thread(
+                    target=self._on_basics_nav, args=(name,), daemon=True
+                ).start()
+                return
+
         if not self._key_matches(key):
             return
 
         if config.push_to_talk:
-            # Push-to-Talk: Starten wenn noch nicht aktiv
             if not self._recording_active:
                 self._recording_active = True
                 if self._on_start:
                     threading.Thread(target=self._on_start, daemon=True).start()
         else:
-            # Toggle-Modus: Umschalten
             if not self._recording_active:
                 self._recording_active = True
                 if self._on_start:

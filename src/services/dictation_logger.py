@@ -1,7 +1,8 @@
 """
 dictation_logger.py
-Detailliertes Diagnose-Log für Aufnahme und Transkription.
-Dateien: Desktop + %APPDATA%\\SurepriseAi\\dictation.log
+Detailliertes Diagnose-Log für Aufnahme, UI und Abstürze.
+Dateien: Desktop\\SurepriseAi-Diktat.log + %APPDATA%\\SurepriseAi\\dictation.log
+         (Dev: zusätzlich .agent\\dictation.log)
 """
 
 from __future__ import annotations
@@ -16,26 +17,51 @@ from typing import Any, Optional
 
 import numpy as np
 
-from src.utils.app_paths import install_root, is_frozen, user_data_dir
+from src.utils.app_paths import desktop_dir, install_root, is_frozen, user_data_dir
 from src.version import __version__
 
-_DESKTOP_LOG = (
-    Path(os.environ.get("USERPROFILE", Path.home()))
-    / "Desktop"
-    / "SurepriseAi-Diktat.log"
-)
-_APPDATA_LOG = user_data_dir() / "dictation.log"
-
+_LOG_FILENAME = "SurepriseAi-Diktat.log"
 _session_id: str = ""
 _dictation_id: str = ""
+_log_paths: list[Path] | None = None
+_boot_written = False
+
+
+def _build_log_paths() -> list[Path]:
+    paths: list[Path] = []
+    desktop_log = desktop_dir() / _LOG_FILENAME
+    paths.append(desktop_log)
+    paths.append(user_data_dir() / "dictation.log")
+    if not is_frozen():
+        paths.append(install_root() / ".agent" / "dictation.log")
+
+    unique: list[Path] = []
+    seen: set[str] = set()
+    for path in paths:
+        key = str(path).lower()
+        if key not in seen:
+            seen.add(key)
+            unique.append(path)
+    return unique
+
+
+def all_log_paths() -> list[Path]:
+    global _log_paths
+    if _log_paths is None:
+        _log_paths = _build_log_paths()
+    return list(_log_paths)
+
+
+def primary_log_path() -> Path:
+    return all_log_paths()[0]
 
 
 def desktop_log_path() -> Path:
-    return _DESKTOP_LOG
+    return desktop_dir() / _LOG_FILENAME
 
 
 def appdata_log_path() -> Path:
-    return _APPDATA_LOG
+    return user_data_dir() / "dictation.log"
 
 
 def current_session_id() -> str:
@@ -50,7 +76,23 @@ def _stamp() -> str:
     return datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
 
 
-def write(message: str, *, also_print: bool = True) -> None:
+def _append_line(line: str, *, sync: bool = False) -> list[str]:
+    """Schreibt eine Zeile in alle Log-Ziele. Gibt Fehler pro Pfad zurück."""
+    errors: list[str] = []
+    for path in all_log_paths():
+        try:
+            path.parent.mkdir(parents=True, exist_ok=True)
+            with open(path, "a", encoding="utf-8", buffering=1) as fh:
+                fh.write(line + "\n")
+                fh.flush()
+                if sync:
+                    os.fsync(fh.fileno())
+        except OSError as exc:
+            errors.append(f"{path}: {exc}")
+    return errors
+
+
+def write(message: str, *, also_print: bool = True, sync: bool = False) -> None:
     prefix = ""
     if _dictation_id:
         prefix = f"[{_dictation_id}] "
@@ -62,39 +104,69 @@ def write(message: str, *, also_print: bool = True) -> None:
             print(f"[Diktat] {message}")
         except Exception:
             pass
-    for path in (_DESKTOP_LOG, _APPDATA_LOG):
-        try:
-            path.parent.mkdir(parents=True, exist_ok=True)
-            with open(path, "a", encoding="utf-8") as fh:
-                fh.write(line + "\n")
-        except OSError:
-            pass
+    errors = _append_line(line, sync=sync)
+    if errors and also_print:
+        for err in errors:
+            try:
+                print(f"[Diktat] LOG-SCHREIBFEHLER {err}", file=sys.stderr)
+            except Exception:
+                pass
+
+
+def write_boot_probe() -> None:
+    """Sofort beim Start – prüft, ob Log-Dateien beschreibbar sind."""
+    global _boot_written
+    if _boot_written:
+        return
+    _boot_written = True
+    paths = all_log_paths()
+    write("=" * 72, also_print=False, sync=True)
+    write(
+        f"BOOT pid={os.getpid()} python={sys.version.split()[0]} cwd={os.getcwd()}",
+        also_print=False,
+        sync=True,
+    )
+    for path in paths:
+        write(f"Log-Ziel: {path}", also_print=False, sync=True)
+    write("Crash-Diagnose aktiv (faulthandler + Exception-Hooks)", also_print=False, sync=True)
+    write("=" * 72, also_print=False, sync=True)
+
+
+def write_crash(kind: str, detail: str) -> None:
+    """Markiert einen schweren Fehler / Absturz im Log."""
+    banner = "!" * 72
+    write(banner, also_print=True, sync=True)
+    write(f"CRASH / FATAL: {kind}", also_print=True, sync=True)
+    for chunk in detail.strip().splitlines():
+        write(chunk, also_print=False, sync=False)
+    write(banner, also_print=True, sync=True)
+    _append_line("", sync=True)
 
 
 def write_exception(context: str) -> None:
-    write(f"{context}:\n{traceback.format_exc()}", also_print=False)
+    write_crash(context, traceback.format_exc())
 
 
 def write_session_header(phase: str = "App-Start") -> None:
     global _session_id
     _session_id = datetime.now().strftime("%Y%m%d-%H%M%S") + "-" + uuid.uuid4().hex[:6]
-    write("=" * 72, also_print=False)
-    write(phase, also_print=False)
-    write(f"Version: {__version__}", also_print=False)
-    write(f"Session: {_session_id}", also_print=False)
-    write(f"Frozen (PyInstaller): {is_frozen()}", also_print=False)
-    write(f"sys.executable: {sys.executable}", also_print=False)
-    write(f"install_root: {install_root()}", also_print=False)
-    write(f"Desktop-Log: {_DESKTOP_LOG}", also_print=False)
-    write(f"AppData-Log: {_APPDATA_LOG}", also_print=False)
-    write(f"PID: {os.getpid()}", also_print=False)
-    write(f"CWD: {os.getcwd()}", also_print=False)
+    write("=" * 72, also_print=False, sync=True)
+    write(phase, also_print=False, sync=True)
+    write(f"Version: {__version__}", also_print=False, sync=True)
+    write(f"Session: {_session_id}", also_print=False, sync=True)
+    write(f"Frozen (PyInstaller): {is_frozen()}", also_print=False, sync=True)
+    write(f"sys.executable: {sys.executable}", also_print=False, sync=True)
+    write(f"install_root: {install_root()}", also_print=False, sync=True)
+    write(f"Desktop-Ordner: {desktop_dir()}", also_print=False, sync=True)
+    for path in all_log_paths():
+        write(f"Log-Datei: {path}", also_print=False, sync=True)
+    write(f"PID: {os.getpid()}", also_print=False, sync=True)
+    write(f"CWD: {os.getcwd()}", also_print=False, sync=True)
     try:
         from src.services.config_service import config
-
         from src.utils.app_paths import config_path
 
-        write(f"Config-Pfad: {config_path()}", also_print=False)
+        write(f"Config-Pfad: {config_path()}", also_print=False, sync=True)
         write(
             "Config: "
             f"engine={config.transcription_engine}, "
@@ -104,21 +176,22 @@ def write_session_header(phase: str = "App-Start") -> None:
             f"ptt={config.push_to_talk}, "
             f"device={config.get_str('recording_device', 'default')}",
             also_print=False,
+            sync=True,
         )
     except Exception as exc:
-        write(f"Config-Snapshot fehlgeschlagen: {exc}", also_print=False)
-    write("=" * 72, also_print=False)
+        write(f"Config-Snapshot fehlgeschlagen: {exc}", also_print=False, sync=True)
+    write("=" * 72, also_print=False, sync=True)
 
 
 def begin_dictation() -> str:
     global _dictation_id
     _dictation_id = "D" + uuid.uuid4().hex[:8]
-    write("--- Diktat gestartet ---")
+    write("--- Diktat gestartet ---", sync=True)
     return _dictation_id
 
 
 def end_dictation(outcome: str) -> None:
-    write(f"--- Diktat beendet: {outcome} ---")
+    write(f"--- Diktat beendet: {outcome} ---", sync=True)
     global _dictation_id
     _dictation_id = ""
 
@@ -134,7 +207,7 @@ def log_audio(label: str, audio: Optional[np.ndarray]) -> None:
         return
     rms = float(np.sqrt(np.mean(flat ** 2)))
     peak = float(np.max(np.abs(flat)))
-    zc = int(np.sum(np.abs(np.diff(np.signbit(flat)))))  # grobe Aktivitaet
+    zc = int(np.sum(np.abs(np.diff(np.signbit(flat)))))
     write(
         f"{label}: samples={n}, "
         f"dauer={n / 16000:.2f}s, "
@@ -165,7 +238,7 @@ def log_transcription_attempt(
         f"segments={segment_count} zeichen={len(text)} text='{preview}'"
     )
     if error:
-        write(f"Transkription FEHLER: {error}")
+        write(f"Transkription FEHLER: {error}", sync=True)
 
 
 def log_kv(label: str, **fields: Any) -> None:

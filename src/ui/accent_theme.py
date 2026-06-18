@@ -84,6 +84,8 @@ def apply_windows_accent() -> bool:
 def apply_accent_from_config() -> bool:
     """Wendet Windows-Akzent oder Standard-Indigo laut Config an."""
     global _LAST_APPLIED_HEX
+    accent_name = config.get_str("accent_color", "indigo")
+    print(f"[Theme] accent={accent_name}")
     if not config.get_bool("use_windows_accent", True):
         if _LAST_APPLIED_HEX == _DEFAULT_ACCENT[0]:
             return False
@@ -112,6 +114,7 @@ def apply_theme_from_config() -> bool:
         setattr(Colors, key, value)
         
     _CURRENT_THEME = resolved
+    print(f"[Theme] theme_mode={resolved}")
     return True
 
 

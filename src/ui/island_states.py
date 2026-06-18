@@ -7,7 +7,6 @@ Verwaltet Übergänge: idle → recording → processing → success → idle
 from enum import Enum, auto
 from typing import Callable, Optional
 import threading
-import time
 
 from .design_tokens import AnimationTokens
 
@@ -26,11 +25,11 @@ class IslandState(Enum):
 # Erlaubte Übergänge zwischen States
 _TRANSITIONS: dict[IslandState, set[IslandState]] = {
     IslandState.IDLE:       {IslandState.RECORDING, IslandState.ERROR, IslandState.EXPANDED, IslandState.BASICS},
-    IslandState.RECORDING:  {IslandState.PROCESSING, IslandState.IDLE, IslandState.ERROR},
+    IslandState.RECORDING:  {IslandState.PROCESSING, IslandState.IDLE, IslandState.ERROR, IslandState.EXPANDED},
     IslandState.PROCESSING: {IslandState.SUCCESS, IslandState.ERROR, IslandState.IDLE, IslandState.EXPANDED},
     IslandState.SUCCESS:    {IslandState.IDLE, IslandState.RECORDING, IslandState.EXPANDED, IslandState.BASICS},
     IslandState.ERROR:      {IslandState.IDLE},
-    IslandState.EXPANDED:   {IslandState.IDLE, IslandState.RECORDING},
+    IslandState.EXPANDED:   {IslandState.IDLE, IslandState.RECORDING, IslandState.PROCESSING},
     IslandState.BASICS:     {IslandState.IDLE, IslandState.RECORDING},
 }
 
@@ -45,10 +44,32 @@ class IslandStateMachine:
         self._current: IslandState = IslandState.IDLE
         self._previous: Optional[IslandState] = None
         self._lock = threading.Lock()
-        self._dismiss_timer: Optional[threading.Timer] = None
+        self._dismiss_generation = 0
 
         # Listener: (prev_state, new_state) → None
         self._listeners: list[Callable[[IslandState, IslandState], None]] = []
+
+        # UI-Thread-Marshalling (von AppController mit QTimer gesetzt)
+        self._is_main_thread: Optional[Callable[[], bool]] = None
+        self._invoke_main: Optional[Callable[[Callable[[], None]], None]] = None
+        self._schedule_delayed: Optional[Callable[[int, Callable[[], None]], None]] = None
+
+    def configure_ui_thread(
+        self,
+        is_main_thread: Callable[[], bool],
+        invoke_main: Callable[[Callable[[], None]], None],
+        schedule_delayed: Callable[[int, Callable[[], None]], None],
+    ) -> None:
+        """Alle Listener und Timer laufen auf dem Qt-Hauptthread."""
+        self._is_main_thread = is_main_thread
+        self._invoke_main = invoke_main
+        self._schedule_delayed = schedule_delayed
+
+    def _run_on_ui_thread(self, fn: Callable[[], None]) -> None:
+        if self._is_main_thread and self._invoke_main and not self._is_main_thread():
+            self._invoke_main(fn)
+        else:
+            fn()
 
     # ── State-Verwaltung ──────────────────────────────────────────────────────
 
@@ -81,29 +102,38 @@ class IslandStateMachine:
             self._previous = prev
             self._current = new_state
 
-        # Bestehenden Auto-Dismiss-Timer abbrechen
-        self._cancel_timer()
+        dismiss_ms = auto_dismiss_ms
 
-        # Listener benachrichtigen
-        for listener in self._listeners:
-            try:
-                listener(prev, new_state)
-            except Exception as e:
-                print(f"[State] Listener-Fehler: {e}")
+        def complete() -> None:
+            self._cancel_timer()
+            for listener in self._listeners:
+                try:
+                    listener(prev, new_state)
+                except Exception as e:
+                    print(f"[State] Listener-Fehler: {e}")
 
-        print(f"[State] {prev.name} → {new_state.name}")
+            print(f"[State] {prev.name} → {new_state.name}")
 
-        # Auto-Dismiss nach Timeout
-        if auto_dismiss_ms is not None:
-            target = IslandState.IDLE
-            self._dismiss_timer = threading.Timer(
-                auto_dismiss_ms / 1000.0,
-                lambda: self.transition_to(target),
-            )
-            self._dismiss_timer.daemon = True
-            self._dismiss_timer.start()
+            if dismiss_ms is not None:
+                target = IslandState.IDLE
+                self._schedule_dismiss(dismiss_ms, target)
 
+        self._run_on_ui_thread(complete)
         return True
+
+    def _schedule_dismiss(self, delay_ms: int, target: IslandState) -> None:
+        self._dismiss_generation += 1
+        generation = self._dismiss_generation
+
+        def fire() -> None:
+            if generation != self._dismiss_generation:
+                return
+            self.transition_to(target)
+
+        if self._schedule_delayed:
+            self._schedule_delayed(delay_ms, fire)
+        else:
+            threading.Timer(delay_ms / 1000.0, fire).start()
 
     def transition_by_name(self, state_name: str) -> bool:
         """Wechselt anhand des State-Namens (z.B. 'recording')."""
@@ -132,15 +162,19 @@ class IslandStateMachine:
 
     def reset_to_idle(self) -> None:
         """Erzwingt einen Wechsel zu IDLE (ignoriert Übergangsregeln)."""
-        self._cancel_timer()
         with self._lock:
             prev = self._current
             self._current = IslandState.IDLE
-        for listener in self._listeners:
-            try:
-                listener(prev, IslandState.IDLE)
-            except Exception:
-                pass
+
+        def complete() -> None:
+            self._cancel_timer()
+            for listener in self._listeners:
+                try:
+                    listener(prev, IslandState.IDLE)
+                except Exception:
+                    pass
+
+        self._run_on_ui_thread(complete)
 
     # ── Listener ─────────────────────────────────────────────────────────────
 
@@ -159,9 +193,7 @@ class IslandStateMachine:
     # ── Hilfsmethoden ─────────────────────────────────────────────────────────
 
     def _cancel_timer(self) -> None:
-        if self._dismiss_timer and self._dismiss_timer.is_alive():
-            self._dismiss_timer.cancel()
-            self._dismiss_timer = None
+        self._dismiss_generation += 1
 
     @property
     def current(self) -> IslandState:

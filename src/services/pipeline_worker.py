@@ -11,6 +11,7 @@ import numpy as np
 
 from src.services.config_service import config
 from src.services import dictation_logger as dlog
+from src.services.text_postprocessor import apply_postprocessing
 from src.utils.text_cleaner import bereinige_text
 
 
@@ -27,7 +28,8 @@ class PipelineWorker:
         clipboard,
         on_result: Callable[[str, str], None],
         on_state_change: Callable[[str], None],
-        on_error: Callable[[str], None]
+        on_error: Callable[[str], None],
+        on_upgrade: Callable[[str, str, str], None] | None = None,
     ) -> None:
         self.transcriber = transcriber
         self.replacer = replacer
@@ -37,6 +39,7 @@ class PipelineWorker:
         self.on_result = on_result
         self.on_state_change = on_state_change
         self.on_error = on_error
+        self.on_upgrade = on_upgrade
 
     def process_audio_async(
         self,
@@ -86,7 +89,7 @@ class PipelineWorker:
                 dlog.write(f"Final leer – nutze letztes Live-Partial ({len(live_fallback_text)} Zeichen)")
                 raw_text = live_fallback_text.strip()
             if not raw_text or not raw_text.strip():
-                dlog.end_dictation("FEHLER – keine Sprache erkannt (leerer Rohtext)")
+                dlog.end_dictation("fehlgeschlagen – keine Sprache erkannt (leerer Rohtext)")
                 dlog.write(
                     "HINWEIS: Log-Datei an Support senden: "
                     f"{dlog.desktop_log_path()} oder {dlog.appdata_log_path()}"
@@ -113,12 +116,57 @@ class PipelineWorker:
 
             # 3. KI-Polishing mit Session- oder Standard-Stil
             active_style = style or config.selected_style
+            use_hybrid = (
+                config.get_bool("enable_hybrid_polishing", True)
+                and config.ollama_polishing
+            )
+
+            if use_hybrid:
+                instant_text = self.polisher.polish_instant(corrected_text, active_style)
+                instant_text = apply_postprocessing(
+                    instant_text, active_style, hwnd=target_hwnd
+                )
+                if config.auto_copy:
+                    self.clipboard.copy(instant_text)
+                if config.get_bool("auto_inject_text", True):
+                    self.clipboard.inject_text(
+                        instant_text, delay_ms=150, target_hwnd=target_hwnd
+                    )
+                dlog.end_dictation(
+                    f"OK hybrid-instant – raw={len(raw_text)} zeichen, "
+                    f"instant={len(instant_text)} zeichen"
+                )
+                self.on_result(raw_text, instant_text)
+
+                deep_text = self.polisher.polish_deep(
+                    corrected_text, active_style, screen_context
+                )
+                if deep_text:
+                    deep_text = apply_postprocessing(
+                        deep_text, active_style, hwnd=target_hwnd
+                    )
+                    if deep_text.strip() != instant_text.strip() and self.on_upgrade:
+                        dlog.write(
+                            f"Hybrid-Deep: {len(instant_text)} → {len(deep_text)} Zeichen"
+                        )
+                        if config.get_bool("hybrid_auto_reinject", False):
+                            if config.auto_copy:
+                                self.clipboard.copy(deep_text)
+                            if config.get_bool("auto_inject_text", True):
+                                self.clipboard.inject_text(
+                                    deep_text, delay_ms=150, target_hwnd=target_hwnd
+                                )
+                        self.on_upgrade(raw_text, instant_text, deep_text)
+                return
+
             polished_text = self.polisher.polish(
                 corrected_text,
                 style=active_style,
                 screen_context=screen_context,
             )
-            final_text = polished_text or corrected_text
+            final_text = apply_postprocessing(
+                polished_text or corrected_text, active_style, hwnd=target_hwnd
+            )
 
             # 4. Zwischenablage & optionales Einfügen
             if config.auto_copy:
@@ -130,7 +178,6 @@ class PipelineWorker:
             dlog.end_dictation(
                 f"OK – raw={len(raw_text)} zeichen, final={len(final_text)} zeichen"
             )
-            # Expanded-UI wird in AppController._on_pipeline_result geöffnet (Race vermeiden)
             self.on_result(raw_text, final_text)
 
         except Exception as e:
@@ -164,7 +211,9 @@ class PipelineWorker:
                 style=active_style,
                 screen_context=screen_context,
             )
-            final_text = polished_text or corrected_text
+            final_text = apply_postprocessing(
+                polished_text or corrected_text, active_style, hwnd=None
+            )
 
             if config.auto_copy:
                 self.clipboard.copy(final_text)

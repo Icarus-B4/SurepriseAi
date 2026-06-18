@@ -1,6 +1,6 @@
 """
 settings_features_section.py
-Einstellungs-Sektion für Erscheinungsbild, Mini-FAB, App-Modi und Historie.
+Einstellungs-Sektion für Erscheinungsbild, App-Modi und Historie.
 """
 
 from typing import Callable
@@ -54,10 +54,9 @@ def add_features_section(
         card_layout.addWidget(row)
         return row
 
-    _toggle("Presence-Bar Auto-Hide (nur oben, 5 s)", "enable_presence_bar")
+    _toggle("Presence-Bar (per Mausrad ein-/ausblenden)", "enable_presence_bar")
     _toggle("Windows-Akzentfarbe verwenden", "use_windows_accent")
     _toggle("Privacy-Badge in Idle-Pill", "show_privacy_badge")
-    _toggle("Mini-FAB (schwebender Mic-Button)", "enable_mini_fab")
     _toggle("Updates beim Start prüfen", "check_updates_on_startup")
 
     if is_frozen():
@@ -121,6 +120,50 @@ def add_features_section(
     modes_row.toggled.connect(
         lambda checked: (_save_bool("enable_app_modes", checked), on_change("enable_app_modes"))
     )
+
+    add_section(card_layout, "Diff & Korrektur-Lernen", "✨")
+    _toggle("Diff nach Polishing automatisch öffnen", "auto_show_diff_on_result")
+    learn_row = ToggleRow(
+        "Korrekturen nach Einfügen lernen",
+        checked=config.get_bool("enable_correction_learning", True),
+    )
+    learn_row.toggled.connect(
+        lambda checked: (
+            _save_bool("enable_correction_learning", checked),
+            on_change("enable_correction_learning"),
+        )
+    )
+    card_layout.addWidget(learn_row)
+    learn_hint = QLabel(
+        "Liest nach dem Einfügen den bearbeiteten Text und merkt sich "
+        "Einzelwort-Korrekturen lokal (Wörterbuch / Ersetzungen)."
+    )
+    learn_hint.setObjectName("HintLabel")
+    learn_hint.setWordWrap(True)
+    card_layout.addWidget(learn_hint)
+
+    add_section(card_layout, "Developer & Hybrid", "⌨")
+    _toggle("Developer Mode (camelCase / snake_case)", "enable_developer_mode")
+    _toggle("Developer Mode automatisch in IDEs", "developer_mode_auto_ide")
+    _toggle("Hybrid-Polishing (sofort + Ollama)", "enable_hybrid_polishing")
+    _toggle("Hybrid: Deep-Text automatisch ersetzen", "hybrid_auto_reinject")
+    dev_hint = QLabel(
+        'Developer: „camel case user name" → userName. '
+        "Hybrid: Instant-Text landet sofort, Ollama verfeinert danach."
+    )
+    dev_hint.setObjectName("HintLabel")
+    dev_hint.setWordWrap(True)
+    card_layout.addWidget(dev_hint)
+
+    add_section(card_layout, "Deutsch-Engine", "🇩🇪")
+    _toggle("Deutsch-native Engine (Sie/Du, Zahlen, €)", "enable_german_native_engine")
+    de_hint = QLabel(
+        "Formell/Business → Sie-Anrede, Casual/Kompakt → Du. "
+        'Erkennt „12 komma 5" und „10 euro 50" als 12,5 bzw. 10,50 €.'
+    )
+    de_hint.setObjectName("HintLabel")
+    de_hint.setWordWrap(True)
+    card_layout.addWidget(de_hint)
 
     layout.addWidget(card)
 

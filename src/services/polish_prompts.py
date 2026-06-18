@@ -12,7 +12,12 @@ STYLE_PROMPTS = {
     "key_points": "Extrahiere die 3–5 wichtigsten Kernpunkte als kurze Stichpunkte (mit '•'). Antworte NUR mit dem Text.",
     "concise": "Fasse den Text auf das Wesentliche zusammen. Antworte NUR mit dem Text.",
     "long": "Formuliere den Text ausführlicher und flüssiger, ohne neue Fakten zu erfinden. Antworte NUR mit dem Text.",
-    "formal": "Formuliere den Text in einem formellen, höflichen Stil um. Antworte NUR mit dem Text.",
+    "formal": "Formuliere den Text in einem formellen, höflichen Stil um. Verwende konsequent die Sie-Anrede. Antworte NUR mit dem Text.",
+    "developer": (
+        "Bereinige den Text für Code-Editoren. Behalte camelCase, snake_case, "
+        "PascalCase und technische Bezeichner exakt bei. Keine Umschreibung von "
+        "Variablennamen. Antworte NUR mit dem Text."
+    ),
 }
 
 _CONTEXT_HEADER = (

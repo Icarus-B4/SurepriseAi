@@ -18,17 +18,22 @@ from PyQt6.QtGui import QColor, QPainterPath, QRegion
 
 from src.ui.design_tokens import FluentIcons, Typography
 from src.ui.history_dialog import HistoryDialog
+from src.ui.insights_dialog import InsightsDialog
 from src.ui.settings_styles import settings_stylesheet
 from src.ui.settings_features_section import add_features_section
 from src.ui.toggle_switch import ToggleRow
 from src.ui.url_transcribe_panel import UrlTranscribePanel
 from src.services.config_service import config
 from src.services.dictation_history import DictationHistoryService
+from src.services.usage_stats import UsageStatsService
 from src.services.recording_sound_service import RecordingSoundService
+from src.ui.drag_handle import DragHandleButton
 from src.ui.ollama_settings_row import OllamaSettingsRow
 from src.utils.translation import tr
 
-_CORNER_RADIUS = 16
+_CORNER_RADIUS = 12
+_SETTINGS_W = 900
+_SETTINGS_H = 650
 
 
 class SettingsWindow(QDialog):
@@ -44,11 +49,15 @@ class SettingsWindow(QDialog):
         parent=None,
         on_open_history=None,
         history_service: DictationHistoryService | None = None,
+        usage_stats: UsageStatsService | None = None,
     ):
-        super().__init__(parent)
+        self._island_ref = parent
+        super().__init__(None)
         self._on_open_history = on_open_history
         self._history_service = history_service
+        self._usage_stats = usage_stats
         self._history_view: HistoryDialog | None = None
+        self._insights_view: InsightsDialog | None = None
         self._container: QWidget | None = None
         self._container_layout: QHBoxLayout | None = None
         self._content_stack: QStackedWidget | None = None
@@ -66,10 +75,15 @@ class SettingsWindow(QDialog):
             Qt.WindowType.Dialog
         )
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
-        self.setMinimumSize(1180, 720)
-        self.resize(1280, 760)
-        self.drag_position = QPoint()
+        self.setMinimumSize(_SETTINGS_W, _SETTINGS_H)
+        self.resize(_SETTINGS_W, _SETTINGS_H)
+        self._user_moved = False
+        self._positioned_once = False
+        self._last_mask_size: tuple[int, int] | None = None
         self._init_ui()
+
+    def mark_user_positioned(self) -> None:
+        self._user_moved = True
 
     def _register_translation(self, widget: Any, key: str, is_upper: bool = False, is_placeholder: bool = False) -> None:
         self._translatable_widgets.append((widget, key, is_upper, is_placeholder))
@@ -212,7 +226,7 @@ class SettingsWindow(QDialog):
         layout.addWidget(self._content_stack, stretch=1)
 
         main_layout = QVBoxLayout(self)
-        main_layout.setContentsMargins(16, 16, 16, 16)
+        main_layout.setContentsMargins(0, 0, 0, 0)
         main_layout.addWidget(container)
 
         self.retranslate_ui()
@@ -226,16 +240,25 @@ class SettingsWindow(QDialog):
         layout.setContentsMargins(14, 18, 14, 16)
         layout.setSpacing(8)
 
+        drag_row = QHBoxLayout()
+        drag_row.setContentsMargins(0, 0, 0, 0)
+        drag_row.addWidget(DragHandleButton(sidebar))
+        drag_row.addStretch()
+        layout.addLayout(drag_row)
+
         self._settings_nav_btn = self._make_nav_button("")
         self._history_nav_btn = self._make_nav_button("")
+        self._insights_nav_btn = self._make_nav_button("")
         self._url_nav_btn = self._make_nav_button("")
 
         self._settings_nav_btn.clicked.connect(self.show_settings)
         self._history_nav_btn.clicked.connect(self._open_history_inside_settings)
+        self._insights_nav_btn.clicked.connect(self.show_insights)
         self._url_nav_btn.clicked.connect(self.show_url_transcribe)
 
         layout.addWidget(self._settings_nav_btn)
         layout.addWidget(self._history_nav_btn)
+        layout.addWidget(self._insights_nav_btn)
         layout.addWidget(self._url_nav_btn)
         
         layout.addSpacing(16)
@@ -299,15 +322,30 @@ class SettingsWindow(QDialog):
             self._history_nav_btn.setChecked(view == "history")
         if self._url_nav_btn is not None:
             self._url_nav_btn.setChecked(view == "url")
+        if self._insights_nav_btn is not None:
+            self._insights_nav_btn.setChecked(view == "insights")
+
+    def prepare_for_show(self, reposition: bool = False) -> None:
+        """Setzt Größe und optional Position vor dem Anzeigen."""
+        self.setMinimumSize(_SETTINGS_W, _SETTINGS_H)
+        if self.width() != _SETTINGS_W or self.height() != _SETTINGS_H:
+            self.resize(_SETTINGS_W, _SETTINGS_H)
+        if reposition and not self._user_moved:
+            self._center_on_screen()
+        self._apply_rounded_mask()
 
     def _apply_rounded_mask(self) -> None:
-        """Schneidet Container und Fenster auf abgerundetes Rechteck zu."""
+        """Schneidet den Container auf abgerundetes Rechteck zu."""
         if not self._container:
             return
         w = self._container.width()
         h = self._container.height()
         if w < 2 or h < 2:
             return
+        size_key = (w, h)
+        if size_key == self._last_mask_size:
+            return
+        self._last_mask_size = size_key
         path = QPainterPath()
         path.addRoundedRect(QRectF(0, 0, w, h), _CORNER_RADIUS, _CORNER_RADIUS)
         region = QRegion(path.toFillPolygon().toPolygon())
@@ -344,12 +382,37 @@ class SettingsWindow(QDialog):
             self._content_stack.addWidget(self._history_view)
 
         self._history_view.retranslate_ui()
-        self._history_view._refresh_list()
+        if not self._history_view._current_entry:
+            self._history_view._refresh_list()
         self._content_stack.setCurrentWidget(self._history_view)
         self._set_active_nav("history")
-        self.setMinimumSize(900, 650)
-        self.resize(900, 650)
-        self._center_on_screen()
+        self._apply_rounded_mask()
+
+    def show_insights(self) -> None:
+        """Wechselt rechts in die eingebettete Insights-Ansicht."""
+        if not self._content_stack or not self._container or self._usage_stats is None:
+            return
+        if self._history_view is not None:
+            self._history_view._player.stop()
+
+        if self._insights_view is None:
+            self._insights_view = InsightsDialog(
+                self._usage_stats,
+                self._container,
+                embedded=True,
+            )
+            self._insights_view.setWindowFlags(Qt.WindowType.Widget)
+            self._insights_view.setSizePolicy(
+                QSizePolicy.Policy.Expanding,
+                QSizePolicy.Policy.Expanding,
+            )
+            self._insights_view.finished.connect(lambda _result: self.show_settings())
+            self._content_stack.addWidget(self._insights_view)
+
+        self._insights_view.retranslate_ui()
+        self._insights_view.refresh()
+        self._content_stack.setCurrentWidget(self._insights_view)
+        self._set_active_nav("insights")
         self._apply_rounded_mask()
 
     def show_settings(self) -> None:
@@ -359,9 +422,6 @@ class SettingsWindow(QDialog):
         if self._content_stack is not None and self._settings_page is not None:
             self._content_stack.setCurrentWidget(self._settings_page)
         self._set_active_nav("settings")
-        self.setMinimumSize(900, 650)
-        self.resize(900, 650)
-        self._center_on_screen()
         self._apply_rounded_mask()
 
     def show_url_transcribe(self) -> None:
@@ -372,9 +432,6 @@ class SettingsWindow(QDialog):
             self._history_view._player.stop()
         self._content_stack.setCurrentWidget(self._url_panel)
         self._set_active_nav("url")
-        self.setMinimumSize(900, 650)
-        self.resize(900, 650)
-        self._center_on_screen()
         self._apply_rounded_mask()
 
     def _center_on_screen(self) -> None:
@@ -388,20 +445,23 @@ class SettingsWindow(QDialog):
             self.move(x, y)
 
     def _hide_island_presence(self) -> None:
-        island = cast(Any, self.parent())
+        island = cast(Any, self._island_ref)
         if island and hasattr(island, "presence_bar"):
             island._presence_hidden_for_settings = True
             island.presence_bar.stop()
             island.presence_bar.hide()
 
     def _restore_island_presence(self) -> None:
-        island = cast(Any, self.parent())
+        island = cast(Any, self._island_ref)
         if not island or not getattr(island, "_presence_hidden_for_settings", False):
             return
         island._presence_hidden_for_settings = False
         if island.state_machine.is_idle or island.state_machine.is_basics:
             if config.get_bool("enable_presence_bar", True):
-                island._check_hover()
+                if hasattr(island, "presence_controller"):
+                    island.presence_controller.check_hover()
+                else:
+                    island._check_hover()
             elif not island._idle_revealed:
                 island._position_presence_bar()
                 island.presence_bar.start()
@@ -651,6 +711,7 @@ class SettingsWindow(QDialog):
         # Sidebar Buttons übersetzen
         self._settings_nav_btn.setText(tr("nav_settings"))
         self._history_nav_btn.setText(tr("nav_history"))
+        self._insights_nav_btn.setText(tr("nav_insights"))
         self._url_nav_btn.setText(tr("nav_url_transcribe"))
         self._record_btn.setText(tr("nav_start_dictation"))
         self._style_btn.setText(tr("nav_polishing_style"))
@@ -659,12 +720,17 @@ class SettingsWindow(QDialog):
         self._url_panel.retranslate_ui()
         if self._history_view is not None:
             self._history_view.retranslate_ui()
+        if self._insights_view is not None:
+            self._insights_view.retranslate_ui()
+            self._insights_view.refresh()
 
     def refresh_theme(self) -> None:
         """Aktualisiert das Stylesheet bei Theme-Wechseln."""
         self.setStyleSheet(settings_stylesheet())
         if self._history_view is not None:
             self._history_view._apply_style()
+        if self._insights_view is not None:
+            self._insights_view._apply_style()
         self._apply_rounded_mask()
 
     def showEvent(self, event):
@@ -673,6 +739,8 @@ class SettingsWindow(QDialog):
         if hasattr(self, "_ollama_row"):
             self._ollama_row.refresh_status()
         self._hide_island_presence()
+        if self.width() != _SETTINGS_W or self.height() != _SETTINGS_H:
+            self.resize(_SETTINGS_W, _SETTINGS_H)
         self._apply_rounded_mask()
 
     def resizeEvent(self, event):
@@ -682,13 +750,3 @@ class SettingsWindow(QDialog):
     def closeEvent(self, event):
         self._restore_island_presence()
         super().closeEvent(event)
-
-    def mousePressEvent(self, event):
-        if event.button() == Qt.MouseButton.LeftButton:
-            self.drag_position = event.globalPosition().toPoint() - self.frameGeometry().topLeft()
-            event.accept()
-
-    def mouseMoveEvent(self, event):
-        if event.buttons() == Qt.MouseButton.LeftButton:
-            self.move(event.globalPosition().toPoint() - self.drag_position)
-            event.accept()
