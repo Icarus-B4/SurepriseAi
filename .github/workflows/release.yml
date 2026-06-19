@@ -57,8 +57,9 @@ jobs:
 
             **Windows-Installer** – Doppelklick auf `SurepriseAi-Setup.exe`.
 
-            ### Neu in v0.1.31
-            - **Desktop-Icon:** Verknüpfungen zeigen nach Installation/Update das Waveform-Icon aus `App_icon.png`.
-            - Installer schreibt `SurepriseAi.ico` zuverlässig neu und aktualisiert den Windows-Icon-Cache.
+            ### Neu in v0.1.37
+            - **Absturzfix:** Hotkey-Callbacks laufen thread-sicher auf dem Qt-Hauptthread (keine `QBasicTimer`-/Fenster-Handle-Fehler mehr).
+            - **Basics-Hotkeys:** Buchstaben-Tasten `m`, `d`, `s` und Pfeiltasten reagieren nur noch im Basics-Modus – normales Tippen in anderen Apps löst sie nicht mehr aus.
+            - **Stabilität:** Keine redundanten Hintergrund-Threads mehr im Hotkey-Listener; Ollama-Status-UI marshalled korrekt.
 
-            Vollständiges Changelog: https://github.com/Icarus-B4/SurepriseAi/compare/v0.1.30...${{ github.ref_name }}
+            Vollständiges Changelog: https://github.com/Icarus-B4/SurepriseAi/compare/v0.1.36...${{ github.ref_name }}

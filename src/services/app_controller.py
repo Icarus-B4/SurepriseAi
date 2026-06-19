@@ -94,10 +94,10 @@ class AppController(QObject):
             return threading.current_thread() is _main
 
         def _invoke_main(fn) -> None:
-            QTimer.singleShot(0, fn)
+            self._run_on_main_thread(fn)
 
         def _schedule_delayed(ms: int, fn) -> None:
-            QTimer.singleShot(ms, fn)
+            QTimer.singleShot(ms, self, fn)
 
         self.app.state_machine.configure_ui_thread(
             _is_main_thread, _invoke_main, _schedule_delayed
@@ -111,20 +111,41 @@ class AppController(QObject):
         self._app_mode_timer.timeout.connect(self._poll_app_mode)
         self._app_mode_timer.start(900)
 
-        self.app.hotkey.set_start_callback(self.app.pipeline.start_recording)
-        self.app.hotkey.set_stop_callback(self.app.pipeline.stop_recording)
-        self.app.hotkey.set_translate_de_callback(lambda: self._start_dictation_translate("de"))
-        self.app.hotkey.set_translate_en_callback(lambda: self._start_dictation_translate("en"))
+        self.app.hotkey.set_basics_active_callback(
+            lambda: self.app.state_machine.is_basics
+        )
+        self.app.hotkey.set_start_callback(
+            lambda: self._run_on_main_thread(self.app.pipeline.start_recording)
+        )
+        self.app.hotkey.set_stop_callback(
+            lambda: self._run_on_main_thread(self.app.pipeline.stop_recording)
+        )
+        self.app.hotkey.set_translate_de_callback(
+            lambda: self._run_on_main_thread(lambda: self._start_dictation_translate("de"))
+        )
+        self.app.hotkey.set_translate_en_callback(
+            lambda: self._run_on_main_thread(lambda: self._start_dictation_translate("en"))
+        )
         self.app.hotkey.set_mute_toggle_callback(
-            lambda: self._schedule_ui(self._toggle_mute)
+            lambda: self._run_on_main_thread(self._toggle_mute)
         )
         self.app.hotkey.set_device_cycle_callback(
-            lambda: self._schedule_ui(self._cycle_device)
+            lambda: self._run_on_main_thread(self._cycle_device)
         )
-        self.app.hotkey.set_rewrite_callback(self._trigger_selected_text_rewrite)
-        self.app.hotkey.set_escape_callback(self._dismiss_basics)
-        self.app.hotkey.set_basics_nav_callback(self._on_basics_nav_key)
-        self.app.hotkey.set_open_settings_callback(self.app.window._on_open_settings)
+        self.app.hotkey.set_rewrite_callback(
+            lambda: self._run_on_main_thread(self._trigger_selected_text_rewrite)
+        )
+        self.app.hotkey.set_escape_callback(
+            lambda: self._run_on_main_thread(self._dismiss_basics)
+        )
+        self.app.hotkey.set_basics_nav_callback(
+            lambda key_name: self._run_on_main_thread(
+                lambda: self._on_basics_nav_key(key_name)
+            )
+        )
+        self.app.hotkey.set_open_settings_callback(
+            lambda: self._run_on_main_thread(self.app.window._on_open_settings)
+        )
 
         self.app.window.settings_changed_callback = self.apply_runtime_setting
         self.app.window.open_history_callback = self._open_history
@@ -259,9 +280,18 @@ class AppController(QObject):
         if applied:
             print(f"[CorrectionLearning] {len(applied)} Eintrag/Einträge gespeichert")
 
+    def _run_on_main_thread(self, fn) -> None:
+        """Führt fn auf dem Qt-Hauptthread aus (sicher aus pynput-/Worker-Threads)."""
+        import threading
+
+        if threading.current_thread() is threading.main_thread():
+            fn()
+        else:
+            QTimer.singleShot(0, self, fn)
+
     def _schedule_ui(self, fn) -> None:
-        """Führt einen Callback auf dem Qt-Hauptthread aus (Hotkeys laufen in pynput-Threads)."""
-        QTimer.singleShot(0, fn)
+        """Alias für _run_on_main_thread (Hotkeys, Pipeline-Callbacks)."""
+        self._run_on_main_thread(fn)
 
     def _pump_background_ui(self) -> None:
         """Holt Pipeline-Events aus Hintergrund-Threads auf den UI-Thread."""

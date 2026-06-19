@@ -5,7 +5,6 @@ Unterstützt Push-to-Talk und Toggle-Modus.
 Läuft in einem separaten Thread – kein Admin nötig.
 """
 
-import threading
 from typing import Callable, Optional
 
 try:
@@ -62,6 +61,7 @@ class HotkeyService:
         self._on_escape: Optional[Callable[[], None]] = None
         self._on_basics_nav: Optional[Callable[[str], None]] = None
         self._on_open_settings: Optional[Callable[[], None]] = None
+        self._is_basics_active: Optional[Callable[[], bool]] = None
 
     def set_start_callback(self, cb: Callable[[], None]) -> None:
         self._on_start = cb
@@ -92,6 +92,27 @@ class HotkeyService:
 
     def set_open_settings_callback(self, cb: Callable[[], None]) -> None:
         self._on_open_settings = cb
+
+    def set_basics_active_callback(self, cb: Callable[[], bool]) -> None:
+        """Gibt an, ob Buchstaben-Hotkeys (m/d/s) und Hub-Navigation aktiv sind."""
+        self._is_basics_active = cb
+
+    def _basics_keys_allowed(self) -> bool:
+        if self._is_basics_active is None:
+            return False
+        try:
+            return bool(self._is_basics_active())
+        except Exception:
+            return False
+
+    def _fire(self, cb: Optional[Callable[..., None]], *args: object) -> None:
+        """Ruft Callback direkt auf – UI-Marshalling liegt beim Empfänger."""
+        if cb is None:
+            return
+        try:
+            cb(*args)
+        except Exception as exc:
+            print(f"[Hotkey] Callback-Fehler: {exc}")
 
     # ── Listener-Steuerung ────────────────────────────────────────────────────
 
@@ -126,7 +147,10 @@ class HotkeyService:
                 )
             print(f"[Hotkey] Listener gestartet – '{hotkey}' ({mode}-Modus){extras}")
             print("[Hotkey] SelectedText Umschrift gebunden: f9")
-            print("[Hotkey] Basics-Steuerung: m=Mute, d=Device, Escape=Basics schließen")
+            print(
+                "[Hotkey] Basics-Steuerung (nur im Basics-Modus): "
+                "m=Mute, d=Device, s=Einstellungen, Escape=schließen"
+            )
             try:
                 from src.services import dictation_logger as dlog
                 dlog.write("SelectedText Hotkey gebunden: f9", also_print=False)
@@ -189,43 +213,41 @@ class HotkeyService:
             de_key = config.get_str("translate_german_hotkey", "f6")
             en_key = config.get_str("translate_english_hotkey", "f7")
             if self._key_matches(key, de_key) and self._on_translate_de:
-                threading.Thread(target=self._on_translate_de, daemon=True).start()
+                self._fire(self._on_translate_de)
                 return
             if self._key_matches(key, en_key) and self._on_translate_en:
-                threading.Thread(target=self._on_translate_en, daemon=True).start()
+                self._fire(self._on_translate_en)
                 return
 
         if self._key_matches(key, "f9") and self._on_rewrite:
-            threading.Thread(target=self._on_rewrite, daemon=True).start()
+            self._fire(self._on_rewrite)
             return
 
-        if self._key_matches(key, "m") and self._on_mute_toggle:
-            threading.Thread(target=self._on_mute_toggle, daemon=True).start()
-            return
-
-        if self._key_matches(key, "d") and self._on_device_cycle:
-            threading.Thread(target=self._on_device_cycle, daemon=True).start()
-            return
-
-        if self._key_matches(key, "s") and self._on_open_settings:
-            threading.Thread(target=self._on_open_settings, daemon=True).start()
-            return
-
-        if key == pynput_kb.Key.esc and self._on_escape:
-            threading.Thread(target=self._on_escape, daemon=True).start()
-            return
-
-        if self._on_basics_nav:
-            nav_map = {
-                pynput_kb.Key.right: "right",
-                pynput_kb.Key.left: "left",
-            }
-            if key in nav_map:
-                name = nav_map[key]
-                threading.Thread(
-                    target=self._on_basics_nav, args=(name,), daemon=True
-                ).start()
+        if self._basics_keys_allowed():
+            if self._key_matches(key, "m") and self._on_mute_toggle:
+                self._fire(self._on_mute_toggle)
                 return
+
+            if self._key_matches(key, "d") and self._on_device_cycle:
+                self._fire(self._on_device_cycle)
+                return
+
+            if self._key_matches(key, "s") and self._on_open_settings:
+                self._fire(self._on_open_settings)
+                return
+
+            if key == pynput_kb.Key.esc and self._on_escape:
+                self._fire(self._on_escape)
+                return
+
+            if self._on_basics_nav:
+                nav_map = {
+                    pynput_kb.Key.right: "right",
+                    pynput_kb.Key.left: "left",
+                }
+                if key in nav_map:
+                    self._fire(self._on_basics_nav, nav_map[key])
+                    return
 
         if not self._key_matches(key):
             return
@@ -233,17 +255,14 @@ class HotkeyService:
         if config.push_to_talk:
             if not self._recording_active:
                 self._recording_active = True
-                if self._on_start:
-                    threading.Thread(target=self._on_start, daemon=True).start()
+                self._fire(self._on_start)
         else:
             if not self._recording_active:
                 self._recording_active = True
-                if self._on_start:
-                    threading.Thread(target=self._on_start, daemon=True).start()
+                self._fire(self._on_start)
             else:
                 self._recording_active = False
-                if self._on_stop:
-                    threading.Thread(target=self._on_stop, daemon=True).start()
+                self._fire(self._on_stop)
 
     def _on_release(self, key: object) -> None:
         """Wird aufgerufen wenn eine Taste losgelassen wird."""
@@ -255,8 +274,7 @@ class HotkeyService:
 
         if self._key_matches(key, config.global_hotkey) and self._recording_active:
             self._recording_active = False
-            if self._on_stop:
-                threading.Thread(target=self._on_stop, daemon=True).start()
+            self._fire(self._on_stop)
 
 
     @property

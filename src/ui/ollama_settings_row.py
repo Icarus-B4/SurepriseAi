@@ -130,7 +130,7 @@ class OllamaSettingsRow(QWidget):
                 result = worker()
             except Exception as exc:
                 result = (False, f"Fehler: {exc}")
-            QTimer.singleShot(0, lambda: self._on_worker_finished(*result))
+            QTimer.singleShot(0, self, lambda: self._on_worker_finished(*result))
 
         threading.Thread(target=_target, daemon=True).start()
 
