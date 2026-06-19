@@ -57,9 +57,9 @@ jobs:
 
             **Windows-Installer** – Doppelklick auf `SurepriseAi-Setup.exe`.
 
-            ### Neu in v0.1.37
-            - **Absturzfix:** Hotkey-Callbacks laufen thread-sicher auf dem Qt-Hauptthread (keine `QBasicTimer`-/Fenster-Handle-Fehler mehr).
-            - **Basics-Hotkeys:** Buchstaben-Tasten `m`, `d`, `s` und Pfeiltasten reagieren nur noch im Basics-Modus – normales Tippen in anderen Apps löst sie nicht mehr aus.
-            - **Stabilität:** Keine redundanten Hintergrund-Threads mehr im Hotkey-Listener; Ollama-Status-UI marshalled korrekt.
+            ### Neu in v0.1.38
+            - **Hotkey-Fix:** Konfigurierte Tastenkürzel (F8, F6/F7, Umschrift) funktionieren wieder – Dispatch über `pyqtSignal` statt fehlerhaftem `QTimer` vom pynput-Thread.
+            - **Rewrite-Hotkey:** `selected_text_hotkey` wird aus den Einstellungen gelesen (nicht mehr fest F9).
+            - **Key-Erkennung:** Funktionstasten wie `F8`/`f8` werden zuverlässig erkannt.
 
-            Vollständiges Changelog: https://github.com/Icarus-B4/SurepriseAi/compare/v0.1.36...${{ github.ref_name }}
+            Vollständiges Changelog: https://github.com/Icarus-B4/SurepriseAi/compare/v0.1.37...${{ github.ref_name }}

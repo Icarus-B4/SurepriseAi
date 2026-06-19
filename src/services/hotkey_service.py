@@ -146,14 +146,18 @@ class HotkeyService:
                     f", EN={config.get_str('translate_english_hotkey', 'f7')}"
                 )
             print(f"[Hotkey] Listener gestartet – '{hotkey}' ({mode}-Modus){extras}")
-            print("[Hotkey] SelectedText Umschrift gebunden: f9")
+            rewrite_key = config.get_str("selected_text_hotkey", "f9")
+            print(f"[Hotkey] SelectedText Umschrift gebunden: {rewrite_key}")
             print(
                 "[Hotkey] Basics-Steuerung (nur im Basics-Modus): "
                 "m=Mute, d=Device, s=Einstellungen, Escape=schließen"
             )
             try:
                 from src.services import dictation_logger as dlog
-                dlog.write("SelectedText Hotkey gebunden: f9", also_print=False)
+                dlog.write(
+                    f"SelectedText Hotkey gebunden: {rewrite_key}",
+                    also_print=False,
+                )
             except Exception:
                 pass
             return True
@@ -184,12 +188,13 @@ class HotkeyService:
     def _resolve_key(self, hotkey_str: str) -> Optional[object]:
         """Gibt einen Hotkey-String als pynput-Key zurück."""
         key_name = hotkey_str.lower().strip()
+        if key_name.startswith("key."):
+            key_name = key_name[4:]
         if key_name in _SPECIAL_KEYS:
             return _SPECIAL_KEYS[key_name]
-        try:
+        if len(key_name) == 1:
             return pynput_kb.KeyCode.from_char(key_name)
-        except Exception:
-            return None
+        return None
 
     def _get_hotkey_key(self) -> Optional[object]:
         """Gibt den konfigurierten Aufnahme-Hotkey als pynput-Key zurück."""
@@ -219,7 +224,7 @@ class HotkeyService:
                 self._fire(self._on_translate_en)
                 return
 
-        if self._key_matches(key, "f9") and self._on_rewrite:
+        if self._key_matches(key, config.get_str("selected_text_hotkey", "f9")) and self._on_rewrite:
             self._fire(self._on_rewrite)
             return
 

@@ -42,3 +42,30 @@ def test_function_hotkeys_work_without_basics_mode():
     service._on_press(pynput.keyboard.Key.f9)
 
     rewrite_cb.assert_called_once()
+
+
+def test_global_hotkey_works_without_basics_mode(monkeypatch):
+    from src.services.config_service import config
+
+    monkeypatch.setattr(config, "get_str", lambda key, default="": {
+        "global_hotkey": "F8",
+    }.get(key, default))
+    monkeypatch.setattr(config, "get_bool", lambda key, default=False: {
+        "enable_translate_hotkeys": True,
+        "push_to_talk": False,
+    }.get(key, default))
+
+    service = HotkeyService()
+    start_cb = MagicMock()
+    service.set_start_callback(start_cb)
+    service.set_basics_active_callback(lambda: False)
+
+    service._on_press(pynput.keyboard.Key.f8)
+
+    start_cb.assert_called_once()
+
+
+def test_resolve_key_accepts_uppercase_function_keys():
+    service = HotkeyService()
+    assert service._resolve_key("F8") == pynput.keyboard.Key.f8
+    assert service._resolve_key("f8") == pynput.keyboard.Key.f8

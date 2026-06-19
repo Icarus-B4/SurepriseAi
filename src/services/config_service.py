@@ -43,6 +43,7 @@ _DEFAULTS: dict[str, Any] = {
     "enable_translate_hotkeys": True,
     "translate_german_hotkey": "f6",
     "translate_english_hotkey": "f7",
+    "selected_text_hotkey": "f9",
     "enable_app_modes":        True,
     "app_modes": {
         "OUTLOOK": "formal",

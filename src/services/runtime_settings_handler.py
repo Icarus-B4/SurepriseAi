@@ -32,7 +32,16 @@ class RuntimeSettingsHandler:
             self.refresh_ui_language()
         if key in ("enable_presence_bar", ""):
             self.sync_presence_bar()
-        if key in ("enable_global_hotkey", "global_hotkey", "push_to_talk", "enable_translate_hotkeys", "translate_german_hotkey", "translate_english_hotkey", ""):
+        if key in (
+            "enable_global_hotkey",
+            "global_hotkey",
+            "push_to_talk",
+            "enable_translate_hotkeys",
+            "translate_german_hotkey",
+            "translate_english_hotkey",
+            "selected_text_hotkey",
+            "",
+        ):
             self.sync_hotkey()
         if key in ("recording_sound_volume", ""):
             self.app.controller.recording_sounds.refresh_volume()

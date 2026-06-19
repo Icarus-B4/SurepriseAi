@@ -4,7 +4,7 @@ Verwaltet die Event-Handler, Berechnungen und Signal-Kopplungen.
 Hält app.py schlank und unter 200 Zeilen.
 """
 
-from PyQt6.QtCore import QObject, QTimer, Qt
+from PyQt6.QtCore import QObject, QTimer, Qt, pyqtSignal, pyqtSlot
 from PyQt6.QtWidgets import QApplication
 from src.ui.island_states import IslandState
 from src.ui.polish_animator import PolishAnimator
@@ -32,6 +32,8 @@ class AppController(QObject):
     Controller zur Steuerung der Interaktion zwischen Benutzeroberfläche und Services.
     """
 
+    _main_thread_job = pyqtSignal(object)
+
     def __init__(self, app_instance) -> None:
         super().__init__()
         self.app = app_instance
@@ -51,6 +53,15 @@ class AppController(QObject):
         self._last_injected_text: str = ""
         self._last_inject_hwnd: int | None = None
         self._correction_generation = 0
+        self._main_thread_job.connect(
+            self._dispatch_main_thread_job,
+            Qt.ConnectionType.QueuedConnection,
+        )
+
+    @pyqtSlot(object)
+    def _dispatch_main_thread_job(self, fn) -> None:
+        if callable(fn):
+            fn()
 
     def connect_all(self):
         """Verknüpft alle Signale und Callbacks."""
@@ -287,7 +298,7 @@ class AppController(QObject):
         if threading.current_thread() is threading.main_thread():
             fn()
         else:
-            QTimer.singleShot(0, self, fn)
+            self._main_thread_job.emit(fn)
 
     def _schedule_ui(self, fn) -> None:
         """Alias für _run_on_main_thread (Hotkeys, Pipeline-Callbacks)."""
